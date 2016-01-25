@@ -30,6 +30,7 @@ RELATIONS = ['top-left', 'center']
 DELAY_AFTER_MOUSE_MOVEMENT = 0.500  # Время в [c]
 DELAY_IN_MOUSE_CLICK = 0.100        # Время в [c] между нажатием и отжатием кнопки (замерял сам и гуглил)
 DELAY_MOUSE_DOUBLE_CLICK = 0.100    # Время в [c] между кликами (замерял сам и гуглил)
+DELAY_KBD_KEY_PRESS = 0.020
 
 DELAY_BETWEEN_CV_ATTEMPT = 0.5      # Время в [c] между попытками распознования графического объекта
 
@@ -226,6 +227,103 @@ def _grab_screen_(*args):
 """
 
 
+
+
+
+
+
+_KeyCodes = {
+    # (bVk, bScan_press, bScan_relaese) скан коды для XT-клавиатуры. Но они могут быть многобайтовыми. Поэтому мока пробуем передавать вместо них нули.
+    'ALT':   (win32con.VK_MENU, 0, 0),
+    'CTRL':  (win32con.VK_CONTROL, 0, 0),
+    'SHIFT': (win32con.VK_SHIFT, 0, 0),
+}
+
+
+class KeyModifier(object):
+    ALT   = 0x01
+    CTRL  = 0x02
+    SHIFT = 0x04
+    _rev  = {0x01: 'ALT', 0x02: 'CTRL', 0x04: 'SHIFT'}
+
+
+class Key(object):
+    ENTER = chr(0) + chr(win32con.VK_RETURN)
+    TAB   = chr(0) + chr(win32con.VK_TAB)
+    LEFT  = chr(0) + chr(win32con.VK_LEFT)
+    UP    = chr(0) + chr(win32con.VK_UP)
+    RIGHT = chr(0) + chr(win32con.VK_RIGHT)
+    DOWN  = chr(0) + chr(win32con.VK_DOWN)
+
+
+def type_text(s, modifiers=None):
+    '''
+    Особенности:
+        -- Если установлены modifiers, то не будет различия между строчными и загалвными буксами.
+           Т.е., будет игнорироваться необходимость нажимать Shift, если есть заглавные символы.
+    '''
+    # https://mail.python.org/pipermail/python-win32/2013-July/012862.html
+    # https://msdn.microsoft.com/ru-ru/library/windows/desktop/ms646304(v=vs.85).aspx
+    # http://stackoverflow.com/questions/4790268/how-to-generate-keystroke-combination-in-win32-api
+    # http://stackoverflow.com/questions/11906925/python-simulate-keydown
+    # https://ru.wikipedia.org/wiki/Скан-код
+    # http://stackoverflow.com/questions/21197257/keybd-event-keyeventf-extendedkey-explanation-required
+
+    def press_key(char, scancode):
+        win32api.keybd_event(char, scancode, 0, 0)  # win32con.KEYEVENTF_EXTENDEDKEY   # TODO: is scan code needed?
+        time.sleep(DELAY_KBD_KEY_PRESS)
+
+    def release_key(char, scancode):
+        win32api.keybd_event(char, scancode, win32con.KEYEVENTF_KEYUP, 0)  # win32con.KEYEVENTF_EXTENDEDKEY
+        time.sleep(DELAY_KBD_KEY_PRESS)
+
+    def type_char(char):
+        press_key(char, 0)
+        release_key(char, 0)
+
+    if not isinstance(s, str):
+        raise FailExit('incorrect string = \'%s\'' % str(s))
+
+    if modifiers is not None:
+        if not isinstance(modifiers, int):
+            raise FailExit('incorrect modifiers = \'%s\'' % str(modifiers))
+        for k in KeyModifier._rev:
+            if modifiers & k != 0:
+                press_key(_KeyCodes[KeyModifier._rev[k]][0], _KeyCodes[KeyModifier._rev[k]][1])
+
+    spec_key = False
+    for c in s:
+        a = ord(c)
+        if spec_key:
+            spec_key = False
+            type_char(a)
+
+        elif a == 0:
+            spec_key = True
+            continue
+
+        elif a >= 0x20 and a <= 0x7E:
+            code = win32api.VkKeyScan(c)
+            if code & 0x100 != 0 and modifiers is None:
+                press_key(_KeyCodes['SHIFT'][0], _KeyCodes['SHIFT'][1])
+
+            type_char(code)
+
+            if code & 0x100 != 0 and modifiers is None:
+                release_key(_KeyCodes['SHIFT'][0], _KeyCodes['SHIFT'][1])
+
+        else:
+            raise FailExit('unknown symbol \'%s\' in \'%s\'' % (str(c), str(s)))
+
+    if modifiers is not None:
+        for k in KeyModifier._rev:
+            if modifiers & k != 0:
+                release_key(_KeyCodes[KeyModifier._rev[k]][0], _KeyCodes[KeyModifier._rev[k]][1])
+
+
+
+
+
 class Region(object):
 
     def __init__(self, *args, **kwargs):  # relation='top-left', title=None):
@@ -272,30 +370,44 @@ class Region(object):
 
 
     def setX(self, x, relation='top-left'):
+        ''' 'top-left' -- x - координата угла; 'center' -- x - координата цента '''
         (self.y, self.w, self.h) = (self._y, self._w, self._h)
         if isinstance(x, int) and relation in RELATIONS:
-            self.__set_x(x, self._w, relation)
+            if relation == 'top-left':
+                self._x = self.x = x
+            elif relation == 'center':
+                self._x = self.x = x - self._w/2
         else:
             raise FailExit('[error] Incorect \'setX()\' method call:\n\tx = %s\n\trelation = %s' % (str(x), str(relation)))
 
     def setY(self, y, relation='top-left'):
+        ''' 'top-left' -- y - координата угла; 'center' -- у - координата цента '''
         (self.x, self.w, self.h) = (self._x, self._w, self._h)
         if isinstance(y, int) and relation in RELATIONS:
-            self.__set_y(y, self._h, relation)
+            if relation == 'top-left':
+                self._y = self.y = y
+            elif relation == 'center':
+                self._y = self.y = y - self._h/2
         else:
             raise FailExit('[error] Incorect \'setY()\' method call:\n\ty = %s\n\trelation = %s' % (str(y), str(relation)))
 
-    def setW(self, w):
+    def setW(self, w, relation='top-left'):
+        ''' 'top-left' -- не надо менять x; 'center' --  не надо менять x '''
         (self.x, self.y, self.h) = (self._x, self._y, self._h)
-        if isinstance(w, int) and w > 0:
-            self.__set_w(w)
+        if isinstance(w, int) and w > 0 and relation in RELATIONS:
+            self._w = self.w = w
+            if relation == 'center':
+                self._x = self.x = self._x - w/2
         else:
             raise FailExit('[error] Incorect \'setW()\' method call:\n\tw = %s' % str(w))
 
-    def setH(self, h):
+    def setH(self, h, relation='top-left'):
+        ''' 'top-left' -- не надо менять y; 'center' --  не надо менять y '''
         (self.x, self.y, self.w) = (self._x, self._y, self._w)
-        if isinstance(h, int) and h > 0:
-            self.__set_h(h)
+        if isinstance(h, int) and h > 0 and relation in RELATIONS:
+            self._h = self.h = h
+            if relation == 'center':
+                self._y = self.y = self._y - h/2
         else:
             raise FailExit('[error] Incorect \'setH()\' method call:\n\th = %s' % str(h))
 
@@ -317,35 +429,19 @@ class Region(object):
                 else:
                     relation = 'top-left'
 
-                self.__set_x(args[0], args[2], relation)
-                self.__set_y(args[1], args[3], relation)
-                self.__set_w(args[2])
-                self.__set_h(args[3])
-
+                self._w = self.w = args[2]
+                self._h = self.h = args[3]
+                if relation == 'top-left':
+                    self._x = self.x = args[0]
+                    self._y = self.y = args[1]
+                elif relation == 'center':
+                    self._x = self.x = x - args[2]/2
+                    self._y = self.y = y - args[3]/2
             else:
                 raise FailExit('#3')
 
         except FailExit as e:
             raise FailExit('[error] Incorect \'setRect()\' method call:\n\targs = %s\n\tkwargs = %s\n\tadditional comment: %s' % (str(args), str(kwargs), str(e)))
-
-
-    def __set_x(self, x, w, relation):
-        if relation == 'top-left':
-            self._x = self.x = x
-        elif relation == 'center':
-            self._x = self.x = x - int(w/2)
-
-    def __set_y(self, y, h, relation):
-        if relation == 'top-left':
-            self._y = self.y = y
-        elif relation == 'center':
-            self._y = self.y = y - int(h/2)
-
-    def __set_w(self, w):
-        self._w = self.w = w
-
-    def __set_h(self, h):
-        self._h = self.h = h
 
     def __set_from_Region(self, reg):
         self._x = self.x = reg.x
@@ -374,36 +470,20 @@ class Region(object):
         return Location(self._x, self._y)
 
 
-    """
-    !!!!!!!!!!!!!!!!!!!!!!!!!!!! TODO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     def offset(self, *args):
         ''' Возвращает область, сдвинутую, относительно self.
-        Переопределение функции базового класса из Sikuli.
-            -- Базово:      2 аргумента; возвращает такую же область, но смещенную на (x_offs,y_offs)
-            -- Наш вариант: 1 или 4 аргумента; возвращает новую область с (w,h), _центр_ которой смещен относительно _центра_ текущей на (x_offs,y_offs) '''
-        if len(args) == 2:
-            return super(Region, self).offset(args[0], args[1])
-
-        def det_wh(name, params):
-            ''' name может быть только 'w' или 'h'! Но не будет это проверять -- внутрення функция. '''
-            if (name in params) and not (params[name] is None or params[name] == 'copy'):
-                return params[name]
-            else:
-                return getattr(self, name)
-
-        def det_xy(name, params):
-            ''' name может быть только 'x' или 'y'! Но не будет это проверять -- внутрення функция. '''
-            name_offs = name + '_offs'
-            if name_offs in params and not (params[name_offs] is None):
-                return getattr(self, name) + params[name_offs]
-            else:
-                return getattr(self, name)
-
-        if len(args) == 1 and isinstance(args[0], dict):
-            params = args[0]
-        elif len(args) == 4:
-            params = {'x_offs': args[0], 'y_offs': args[1], 'w': args[2], 'h': args[3]}
-        return Region(det_xy('x', params), det_xy('y', params), det_wh('w', params), det_wh('h', params))"""
+            Вериант №1 (как в Sikuli):
+                loc_offs := args[0]  --  тип Location; на сколько сдвинуть; (w,h) сохраняется
+            Вериант №2:
+                x_offs := args[0]  --  тип int; на сколько сдвинуть; w сохраняется
+                y_offs := args[1]  --  тип int; на сколько сдвинуть; h сохраняется
+        '''
+        if len(args) == 2 and isinstance(args[0], int) and isinstance(args[1], int):
+            return Region(self._x + args[0], self._y + args[1], self._w, self._h)
+        elif len(args) == 1 and isinstance(args[0], Location):
+            return Region(self._x + args[0]._x, self._y + args[0]._y, self._w, self._h)
+        else:
+            raise FailExit('[error] Incorect \'offset()\' method call:\n\targs = %s' % str(args))
 
     def right(self, l=None):
         ''' Возвращает область справа от self. Self не включено. Высота новой области совпадает с self. Длина новой области len или до конца экрана, если len не задана. '''
@@ -486,9 +566,10 @@ class Region(object):
         return Location(self._x + self._h/2, self._y + self._w/2)
 
 
-    def __find(self, ps):
-        field = _grab_screen(self._x, self._y, self._w, self._h)
+    def __get_field_for_find(self):
+        return _grab_screen(self._x, self._y, self._w, self._h)
 
+    def __find(self, ps, field):
         CF = 0
         if CF == 0:
             res = cv2.matchTemplate(field, ps._cv2_pattern, cv2.TM_CCORR_NORMED)
@@ -513,8 +594,8 @@ class Region(object):
         '''x_arr = map(lambda x: int(x) + self._x, loc[1])
         y_arr = map(lambda y: int(y) + self._y, loc[0])
         s_arr = map(lambda s: float(s), res[loc[0], loc[1]])
-        return (zip(x_arr, y_arr, s_arr), field)'''
-        return (map(lambda x, y, s: (int(x) + self._x, int(y) + self._y, float(s)), loc[1], loc[0], res[loc[0], loc[1]]), field)
+        return zip(x_arr, y_arr, s_arr)'''
+        return map(lambda x, y, s: (int(x) + self._x, int(y) + self._y, float(s)), loc[1], loc[0], res[loc[0], loc[1]])
 
 
     def findAll(self, ps):
@@ -524,52 +605,97 @@ class Region(object):
             if not isinstance(ps, Pattern):
                 raise FailExit('bad \'ps\' argument; it should be a string (path to image file) or \'Pattern\' object')
 
-            (pts, _) = self.__find(ps)
+            pts = self.__find(ps, self.__get_field_for_find())
             return map(lambda pt: Match(pt[0], pt[1], ps._w, ps._h, pt[2], ps.getFilename()), pts)
 
         except FailExit as e:
             raise FailExit('[error] Incorect \'findAll()\' method call:\n\tps = %s\n\tadditional comment: %s' % (str(ps), str(e)))
 
 
-    def find(self, ps, timeout=0):
-        try:
-            if isinstance(ps, str):
-                ps = Pattern(ps)
-            if not isinstance(ps, Pattern):
-                raise FailExit('bad \'ps\' argument; it should be a string (path to image file) or \'Pattern\' object')
-            if not ( (isinstance(timeout, float) or isinstance(timeout, int)) and timeout >= 0 ):
-                raise FailExit('bad \'timeout\' argument')
+    def _wait_for_appear_or_vanish(self, ps, timeout, aov):
+        if isinstance(ps, str):
+            ps = Pattern(ps)
+        if not isinstance(ps, Pattern):
+            raise FailExit('bad \'ps\' argument; it should be a string (path to image file) or \'Pattern\' object')
+        if timeout is None:
+            timeout = self.auto_wait_timeout
+        if not ( (isinstance(timeout, float) or isinstance(timeout, int)) and timeout >= 0 ):
+            raise FailExit('bad \'timeout\' argument')
 
-            prev_field = None
-            elaps_time = 0
-            while True:
-                (pts, field) = self.__find(ps)
+        prev_field = None
+        elaps_time = 0
+        while True:
+            field = self.__get_field_for_find()
 
-                if prev_field is None or (prev_field != field).all():
+            if prev_field is None or (prev_field != field).all():
+                pts = self.__find(ps, field)
+
+                if aov == 'appear':
                     if len(pts) != 0:
                         # Что-то нашли. Выреме один вариант с лучшим 'score'. Из несольких с одинаковыми 'score' будет первый при построчном проходе по экрану.
                         pt = max(pts, key=lambda pt: pt[2])
                         return Match(pt[0], pt[1], ps._w, ps._h, pt[2], ps.getFilename())
 
-                time.sleep(DELAY_BETWEEN_CV_ATTEMPT)
-                elaps_time += DELAY_BETWEEN_CV_ATTEMPT
-                if elaps_time >= timeout:
-                    raise FindFailed()
+                elif aov == 'vanish':
+                    if len(pts) == 0:
+                        return
 
+                else:
+                    raise FailExit('unknown \'aov\' = \'%s\'' % str(aov))
+
+            time.sleep(DELAY_BETWEEN_CV_ATTEMPT)
+            elaps_time += DELAY_BETWEEN_CV_ATTEMPT
+            if elaps_time >= timeout:
+                raise FindFailed()
+
+
+    def find(self, ps, timeout=None):
+        ''' Ждет, пока паттерн не появится. timeout может быть положительным числом или None. timeout = 0 означает однократную проверку; None -- использование дефолтного значения.
+        Возвращает Region, если паттерн появился, и исключение FindFailed, если нет. '''
+        try:
+            reg = self._wait_for_appear_or_vanish(ps, timeout, 'appear')
         except FailExit as e:
             raise FailExit('\nNew stage of %s\n[error] Incorect \'find()\' method call:\n\tself = %s\n\tps = %s\n\ttimeout = %s' % (traceback.format_exc(), str(self), str(ps), str(timeout)))
+        else:
+            return reg
+
+    def waitVanish(self, ps, timeout=None):
+        ''' Ждет, пока паттерн не исчезнет. Если паттерна уже не было к началу выполнения процедуры, то завершается успешно.
+        timeout может быть положительным числом или None. timeout = 0 означает однократную проверку; None -- использование дефолтного значения.'''
+        try:
+            self._wait_for_appear_or_vanish(ps, timeout, 'vanish')
+        except FailExit as e:
+            raise FailExit('\nNew stage of %s\n[error] Incorect \'waitVanish()\' method call:\n\tself = %s\n\tps = %s\n\ttimeout = %s' % (traceback.format_exc(), str(self), str(ps), str(timeout)))
+        except FindFailed:
+            return False
+        else:
+            return True
+
+
+    def exists(self, ps):
+        try:
+            self._wait_for_appear_or_vanish(ps, 0, 'appear')
+        except FailExit as e:
+            raise FailExit('\nNew stage of %s\n[error] Incorect \'exists()\' method call:\n\tself = %s\n\tps = %s' % (traceback.format_exc(), str(self), str(ps)))
+        except FindFailed:
+            return False
+        else:
+            return True
 
 
     def wait(self, ps=None, timeout=None):
-        ''' Для совместимости с Sikuli. '''
+        ''' Для совместимости с Sikuli. Ждет появления паттерна или просто ждет.
+        timeout может быть положительным числом или None. timeout = 0 означает однократную проверку; None -- использование дефолтного значения.'''
         if ps is None:
             if timeout is not None:
                 time.sleep(timeout)
         else:
-            if timeout is None:
-                return self.find(ps, self.auto_wait_timeout)
+            try:
+                reg = self._wait_for_appear_or_vanish(ps, timeout, 'appear')
+            except FailExit as e:
+                raise FailExit('\nNew stage of %s\n[error] Incorect \'wait()\' method call:\n\tself = %s\n\tps = %s\n\ttimeout = %s' % (traceback.format_exc(), str(self), str(ps), str(timeout)))
             else:
-                return self.find(ps, timeout)
+                return reg
 
 
     def setAutoWaitTimeout(self, timeout):
@@ -584,6 +710,14 @@ class Region(object):
 
     def doubleClick(self):
         self.getCenter().doubleClick()
+
+    def type(self, text):
+        ''' Не как в Sikuli '''
+        self.getCenter().type(text)
+
+    def enter_text(self, text):
+        ''' Не как в Sikuli '''
+        self.getCenter().enter_text(text)
 
 
 
@@ -680,6 +814,16 @@ class Location(object):
         time.sleep(DELAY_IN_MOUSE_CLICK)
         win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, self.x, self.y, 0, 0)
 
+    def type(self, text):
+        ''' Не как в Sikuli '''
+        self.click()
+        type_text(text)
+
+    def enter_text(self, text):
+        ''' Не как в Sikuli '''
+        self.click()
+        type_text(text + Key.ENTER)
+
 
 
 class Pattern(object):
@@ -737,9 +881,6 @@ class Pattern(object):
         (self.w, self.h) = (self._w, self._h)
         return self._h
 
-
-class Key(object):
-    pass
 
 
 

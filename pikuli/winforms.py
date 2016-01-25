@@ -13,6 +13,10 @@ from win32con import *
 from pikuli import Region
 
 
+# Словарь "системых" title'ов. Если title не строка, а число отсюда, то title интерпретируется не просто как заголвок окна или текст лейбла, а как указание на какой-то объект.
+SYS_TITLES = {'main_window': 0}
+
+
 class FindFailed(Exception):
     pass
 
@@ -110,35 +114,48 @@ class WindowsForm(object):
 
 
     def find(self, win_class, title, title_regexp=False, return_list=False):
-        ''' Поиск дочернего окна-объекта любого уровня вложенности. Под окном пнимается любой WinForms-элемент любого класса.
+        '''
+        Поиск дочернего окна-объекта любого уровня вложенности. Под окном пнимается любой WinForms-элемент любого класса.
             win_class     --  Искомое окно должно обладать таким WinForms-классом.
             title         --  Искомое окно должно иметь такой заголвоок (текст); в точности такое или это регулярное выражение, в зависимости от флага title_regexp.
             title_regexp  --  В title передается регулярное выржение для поиска.
-            return_list   --  Если True, то возвращается список найденных окон. Если False, то возвращается только одно значение или происходит Exception, если найдено несколько элементов. '''
+            return_list   --  Если True, то возвращается список найденных окон. Если False, то возвращается только одно значение или происходит Exception, если найдено несколько элементов.
+        Возвращает объект типа Region.
+        '''
 
-        if title_regexp:
-            extra = {'hwnds': [], 're_comp': re.compile(title)}
-        else:
-            extra = {'hwnds': [], 're_comp': None}
-
-        def EnumChildWindows_callback(hwnd, extra):
-            if hwnd == 0:
-                return
-            if (not title_regexp and title == GetWindowText(hwnd)) or (title_regexp and extra['re_comp'].match(GetWindowText(hwnd))):
-                if win_class.lower() in GetClassName(hwnd).lower().split('.'):
-                    extra['hwnds'] += [hwnd]
-        EnumChildWindows(self.hwnd_main_win, EnumChildWindows_callback, extra)
-
-        if len(extra['hwnds']) == 0:
-            raise FindFailed('pikuli: winforms_operator: find: not win_class = \'%s\' and title = \'%s\' was found.' % (str(win_class), str(title)))
-
-        if return_list:
-            return [_hwnd2reg(h, GetWindowText(h)) for h in extra['hwnds']]
-        else:
-            if len(extra['hwnds']) == 1:
-                return _hwnd2reg(extra['hwnds'][0], GetWindowText(extra['hwnds'][0]))
+        if isinstance(title, int) and title in SYS_TITLES.values():
+            if title == SYS_TITLES['main_window']:
+                return _hwnd2reg(self.hwnd_main_win, GetWindowText(self.hwnd_main_win))
             else:
-                raise Exception('pikuli: winforms_operator: find: more than one elemnt was found with win_class = \'%s\' and title = \'%s\': extra[\'hwnds\'] = %s' % (str(win_class), str(title), str(extra['hwnds'])))
+                raise Exception('pikuli: winforms_operator: find: title = \'%s\' not in SYS_TITLES = %s (win_class = \'%s\')' % (str(title), str(SYS_TITLES), str(win_class)))
+
+        elif isinstance(title, str):
+            if title_regexp:
+                extra = {'hwnds': [], 're_comp': re.compile(title)}
+            else:
+                extra = {'hwnds': [], 're_comp': None}
+
+            def EnumChildWindows_callback(hwnd, extra):
+                if hwnd == 0:
+                    return
+                if (not title_regexp and title == GetWindowText(hwnd)) or (title_regexp and extra['re_comp'].match(GetWindowText(hwnd))):
+                    if win_class.lower() in GetClassName(hwnd).lower().split('.'):
+                        extra['hwnds'] += [hwnd]
+            EnumChildWindows(self.hwnd_main_win, EnumChildWindows_callback, extra)
+
+            if len(extra['hwnds']) == 0:
+                raise FindFailed('pikuli: winforms_operator: find: not win_class = \'%s\' and title = \'%s\' was found.' % (str(win_class), str(title)))
+
+            if return_list:
+                return [_hwnd2reg(h, GetWindowText(h)) for h in extra['hwnds']]
+            else:
+                if len(extra['hwnds']) == 1:
+                    return _hwnd2reg(extra['hwnds'][0], GetWindowText(extra['hwnds'][0]))
+                else:
+                    raise Exception('pikuli: winforms_operator: find: more than one elemnt was found with win_class = \'%s\' and title = \'%s\': extra[\'hwnds\'] = %s' % (str(win_class), str(title), str(extra['hwnds'])))
+
+        else:
+            raise Exception('pikuli: winforms_operator: find: wrond title = \'%s\' (win_class = \'%s\')' % (str(title), str(win_class)))
 
 
     def reg(self):
