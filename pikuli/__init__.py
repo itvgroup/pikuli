@@ -466,9 +466,6 @@ class Region(object):
         (self.x, self.y, self.w, self.h) = (self._x, self._y, self._w, self._h)
         return self._h
 
-    def getCenter(self):
-        return Location(self._x, self._y)
-
 
     def offset(self, *args):
         ''' Возвращает область, сдвинутую, относительно self.
@@ -563,7 +560,7 @@ class Region(object):
         return Location(self._x + self._h - 1, self._y + self._w - 1)
 
     def getCenter(self):
-        return Location(self._x + self._h/2, self._y + self._w/2)
+        return Location(self._x + self._w/2, self._y + self._h/2)
 
 
     def __get_field_for_find(self):
@@ -711,9 +708,9 @@ class Region(object):
     def doubleClick(self):
         self.getCenter().doubleClick()
 
-    def type(self, text):
+    def type(self, text, m = None, click = True):
         ''' Не как в Sikuli '''
-        self.getCenter().type(text)
+        self.getCenter().type(text, m, click)
 
     def enter_text(self, text):
         ''' Не как в Sikuli '''
@@ -814,10 +811,11 @@ class Location(object):
         time.sleep(DELAY_IN_MOUSE_CLICK)
         win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, self.x, self.y, 0, 0)
 
-    def type(self, text):
+    def type(self, text, m = None, click = True):
         ''' Не как в Sikuli '''
-        self.click()
-        type_text(text)
+        if click == True:
+            self.click()
+        type_text(text, m)
 
     def enter_text(self, text):
         ''' Не как в Sikuli '''
