@@ -270,11 +270,11 @@ def type_text(s, modifiers=None):
     # http://stackoverflow.com/questions/21197257/keybd-event-keyeventf-extendedkey-explanation-required
 
     def press_key(char, scancode):
-        win32api.keybd_event(char, scancode, 0, 0)  # win32con.KEYEVENTF_EXTENDEDKEY   # TODO: is scan code needed?
+        win32api.keybd_event(char, scancode, win32con.KEYEVENTF_EXTENDEDKEY, 0)  # win32con.KEYEVENTF_EXTENDEDKEY   # TODO: is scan code needed?
         time.sleep(DELAY_KBD_KEY_PRESS)
 
     def release_key(char, scancode):
-        win32api.keybd_event(char, scancode, win32con.KEYEVENTF_KEYUP, 0)  # win32con.KEYEVENTF_EXTENDEDKEY
+        win32api.keybd_event(char, scancode, win32con.KEYEVENTF_EXTENDEDKEY | win32con.KEYEVENTF_KEYUP, 0)  # win32con.KEYEVENTF_EXTENDEDKEY
         time.sleep(DELAY_KBD_KEY_PRESS)
 
     def type_char(char):
