@@ -84,7 +84,10 @@ class _SettingsClass(object):
 # Создадим экземпляр класса (он будет создаваться только один раз, даже если импорт модуля происходит мого раз в разных местах)
 # и добавим путь к тому фйлу, из которого импортировали настоящий модуль:
 Settings = _SettingsClass()
-Settings.addImagePath(os.path.dirname(os.path.abspath(sys.modules['__main__'].__file__)))
+try:
+    Settings.addImagePath(os.path.dirname(os.path.abspath(sys.modules['__main__'].__file__)))
+except:
+    pass
 
 
 
@@ -544,6 +547,9 @@ class Region(object):
                 raise FailExit()
         except FailExit:
             raise FailExit('\nNew stage of %s\n[error] Incorect \'below()\' method call:\n\tl = %s' % (traceback.format_exc(), str(l)))
+        p2c('---------------------------------------------------')
+        p2c(str(reg))
+        p2c('---------------------------------------------------')
         return reg
 
 
@@ -602,8 +608,14 @@ class Region(object):
             if not isinstance(ps, Pattern):
                 raise FailExit('bad \'ps\' argument; it should be a string (path to image file) or \'Pattern\' object')
 
+            p2c('---------------------------------------------------')
+            p2c(str(ps))
             pts = self.__find(ps, self.__get_field_for_find())
-            return map(lambda pt: Match(pt[0], pt[1], ps._w, ps._h, pt[2], ps.getFilename()), pts)
+            p2c(str(pts))
+            result = map(lambda pt: Match(pt[0], pt[1], ps._w, ps._h, pt[2], ps.getFilename()), pts)
+            p2c(str(result))
+            p2c('---------------------------------------------------')
+            return result
 
         except FailExit as e:
             raise FailExit('[error] Incorect \'findAll()\' method call:\n\tps = %s\n\tadditional comment: %s' % (str(ps), str(e)))
@@ -643,6 +655,7 @@ class Region(object):
             time.sleep(DELAY_BETWEEN_CV_ATTEMPT)
             elaps_time += DELAY_BETWEEN_CV_ATTEMPT
             if elaps_time >= timeout:
+                p2c(str(ps))
                 raise FindFailed()
 
 
