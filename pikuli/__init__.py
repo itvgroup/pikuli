@@ -547,9 +547,7 @@ class Region(object):
                 raise FailExit()
         except FailExit:
             raise FailExit('\nNew stage of %s\n[error] Incorect \'below()\' method call:\n\tl = %s' % (traceback.format_exc(), str(l)))
-        p2c('---------------------------------------------------')
         p2c(str(reg))
-        p2c('---------------------------------------------------')
         return reg
 
 
@@ -677,6 +675,7 @@ class Region(object):
         except FailExit as e:
             raise FailExit('\nNew stage of %s\n[error] Incorect \'waitVanish()\' method call:\n\tself = %s\n\tps = %s\n\ttimeout = %s' % (traceback.format_exc(), str(self), str(ps), str(timeout)))
         except FindFailed:
+            p2c(str(ps))
             return False
         else:
             return True
@@ -688,6 +687,7 @@ class Region(object):
         except FailExit as e:
             raise FailExit('\nNew stage of %s\n[error] Incorect \'exists()\' method call:\n\tself = %s\n\tps = %s' % (traceback.format_exc(), str(self), str(ps)))
         except FindFailed:
+            p2c(str(ps))
             return False
         else:
             return True
