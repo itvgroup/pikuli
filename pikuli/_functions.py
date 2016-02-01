@@ -1,0 +1,257 @@
+# -*- coding: utf-8 -*-
+import sys
+import os
+import win32con
+import win32api
+import win32gui
+import win32ui
+import time
+import numpy as np
+import win32print
+
+from .SettingsClass import *
+
+DELAY_KBD_KEY_PRESS = 0.020
+
+def p2c(*msgs):
+    for m in msgs:
+        sys.__stdout__.write('*** ' + str(m) + '\n')
+
+# Создадим экземпляр класса Settings(он будет создаваться только один раз, даже если импорт модуля происходит мого раз в разных местах)
+# и добавим путь к тому фйлу, из которого импортировали настоящий модуль:
+Settings = SettingsClass()
+# Settings.addImagePath(os.getcwd()) -- надо ли так?
+try:
+    Settings.addImagePath(os.path.dirname(os.path.abspath(sys.modules['__main__'].__file__)))
+except:
+    p2c('[warn] err in Settings.addImagePath(os.path.dirname(os.path.abspath(sys.modules[\'__main__\'].__file__)))')
+
+def addImagePath(path):
+    Settings.addImagePath(path)
+
+
+def _monitor_hndl_to_screen_n(m_hndl):
+    ''' Экраны-мониторы нуменруются от 1. Нулевой экран -- это полный вирутальный. '''
+    minfo = win32api.GetMonitorInfo(m_hndl)  # For example for primary monitor: {'Device': '\\\\.\\DISPLAY1', 'Work': (0, 0, 1920, 1040), 'Flags': 1, 'Monitor': (0, 0, 1920, 1080)}
+    screen_n = int(minfo['Device'][len(r'\\.\DISPLAY'):])
+    if screen_n <= 0:
+        raise FailExit('can not obtaen Screen number from win32api.GetMonitorInfo() = %s' % str(minfo))
+    return screen_n
+
+
+def _screen_n_to_monitor_name(n):
+    ''' Экраны-мониторы нуменруются от 1. Нулевой экран -- это полный вирутальный. '''
+    return r'\\.\DISPLAY%i' % n
+
+
+def _screen_n_to_mon_descript(n):
+    ''' Returns a sequence of tuples. For each monitor found, returns a handle to the monitor, device context handle, and intersection rectangle:
+    (hMonitor, hdcMonitor, PyRECT) '''
+    monitors = win32api.EnumDisplayMonitors(None, None)
+    if n >= 1:
+        for m in monitors:
+            if _monitor_hndl_to_screen_n(m[0]) == n:
+                break
+    elif n == 0:
+        # (x1, y1, x2, y2) = (m[2][0], m[2][1], m[2][2], m[2][3]) -- координаты углов экранов в системе кооринат большого виртуального экрана, где m -- элемнет monitors.
+        x_max = max(map(lambda m: m[2][2], monitors))
+        y_max = max(map(lambda m: m[2][3], monitors))
+        m = (None, None, (0, 0, x_max, y_max))
+    else:
+        raise FailExit('wrong screen number \'%s\'' % str(n))
+    return m
+
+
+def _grab_screen(x, y, w, h):
+    '''
+    Получаем скриншот области:
+            n     --  номер экрана (от нуля)
+            x, y  --  верхний левый угол прямоуголника в системе координат виртуального рабочего стола
+            w, h  --  размеры прямоуголника
+
+      Любопытно, что если пытаться выйти за пределы левого монитора, читая данные из его контекста, то оставшаяся
+    часть скриншота сам будет браться и из контекста другого монитора. Т.о., важно знать какому монитору принадлежит
+    верхний левый угол прямоуголника, скриншот которого получаем. И не надо провериять, на каких мониторах располагаются
+    остальные углы этой области. Вообще без проблем можно право и вниз уйти за пределы всех мониторов.
+      Однако, надо помнить, что при копировании буфера через BitBlt() надо указывать начальные координаты с системе
+    отсчета монитора, а не виртуального рабочего стола. Т.о. входные (x,y) надо пересчитывать.
+    '''
+    # http://stackoverflow.com/questions/3291167/how-to-make-screen-screenshot-with-win32-in-c
+    # http://stackoverflow.com/questions/18733486/python-win32api-bitmap-getbitmapbits
+    # http://stackoverflow.com/questions/24129253/screen-capture-with-opencv-and-python-2-7
+    # Как узнать рамер экрана:
+    #   Варинат 1:
+    #       (_, _, scr_rect) = _screen_n_to_mon_descript(n)
+    #       (w, h) = (scr_rect[2] - scr_rect[0], scr_rect[3] - scr_rect[1])
+    #   Варинат 2:
+    #       w = win32print.GetDeviceCaps(scr_hdc, win32con.HORZRES)
+    #       h = win32print.GetDeviceCaps(scr_hdc, win32con.VERTRES)
+    n = _scr_num_of_point(x, y)
+    scr_hdc = win32gui.CreateDC('DISPLAY', _screen_n_to_monitor_name(n), None)
+
+    mem_hdc = win32gui.CreateCompatibleDC(scr_hdc)  # New context of memory device. This one is compatible with 'scr_hdc'
+    new_bitmap_h = win32gui.CreateCompatibleBitmap(scr_hdc, w, h)
+    win32gui.SelectObject(mem_hdc, new_bitmap_h)    # Returns 'old_bitmap_h'. It will be deleted automatically.
+
+    (_, _, m_rect) = _screen_n_to_mon_descript(n)
+    win32gui.BitBlt(mem_hdc, 0, 0, w, h, scr_hdc, x-m_rect[0], y-m_rect[1], win32con.SRCCOPY)
+
+    bmp = win32ui.CreateBitmapFromHandle(new_bitmap_h)
+    bmp_info = bmp.GetInfo()
+    if bmp_info['bmHeight'] != h or bmp_info['bmWidth'] != w:
+        raise FailExit('bmp_info = %s, but (w, h) = (%s, %s)' % (str(bmp_info), str(w), str(h)))
+    if bmp_info['bmType'] != 0 or bmp_info['bmPlanes'] != 1:
+        raise FailExit('bmp_info = %s: bmType !=0 or bmPlanes != 1' % str(bmp_info))
+    if bmp_info['bmBitsPixel'] % 8 != 0:
+        raise FailExit('bmp_info = %s: bmBitsPixel mod. 8 is not zero' % str(bmp_info))
+
+    bmp_arr = list(bmp.GetBitmapBits())
+    del bmp_arr[3::4]  # Dele alpha channel. TODO: Is it fast enough???
+    bmp_np = np.array(bmp_arr, dtype=np.uint8).reshape((h, w, 3))
+    return bmp_np
+
+
+def _scr_num_of_point(x, y):
+    ''' Вернет номер (от нуля) того экрана, на котором располоржен левый верхний угол текущего Region. '''
+    m_tl = win32api.MonitorFromPoint((x, y), win32con.MONITOR_DEFAULTTONULL)
+    if m_tl is None:
+        raise FailExit('top-left corner of the Region is out of visible area of sreens')
+    return _monitor_hndl_to_screen_n(m_tl)
+
+
+"""
+def __check_reg_in_single_screen(self):
+    ''' Проверяем, что Region целиком на одном экране. Экран -- это просто один из мониторав, которые существуют по мнению Windows. '''
+    m_tl = win32api.MonitorFromPoint((self._x, self._y), win32con.MONITOR_DEFAULTTONULL)
+    # Do "-1" to get the edge pixel belonget to the Region. The next pixel (over any direction) is out of the Region:
+    m_br = win32api.MonitorFromPoint((self._x + self._w - 1, self._y + self._h - 1), win32con.MONITOR_DEFAULTTONULL)
+    if m_tl is None or m_br is None:
+        raise FailExit('one or more corners of region out of visible area of sreens')
+    if m_tl != m_br:
+        raise FailExit('region occupies more than one screen')
+    return Screen(_monitor_hndl_to_screen_n(m_tl))
+"""
+"""
+def _grab_screen_(*args):
+    '''
+    Получаем скриншот. Возможные наборы входных аргументов:
+        Скриншот всего экрана:
+            n  --  номер экрана-монитора (integer)
+        Скриншот области:
+            x, y, w, h  --  размеры прямоуголника
+            reg         --  прямоуголник типа Region
+    '''
+    # http://stackoverflow.com/questions/3291167/how-to-make-screen-screenshot-with-win32-in-c
+    # http://stackoverflow.com/questions/18733486/python-win32api-bitmap-getbitmapbits
+    # http://stackoverflow.com/questions/24129253/screen-capture-with-opencv-and-python-2-7
+    if len(args) == 1:
+        if isinstance(args[0], int):
+            n = args[0]
+        elif isinstance(args[0], Region):
+            raise Exception('TODO here')
+    elif len(args) == 4:
+
+    scr_hdc = win32gui.CreateDC('DISPLAY', _screen_n_to_monitor_name(n), None)
+    mem_hdc = win32gui.CreateCompatibleDC(scr_hdc)  # New context of memory device. This one is compatible with 'scr_hdc'
+
+    # (_, _, scr_rect) = _screen_n_to_mon_descript(n)
+    # (w, h) = (scr_rect[2] - scr_rect[0], scr_rect[3] - scr_rect[1])
+    w = win32print.GetDeviceCaps(scr_hdc, win32con.HORZRES)
+    h = win32print.GetDeviceCaps(scr_hdc, win32con.VERTRES)
+    new_bitmap_h = win32gui.CreateCompatibleBitmap(scr_hdc, w, h)
+    win32gui.SelectObject(mem_hdc, new_bitmap_h)  # Returns 'old_bitmap_h'. It will be deleted automatically.
+    win32gui.BitBlt(mem_hdc, 0, 0, w, h, scr_hdc, 0, 0, win32con.SRCCOPY)
+"""
+
+
+
+
+
+_KeyCodes = {
+    # (bVk, bScan_press, bScan_relaese) скан коды для XT-клавиатуры. Но они могут быть многобайтовыми. Поэтому мока пробуем передавать вместо них нули.
+    'ALT':   (win32con.VK_MENU, 0, 0),
+    'CTRL':  (win32con.VK_CONTROL, 0, 0),
+    'SHIFT': (win32con.VK_SHIFT, 0, 0),
+}
+
+
+class KeyModifier(object):
+    ALT   = 0x01
+    CTRL  = 0x02
+    SHIFT = 0x04
+    _rev  = {0x01: 'ALT', 0x02: 'CTRL', 0x04: 'SHIFT'}
+
+
+class Key(object):
+    ENTER = chr(0) + chr(win32con.VK_RETURN)
+    TAB   = chr(0) + chr(win32con.VK_TAB)
+    LEFT  = chr(0) + chr(win32con.VK_LEFT)
+    UP    = chr(0) + chr(win32con.VK_UP)
+    RIGHT = chr(0) + chr(win32con.VK_RIGHT)
+    DOWN  = chr(0) + chr(win32con.VK_DOWN)
+
+
+def type_text(s, modifiers=None):
+    '''
+    Особенности:
+        -- Если установлены modifiers, то не будет различия между строчными и загалвными буксами.
+           Т.е., будет игнорироваться необходимость нажимать Shift, если есть заглавные символы.
+    '''
+    # https://mail.python.org/pipermail/python-win32/2013-July/012862.html
+    # https://msdn.microsoft.com/ru-ru/library/windows/desktop/ms646304(v=vs.85).aspx
+    # http://stackoverflow.com/questions/4790268/how-to-generate-keystroke-combination-in-win32-api
+    # http://stackoverflow.com/questions/11906925/python-simulate-keydown
+    # https://ru.wikipedia.org/wiki/Скан-код
+    # http://stackoverflow.com/questions/21197257/keybd-event-keyeventf-extendedkey-explanation-required
+
+    def press_key(char, scancode):
+        win32api.keybd_event(char, scancode, win32con.KEYEVENTF_EXTENDEDKEY, 0)  # win32con.KEYEVENTF_EXTENDEDKEY   # TODO: is scan code needed?
+        time.sleep(DELAY_KBD_KEY_PRESS)
+
+    def release_key(char, scancode):
+        win32api.keybd_event(char, scancode, win32con.KEYEVENTF_EXTENDEDKEY | win32con.KEYEVENTF_KEYUP, 0)  # win32con.KEYEVENTF_EXTENDEDKEY
+        time.sleep(DELAY_KBD_KEY_PRESS)
+
+    def type_char(char):
+        press_key(char, 0)
+        release_key(char, 0)
+
+    if not isinstance(s, str):
+        raise FailExit('incorrect string = \'%s\'' % str(s))
+
+    if modifiers is not None:
+        if not isinstance(modifiers, int):
+            raise FailExit('incorrect modifiers = \'%s\'' % str(modifiers))
+        for k in KeyModifier._rev:
+            if modifiers & k != 0:
+                press_key(_KeyCodes[KeyModifier._rev[k]][0], _KeyCodes[KeyModifier._rev[k]][1])
+
+    spec_key = False
+    for c in s:
+        a = ord(c)
+        if spec_key:
+            spec_key = False
+            type_char(a)
+
+        elif a == 0:
+            spec_key = True
+            continue
+
+        elif a >= 0x20 and a <= 0x7E:
+            code = win32api.VkKeyScan(c)
+            if code & 0x100 != 0 and modifiers is None:
+                press_key(_KeyCodes['SHIFT'][0], _KeyCodes['SHIFT'][1])
+
+            type_char(code)
+
+            if code & 0x100 != 0 and modifiers is None:
+                release_key(_KeyCodes['SHIFT'][0], _KeyCodes['SHIFT'][1])
+
+        else:
+            raise FailExit('unknown symbol \'%s\' in \'%s\'' % (str(c), str(s)))
+
+    if modifiers is not None:
+        for k in KeyModifier._rev:
+            if modifiers & k != 0:
+                release_key(_KeyCodes[KeyModifier._rev[k]][0], _KeyCodes[KeyModifier._rev[k]][1])
+
