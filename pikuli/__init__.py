@@ -36,7 +36,6 @@ DELAY_BETWEEN_CV_ATTEMPT = 0.5      # Время в [c] между попытк�
 
 
 def p2c(*msgs):
-    sys.__stdout__.write('\n')
     for m in msgs:
         sys.__stdout__.write('*** ' + str(m) + '\n')
 
@@ -622,13 +621,10 @@ class Region(object):
             if not isinstance(ps, Pattern):
                 raise FailExit('bad \'ps\' argument; it should be a string (path to image file) or \'Pattern\' object')
 
-            p2c('---------------------------------------------------')
-            p2c(str(ps))
             pts = self.__find(ps, self.__get_field_for_find())
-            p2c(str(pts))
+            p2c('Pikuli.findAll: try to find %s' % str(ps))
             result = map(lambda pt: Match(pt[0], pt[1], ps._w, ps._h, pt[2], ps.getFilename()), pts)
-            p2c(str(result))
-            p2c('---------------------------------------------------')
+            p2c('Pikuli.findAll: total found: %s matches' % str(len(result)) )
             return result
 
         except FailExit as e:
@@ -676,12 +672,14 @@ class Region(object):
     def find(self, ps, timeout=None):
         ''' Ждет, пока паттерн не появится. timeout может быть положительным числом или None. timeout = 0 означает однократную проверку; None -- использование дефолтного значения.
         Возвращает Region, если паттерн появился, и исключение FindFailed, если нет. '''
+        p2c('Pikuli.find: try to find %s' % str(ps))
         try:
             reg = self._wait_for_appear_or_vanish(ps, timeout, 'appear')
         except FailExit as e:
             raise FailExit('\nNew stage of %s\n[error] Incorect \'find()\' method call:\n\tself = %s\n\tps = %s\n\ttimeout = %s' % (traceback.format_exc(), str(self), str(ps), str(timeout)))
         else:
             self._last_match = reg
+            p2c('Pikuli.find: %s has been found' % str(ps))
             return reg
 
     def waitVanish(self, ps, timeout=None):
