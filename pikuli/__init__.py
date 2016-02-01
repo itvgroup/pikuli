@@ -830,6 +830,36 @@ class Location(object):
         win32api.SetCursorPos((self.x, self.y))
         time.sleep(DELAY_AFTER_MOUSE_MOVEMENT)
 
+    def offset(self, dx, dy):
+        if isinstance(dx, int) and isinstance(dy, int):
+            return Location(self.x + dx, self.y + dy)
+        else:
+            raise FailExit('Location.offset: incorrect offset values')
+
+    def above(self, dy):
+        if isinstance(dy, int) and dy >= 0:
+            return Location(self.x, self.y - dy)
+        else:
+            raise FailExit('Location.above: incorrect value')
+
+    def below(self, dy):
+        if isinstance(dy, int) and dy >= 0:
+            return Location(self.x, self.y + dy)
+        else:
+            raise FailExit('Location.below: incorrect value')
+
+    def left(self, dx):
+        if isinstance(dx, int) and dx >= 0:
+            return Location(self.x - dx, self.y)
+        else:
+            raise FailExit('Location.left: incorrect value')
+
+    def right(self, dx):
+        if isinstance(dx, int) and dx >= 0:
+            return Location(self.x + dx, self.y)
+        else:
+            raise FailExit('Location.right: incorrect value')
+
     def click(self):
         self.mouseMove()
         win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, self.x, self.y, 0, 0)
