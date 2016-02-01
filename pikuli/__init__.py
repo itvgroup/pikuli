@@ -36,8 +36,9 @@ DELAY_BETWEEN_CV_ATTEMPT = 0.5      # Время в [c] между попытк�
 
 
 def p2c(*msgs):
+    sys.__stdout__.write('\n')
     for m in msgs:
-        sys.__stdout__.write('\n*** ' + str(m) + '\n')
+        sys.__stdout__.write('*** ' + str(m) + '\n')
 
 
 class FailExit(Exception):
