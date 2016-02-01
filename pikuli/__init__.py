@@ -737,6 +737,9 @@ class Region(object):
     def click(self):
         self.getCenter().click()
 
+    def rightClick(self):
+        self.getCenter().rightClick()
+
     def doubleClick(self):
         self.getCenter().doubleClick()
 
@@ -832,6 +835,12 @@ class Location(object):
         win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, self.x, self.y, 0, 0)
         time.sleep(DELAY_IN_MOUSE_CLICK)
         win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, self.x, self.y, 0, 0)
+
+    def rightClick(self):
+        self.mouseMove()
+        win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTDOWN, self.x, self.y, 0, 0)
+        time.sleep(DELAY_IN_MOUSE_CLICK)
+        win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTUP, self.x, self.y, 0, 0)
 
     def doubleClick(self):
         self.mouseMove()
