@@ -6,7 +6,7 @@ Doc pywin32:
     http://timgolden.me.uk/pywin32-docs/modules.html
 
 Особенности использования памяти:
-    -- При создании обхекта Pattern, от сделает self._cv2_pattern = cv2.imread(self.getFilename())
+    -- При создании объекта Pattern, от сделает self._cv2_pattern = cv2.imread(self.getFilename())
 
 '''
 
@@ -37,7 +37,7 @@ DELAY_BETWEEN_CV_ATTEMPT = 0.5      # Время в [c] между попытк�
 
 def p2c(*msgs):
     for m in msgs:
-        sys.__stdout__.write('*** ' + str(m) + '\n')
+        sys.__stdout__.write('\n*** ' + str(m) + '\n')
 
 
 class FailExit(Exception):
