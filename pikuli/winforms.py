@@ -4,7 +4,7 @@
 
 import psutil
 import types
-
+import sys
 from win32api import *
 from win32gui import *
 from win32process import *
@@ -28,6 +28,10 @@ def _hwnd2wf(hwnd):
 def _hwnd2reg(hwnd, title=None):
     (left, top, right, bottom) = GetWindowRect(hwnd)
     return Region(left, top, right-left, bottom-top)
+
+def p2c(*msgs):
+    for m in msgs:
+        sys.__stdout__.write('*** ' + str(m) + '\n')
 
 
 class WindowsForm(object):
@@ -161,3 +165,13 @@ class WindowsForm(object):
     def reg(self):
         ''' Возвращает Region для self-элемента WindowsForm. '''
         return _hwnd2reg(self.hwnd, self.title)
+
+    def bring_to_front(self):
+        try:
+            SetForegroundWindow(self.hwnd)
+            return True
+        except Exception as ex:
+            p2c('bring_to_front: %s' % str(ex))
+            return False
+
+            
