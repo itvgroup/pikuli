@@ -6,7 +6,7 @@ Doc pywin32:
     http://timgolden.me.uk/pywin32-docs/modules.html
 
 Особенности использования памяти:
-    -- При создании объекта Pattern, от сделает self._cv2_pattern = cv2.imread(self.getFilename())
+    -- При создании обхекта Pattern, от сделает self._cv2_pattern = cv2.imread(self.getFilename())
 
 '''
 
@@ -37,7 +37,7 @@ DELAY_BETWEEN_CV_ATTEMPT = 0.5      # Время в [c] между попытк�
 
 def p2c(*msgs):
     for m in msgs:
-        sys.__stdout__.write('\n*** ' + str(m) + '\n')
+        sys.__stdout__.write('*** ' + str(m) + '\n')
 
 
 class FailExit(Exception):
@@ -84,11 +84,7 @@ class _SettingsClass(object):
 # Создадим экземпляр класса (он будет создаваться только один раз, даже если импорт модуля происходит мого раз в разных местах)
 # и добавим путь к тому фйлу, из которого импортировали настоящий модуль:
 Settings = _SettingsClass()
-# Settings.addImagePath(os.getcwd()) -- надо ли так?
-try:
-    Settings.addImagePath(os.path.dirname(os.path.abspath(sys.modules['__main__'].__file__)))
-except:
-    p2c('[warn] err in Settings.addImagePath(os.path.dirname(os.path.abspath(sys.modules[\'__main__\'].__file__)))')
+Settings.addImagePath(os.path.dirname(os.path.abspath(sys.modules['__main__'].__file__)))
 
 
 
@@ -274,11 +270,11 @@ def type_text(s, modifiers=None):
     # http://stackoverflow.com/questions/21197257/keybd-event-keyeventf-extendedkey-explanation-required
 
     def press_key(char, scancode):
-        win32api.keybd_event(char, scancode, win32con.KEYEVENTF_EXTENDEDKEY, 0)  # win32con.KEYEVENTF_EXTENDEDKEY   # TODO: is scan code needed?
+        win32api.keybd_event(char, scancode, 0, 0)  # win32con.KEYEVENTF_EXTENDEDKEY   # TODO: is scan code needed?
         time.sleep(DELAY_KBD_KEY_PRESS)
 
     def release_key(char, scancode):
-        win32api.keybd_event(char, scancode, win32con.KEYEVENTF_EXTENDEDKEY | win32con.KEYEVENTF_KEYUP, 0)  # win32con.KEYEVENTF_EXTENDEDKEY
+        win32api.keybd_event(char, scancode, win32con.KEYEVENTF_KEYUP, 0)  # win32con.KEYEVENTF_EXTENDEDKEY
         time.sleep(DELAY_KBD_KEY_PRESS)
 
     def type_char(char):
@@ -332,35 +328,23 @@ class Region(object):
 
     def __init__(self, *args, **kwargs):  # relation='top-left', title=None):
         '''
-        - Конструктор области. -
-
-        Вариант вызова №1:
+        Конструктор области.
             args[0]:
-                объект типа Region
-                или Screen         -- копируем уже имеющуюуся область-прямоуголник
-
-        Вариант вызова №2:
-            args[0:4] == [x, y, w, h]:
-                целые числа        -- координата x,y, ширина w, высоа h; строим новую область-прямоуголник
-
-        Для всех вариантов вызова есть kwargs:
+                число              -- координата "x"; строим новую область-прямоуголник
+                объект типа Region -- копируем уже имеющуюуся область-прямоуголник
             relation:
-                'top-left' -- x,y являются координатам левого верхнего угла области-прямоуголника; область строится от этой точки
-                'center'   -- x,y являются координатам центра области-прямоуголника; область строится от этой точки
-            title:
-                строка     -- просто строка
+                'top-left' -- x,y являются координатам левого верхнего угла области-прямоуголника; область строится от этой точкаи
+                'center'   -- x,y являются координатам центра области-прямоуголника; область строится от этой точкаи
 
-        Дополнительная справка:
             Внутренние поля класса:
                 _x, _y  --  левый верхнйи угол; будут проецироваться на x, y
                 _w, _h  --  ширина и высота; будут проецироваться на w, h
-                _last_match  --  хранит последний найденный объект или обоъеты (Match или список Match'ей); доступно через метод getLastMatch()
 
             Публичные поля класса:
                 x, y  --  левый верхнйи угол; будут записываться из _x, _y
                 w, h  --  ширина и высота; будут записываться из _w, _h
 
-            Смысл терминов "ширина" и "высота":
+            Смысл "ширина" и "высота":
                 Под этими терминами понимает число пикселей по каждому из измерений, принадлежащих области. "Рамка" тоже входит в область.
                 Т.о. нулем эти величины быть не могут. Равенство единице, к примеру, "ширины" означает прямоугольник вырождается в вертикальную линиию
                 толщиной в 1 пиксель.
@@ -368,11 +352,9 @@ class Region(object):
         '''
         self.auto_wait_timeout = 3.0
 
-        # "Объявляем" переменные, которые будут заданы ниже через self.setRect(...):
         (self.x, self.y, self._x, self._y) = (None, None, None, None)
         (self.w, self.h, self._w, self._h) = (None, None, None, None)
         self.title = None
-        self._last_match = None
 
         try:
             if 'title' in kwargs:
@@ -432,7 +414,7 @@ class Region(object):
 
     def setRect(self, *args, **kwargs):
         try:
-            if len(args) == 1 and (isinstance(args[0], Region) or isinstance(args[0], Screen)):
+            if len(args) == 1 and isinstance(args[0], Region):
                 self.__set_from_Region(args[0])
 
             elif len(args) == 4 and isinstance(args[0], int) and isinstance(args[1], int) and isinstance(args[2], int) and isinstance(args[3], int) and args[2] > 0 and args[3] > 0:
@@ -483,6 +465,9 @@ class Region(object):
     def getH(self):
         (self.x, self.y, self.w, self.h) = (self._x, self._y, self._w, self._h)
         return self._h
+
+    def getCenter(self):
+        return Location(self._x, self._y)
 
 
     def offset(self, *args):
@@ -562,7 +547,6 @@ class Region(object):
                 raise FailExit()
         except FailExit:
             raise FailExit('\nNew stage of %s\n[error] Incorect \'below()\' method call:\n\tl = %s' % (traceback.format_exc(), str(l)))
-        p2c(str(reg))
         return reg
 
 
@@ -579,7 +563,7 @@ class Region(object):
         return Location(self._x + self._h - 1, self._y + self._w - 1)
 
     def getCenter(self):
-        return Location(self._x + self._w/2, self._y + self._h/2)
+        return Location(self._x + self._h/2, self._y + self._w/2)
 
 
     def __get_field_for_find(self):
@@ -621,14 +605,8 @@ class Region(object):
             if not isinstance(ps, Pattern):
                 raise FailExit('bad \'ps\' argument; it should be a string (path to image file) or \'Pattern\' object')
 
-            p2c('---------------------------------------------------')
-            p2c(str(ps))
             pts = self.__find(ps, self.__get_field_for_find())
-            p2c(str(pts))
-            result = map(lambda pt: Match(pt[0], pt[1], ps._w, ps._h, pt[2], ps.getFilename()), pts)
-            p2c(str(result))
-            p2c('---------------------------------------------------')
-            return result
+            return map(lambda pt: Match(pt[0], pt[1], ps._w, ps._h, pt[2], ps.getFilename()), pts)
 
         except FailExit as e:
             raise FailExit('[error] Incorect \'findAll()\' method call:\n\tps = %s\n\tadditional comment: %s' % (str(ps), str(e)))
@@ -668,7 +646,6 @@ class Region(object):
             time.sleep(DELAY_BETWEEN_CV_ATTEMPT)
             elaps_time += DELAY_BETWEEN_CV_ATTEMPT
             if elaps_time >= timeout:
-                p2c(str(ps))
                 raise FindFailed()
 
 
@@ -680,7 +657,6 @@ class Region(object):
         except FailExit as e:
             raise FailExit('\nNew stage of %s\n[error] Incorect \'find()\' method call:\n\tself = %s\n\tps = %s\n\ttimeout = %s' % (traceback.format_exc(), str(self), str(ps), str(timeout)))
         else:
-            self._last_match = reg
             return reg
 
     def waitVanish(self, ps, timeout=None):
@@ -691,7 +667,6 @@ class Region(object):
         except FailExit as e:
             raise FailExit('\nNew stage of %s\n[error] Incorect \'waitVanish()\' method call:\n\tself = %s\n\tps = %s\n\ttimeout = %s' % (traceback.format_exc(), str(self), str(ps), str(timeout)))
         except FindFailed:
-            p2c(str(ps))
             return False
         else:
             return True
@@ -703,7 +678,6 @@ class Region(object):
         except FailExit as e:
             raise FailExit('\nNew stage of %s\n[error] Incorect \'exists()\' method call:\n\tself = %s\n\tps = %s' % (traceback.format_exc(), str(self), str(ps)))
         except FindFailed:
-            p2c(str(ps))
             return False
         else:
             return True
@@ -724,10 +698,6 @@ class Region(object):
                 return reg
 
 
-    def getLastMatch(self):
-        return self._last_match
-
-
     def setAutoWaitTimeout(self, timeout):
         if (isinstance(timeout, float) or isinstance(timeout, int)) and timeout >= 0:
             self.auto_wait_timeout = timeout
@@ -741,9 +711,9 @@ class Region(object):
     def doubleClick(self):
         self.getCenter().doubleClick()
 
-    def type(self, text, m = None, click = True):
+    def type(self, text, click=True):
         ''' Не как в Sikuli '''
-        self.getCenter().type(text, m, click)
+        self.getCenter().type(text, click)
 
     def enter_text(self, text, click=True):
         ''' Не как в Sikuli '''
@@ -844,17 +814,17 @@ class Location(object):
         time.sleep(DELAY_IN_MOUSE_CLICK)
         win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, self.x, self.y, 0, 0)
 
-    def type(self, text, modifiers=None, click=True):
+    def type(self, text, click=True):
         ''' Не как в Sikuli '''
         if click:
             self.click()
-        type_text(text, modifiers)
+        type_text(text)
 
-    def enter_text(self, text, modifiers=None, click=True):
+    def enter_text(self, text, click=True):
         ''' Не как в Sikuli '''
         if click:
             self.click()
-        type_text(text + Key.ENTER, modifiers)
+        type_text(text + Key.ENTER)
 
 
 
