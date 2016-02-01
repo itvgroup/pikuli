@@ -110,34 +110,22 @@ def _screen_n_to_monitor_name(n):
     return r'\\.\DISPLAY%i' % n
 
 
-def _screen_n_to_mon_descript(n, use_handles = True):
+def _screen_n_to_mon_descript(n):
     ''' Returns a sequence of tuples. For each monitor found, returns a handle to the monitor, device context handle, and intersection rectangle:
     (hMonitor, hdcMonitor, PyRECT) '''
     monitors = win32api.EnumDisplayMonitors(None, None)
-    if use_handles:
-        if n >= 1:
-            for m in monitors:
-                if _monitor_hndl_to_screen_n(m[0]) == n:
-                    break
-        elif n == 0:
-            # (x1, y1, x2, y2) = (m[2][0], m[2][1], m[2][2], m[2][3]) -- координаты углов экранов в системе кооринат большого виртуального экрана, где m -- элемнет monitors.
-            x_max = max(map(lambda m: m[2][2], monitors))
-            y_max = max(map(lambda m: m[2][3], monitors))
-            m = (None, None, (0, 0, x_max, y_max))
-        else:
-            raise FailExit('wrong screen number \'%s\'' % str(n))
-        return m
+    if n >= 1:
+        for m in monitors:
+            if _monitor_hndl_to_screen_n(m[0]) == n:
+                break
+    elif n == 0:
+        # (x1, y1, x2, y2) = (m[2][0], m[2][1], m[2][2], m[2][3]) -- координаты углов экранов в системе кооринат большого виртуального экрана, где m -- элемнет monitors.
+        x_max = max(map(lambda m: m[2][2], monitors))
+        y_max = max(map(lambda m: m[2][3], monitors))
+        m = (None, None, (0, 0, x_max, y_max))
     else:
-        # сортируем мониторы. Первый - с координатами (0, x, y, z)
-        monitors = sorted(monitors, key = lambda m: m[2][0])
-        if n >= 1 and n <= len(monitors):
-            return monitors[n - 1]
-        elif n == 0:
-            x_max = max(map(lambda m: m[2][2], monitors))
-            y_max = max(map(lambda m: m[2][3], monitors))
-            return (None, None, (0, 0, x_max, y_max))
-        else:
-            raise FailExit('wrong screen number \'%s\'' % str(n))
+        raise FailExit('wrong screen number \'%s\'' % str(n))
+    return m
 
 
 def _grab_screen(x, y, w, h):
@@ -171,7 +159,7 @@ def _grab_screen(x, y, w, h):
     new_bitmap_h = win32gui.CreateCompatibleBitmap(scr_hdc, w, h)
     win32gui.SelectObject(mem_hdc, new_bitmap_h)    # Returns 'old_bitmap_h'. It will be deleted automatically.
 
-    (_, _, m_rect) = _screen_n_to_mon_descript(n, use_handles=False)
+    (_, _, m_rect) = _screen_n_to_mon_descript(n)
     win32gui.BitBlt(mem_hdc, 0, 0, w, h, scr_hdc, x-m_rect[0], y-m_rect[1], win32con.SRCCOPY)
 
     bmp = win32ui.CreateBitmapFromHandle(new_bitmap_h)
@@ -755,7 +743,7 @@ class Screen(Region):
 
         if isinstance(n, int) and n >= 0:
             # Returns a sequence of tuples. For each monitor found, returns a handle to the monitor, device context handle, and intersection rectangle: (hMonitor, hdcMonitor, PyRECT)
-            (mon_hndl, _, mon_rect) = _screen_n_to_mon_descript(n, use_handles=False)
+            (mon_hndl, _, mon_rect) = _screen_n_to_mon_descript(n)
 
             super(Screen, self).__init__(mon_rect[0], mon_rect[1], mon_rect[2]-mon_rect[0], mon_rect[3]-mon_rect[1], title='Screen (%i)' % n)
             self.n = self._n = n
