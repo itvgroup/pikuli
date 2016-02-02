@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
 
-from Region import *
+'''
+   Screen - представление физических мониторов компьютера. 
+'''
+
 import _functions
 from _exceptions import *
+from Region import *
 
 class Screen(Region):
     ''' Экран.

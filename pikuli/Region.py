@@ -1,4 +1,11 @@
 # -*- coding: utf-8 -*-
+
+'''
+   Region - прямоугольная область экрана, которая определяется координатами левого верхнего угла, шириной и высотой.
+   Region не содержит информации о визуальном контенте (окна, изображения, текст и т д).
+   Контент может быть определен с поомощью методов Region.find() или Region.findAll(), которым передается объект класса Pattern (прямоугольная пиксельная область). 
+   Эти методы возвращают объект класса Match (потомок Region), имеющим те же свойства и методы, что и Region. Размеры Match равны размерам Pattern, используемого для поиска. 
+'''
 import time
 import traceback
 import cv2
@@ -6,6 +13,7 @@ import numpy as np
 import _functions
 from _exceptions import *
 from Pattern import *
+from Location import *
 
 RELATIONS = ['top-left', 'center']
 
@@ -434,5 +442,4 @@ class Region(object):
         self.getCenter().enter_text(text, click)
 
 from Match import *
-from Location import *
 from Screen import *

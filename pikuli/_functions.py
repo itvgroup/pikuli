@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+
+'''
+   Файл содержит вспомогательные функции, используемые в Pikuli. 
+'''
 import sys
 import os
 import win32con

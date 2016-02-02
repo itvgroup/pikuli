@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+
+'''
+   Patten - класс объектов, представляющих изображения, использующиеся для поиска на экране
+'''
 import os
 import cv2
 from _functions import *
