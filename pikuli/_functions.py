@@ -1,37 +1,34 @@
 # -*- coding: utf-8 -*-
 
 '''
-   Файл содержит вспомогательные функции, используемые в Pikuli. 
+   Файл содержит вспомогательные функции, используемые в Pikuli.
 '''
+import pikuli
+
 import sys
-import os
 import win32con
 import win32api
 import win32gui
 import win32ui
 import time
 import numpy as np
-import win32print
+# import win32print
 
-from .SettingsClass import *
+
+from ._exceptions import FailExit
+
+
 
 DELAY_KBD_KEY_PRESS = 0.020
+
 
 def p2c(*msgs):
     for m in msgs:
         sys.__stdout__.write('*** ' + str(m) + '\n')
 
-# Создадим экземпляр класса Settings(он будет создаваться только один раз, даже если импорт модуля происходит мого раз в разных местах)
-# и добавим путь к тому фйлу, из которого импортировали настоящий модуль:
-Settings = SettingsClass()
-# Settings.addImagePath(os.getcwd()) -- надо ли так?
-try:
-    Settings.addImagePath(os.path.dirname(os.path.abspath(sys.modules['__main__'].__file__)))
-except:
-    p2c('[warn] err in Settings.addImagePath(os.path.dirname(os.path.abspath(sys.modules[\'__main__\'].__file__)))')
 
 def addImagePath(path):
-    Settings.addImagePath(path)
+    pikuli.Settings.addImagePath(path)
 
 
 def _monitor_hndl_to_screen_n(m_hndl):

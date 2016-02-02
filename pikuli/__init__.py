@@ -12,6 +12,7 @@ Doc pywin32:
 
 from ._functions import *
 from ._exceptions import *
+from ._SettingsClass import *
 
 from .Region import Region
 from .Match import Match
@@ -19,10 +20,19 @@ from .Screen import Screen
 from .Location import Location
 from .Pattern import Pattern
 
-__all__ = ['SettingsClass',
+
+# Создадим экземпляр класса Settings(он будет создаваться только один раз, даже если импорт модуля происходит мого раз в разных местах)
+# и добавим путь к тому фйлу, из которого импортировали настоящий модуль:
+Settings = SettingsClass()
+# Settings.addImagePath(os.getcwd()) -- надо ли так?
+try:
+    Settings.addImagePath(os.path.dirname(os.path.abspath(sys.modules['__main__'].__file__)))
+except:
+    p2c('[warn] err in Settings.addImagePath(os.path.dirname(os.path.abspath(sys.modules[\'__main__\'].__file__)))')
+
+__all__ = ['Settings',
            'Region',
            'Screen',
            'Match',
            'Location',
            'Pattern']
-

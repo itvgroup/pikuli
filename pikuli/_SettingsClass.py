@@ -1,6 +1,13 @@
 # -*- coding: utf-8 -*-
 
+#import os
+#import sys
+
+#from _functions import p2c
+
+
 class SettingsClass(object):
+
     __def_IMG_ADDITION_PATH = []  # Пути, кроме текущего и мб еще какого-то подобного
     __def_MinSimilarity = 0.995  # 0.700 -- и будет найдено в каждом пикселе. Порог надо поднимать повыше.
 
