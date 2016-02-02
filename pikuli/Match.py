@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
+
 '''
    Объекты класса Match представляют результат успешного поиска в области, представляемой объектом класса Region с использованием объекта класса Pattern.
    Имеет размеры изображения, используемого для поиска.
 '''
+
 import traceback
 from _exceptions import *
 from Region import *
+
 
 class Match(Region):
     def __init__(self, x, y, w, h, score, img_path):

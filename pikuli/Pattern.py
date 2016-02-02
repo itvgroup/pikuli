@@ -3,10 +3,14 @@
 '''
    Patten - класс объектов, представляющих изображения, использующиеся для поиска на экране
 '''
+
 import os
 import cv2
+
+import pikuli
 from _functions import *
 from _exceptions import *
+
 
 class Pattern(object):
     def __init__(self, img_path, similarity=None):
@@ -17,7 +21,7 @@ class Pattern(object):
             if os.path.exists(path) and os.path.isfile(path):
                 self.__img_path = path
             else:
-                for path in Settings.listImagePath():
+                for path in pikuli.Settings.listImagePath():
                     path = os.path.join(path, img_path)
                     if os.path.exists(path) and os.path.isfile(path):
                         self.__img_path = path
@@ -27,7 +31,7 @@ class Pattern(object):
 
 
             if similarity is None:
-                self.__similarity = Settings.MinSimilarity
+                self.__similarity = pikuli.Settings.MinSimilarity
             elif isinstance(similarity, float) and similarity > 0.0 and similarity <= 1.0:
                 self.__similarity = similarity
             else:

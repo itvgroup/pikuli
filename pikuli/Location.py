@@ -7,10 +7,12 @@ import win32con
 import time
 from _functions import *
 
+
 DELAY_AFTER_MOUSE_MOVEMENT = 0.500  # Время в [c]
 DELAY_IN_MOUSE_CLICK = 0.100        # Время в [c] между нажатием и отжатием кнопки (замерял сам и гуглил)
 DELAY_MOUSE_DOUBLE_CLICK = 0.100    # Время в [c] между кликами (замерял сам и гуглил)
 DELAY_KBD_KEY_PRESS = 0.020
+
 
 class Location(object):
 

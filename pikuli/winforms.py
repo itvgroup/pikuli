@@ -34,6 +34,7 @@ def _hwnd2reg(hwnd, title=None):
     (left, top, right, bottom) = GetWindowRect(hwnd)
     return Region(left, top, right-left, bottom-top)
 
+
 def p2c(*msgs):
     for m in msgs:
         sys.__stdout__.write('*** ' + str(m) + '\n')
@@ -179,4 +180,4 @@ class WindowsForm(object):
             p2c('bring_to_front: %s' % str(ex))
             return False
 
-            
+

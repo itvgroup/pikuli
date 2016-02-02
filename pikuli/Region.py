@@ -3,9 +3,10 @@
 '''
    Region - прямоугольная область экрана, которая определяется координатами левого верхнего угла, шириной и высотой.
    Region не содержит информации о визуальном контенте (окна, изображения, текст и т д).
-   Контент может быть определен с поомощью методов Region.find() или Region.findAll(), которым передается объект класса Pattern (прямоугольная пиксельная область). 
-   Эти методы возвращают объект класса Match (потомок Region), имеющим те же свойства и методы, что и Region. Размеры Match равны размерам Pattern, используемого для поиска. 
+   Контент может быть определен с поомощью методов Region.find() или Region.findAll(), которым передается объект класса Pattern (прямоугольная пиксельная область).
+   Эти методы возвращают объект класса Match (потомок Region), имеющим те же свойства и методы, что и Region. Размеры Match равны размерам Pattern, используемого для поиска.
 '''
+
 import time
 import traceback
 import cv2
@@ -15,9 +16,11 @@ from _exceptions import *
 from Pattern import *
 from Location import *
 
+
 RELATIONS = ['top-left', 'center']
 
 DELAY_BETWEEN_CV_ATTEMPT = 0.5      # Время в [c] между попытками распознования графического объекта
+
 
 class Region(object):
 
@@ -357,7 +360,7 @@ class Region(object):
             elaps_time += DELAY_BETWEEN_CV_ATTEMPT
             if elaps_time >= timeout:
                 p2c(str(ps))
-                raise FindFailed()
+                raise FindFailed(ps)
 
 
     def find(self, ps, timeout=None):
