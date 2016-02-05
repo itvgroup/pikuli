@@ -31,8 +31,11 @@ def _hwnd2wf(hwnd):
 
 
 def _hwnd2reg(hwnd, title=None):
-    (left, top, right, bottom) = GetWindowRect(hwnd)
-    return Region(left, top, right-left, bottom-top)
+    # полчение размеров клменскй области окна
+    (_, _, wc, hc) = GetClientRect(hwnd)
+    # получение координат левого верхнего угла клиенской области осносительно угла экрана
+    (xc, yc) = ClientToScreen(hwnd, (0, 0) )
+    return Region(xc, yc, wc, hc)
 
 
 def p2c(*msgs):
