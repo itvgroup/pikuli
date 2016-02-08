@@ -188,7 +188,14 @@ class Region(object):
                 y_offs := args[1]  --  тип int; на сколько сдвинуть; h сохраняется
         '''
         if len(args) == 2 and isinstance(args[0], int) and isinstance(args[1], int):
-            return Region(self._x + args[0], self._y + args[1], self._w, self._h)
+            if   args[0] >= 0 and args[1] >= 0:
+                return Region(self._x + args[0], self._y + args[1], self._w, self._h)
+            elif args[0] >= 0 and args[1] <  0:
+                return Region(self._x + args[0], self._h + args[1], self._w, self._h)
+            elif args[0] <  0 and args[1] >= 0:
+                return Region(self._w + args[0], self._y + args[1], self._w, self._h)
+            elif args[0] <  0 and args[1] <  0:
+                return Region(self._w + args[0], self._h + args[1], self._w, self._h)
         elif len(args) == 1 and isinstance(args[0], Location):
             return Region(self._x + args[0]._x, self._y + args[0]._y, self._w, self._h)
         else:
