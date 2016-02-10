@@ -169,6 +169,7 @@ def _grab_screen_(*args):
 
 
 _KeyCodes = {
+    ''' VirtualCode'ы клавиш клавиатуры, которые рассматриваются как модифкаторы нажатия других клавиш. '''
     # (bVk, bScan_press, bScan_relaese) скан коды для XT-клавиатуры. Но они могут быть многобайтовыми. Поэтому мока пробуем передавать вместо них нули.
     'ALT':   (win32con.VK_MENU, 0, 0),
     'CTRL':  (win32con.VK_CONTROL, 0, 0),
@@ -177,13 +178,23 @@ _KeyCodes = {
 
 
 class KeyModifier(object):
-    ALT   = 0x01
-    CTRL  = 0x02
-    SHIFT = 0x04
-    _rev  = {0x01: 'ALT', 0x02: 'CTRL', 0x04: 'SHIFT'}
+    '''
+    Битовые маски модификаторов. С их помощью будет парсится аргумент modifiers функции type_text()
+        ALT   = 0x01
+        CTRL  = 0x02
+        SHIFT = 0x04
+        _rev  = {0x01: 'ALT', 0x02: 'CTRL', 0x04: 'SHIFT'}
+    '''
+    _rev = {}
+for (m, i) in (lambda l: zip(l, range(len(l))))(['ALT', 'CTRL', 'SHIFT']):
+    setattr(KeyModifier, m, 2**i)
+    KeyModifier._rev[getattr(KeyModifier, m)] = m
 
 
 class Key(object):
+    ''' Ноль-символ и VirtualCode специальных клавиш. Именно такую пару можно вставлять прямо в текстовую
+    строку, подаваемую на вход type_text(). Ноль-символ говорит о том, что за ним идет не литера, а коды
+    специальной клавиши. '''
     ENTER = chr(0) + chr(win32con.VK_RETURN)
     TAB   = chr(0) + chr(win32con.VK_TAB)
     LEFT  = chr(0) + chr(win32con.VK_LEFT)
