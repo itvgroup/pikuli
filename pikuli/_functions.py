@@ -184,12 +184,13 @@ class KeyModifier(object):
 
 
 class Key(object):
-    ENTER = chr(0) + chr(win32con.VK_RETURN)
-    TAB   = chr(0) + chr(win32con.VK_TAB)
-    LEFT  = chr(0) + chr(win32con.VK_LEFT)
-    UP    = chr(0) + chr(win32con.VK_UP)
-    RIGHT = chr(0) + chr(win32con.VK_RIGHT)
-    DOWN  = chr(0) + chr(win32con.VK_DOWN)
+    ENTER      = chr(0) + chr(win32con.VK_RETURN)
+    TAB        = chr(0) + chr(win32con.VK_TAB)
+    LEFT       = chr(0) + chr(win32con.VK_LEFT)
+    UP         = chr(0) + chr(win32con.VK_UP)
+    RIGHT      = chr(0) + chr(win32con.VK_RIGHT)
+    DOWN       = chr(0) + chr(win32con.VK_DOWN)
+    BACKSPACE  = chr(0) + chr(win32con.VK_BACK)
 
 
 def type_text(s, modifiers=None):
