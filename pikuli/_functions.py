@@ -201,6 +201,7 @@ class Key(object):
     UP    = chr(0) + chr(win32con.VK_UP)
     RIGHT = chr(0) + chr(win32con.VK_RIGHT)
     DOWN  = chr(0) + chr(win32con.VK_DOWN)
+    BACKSPACE  = chr(0) + chr(win32con.VK_BACK)
 
 
 def type_text(s, modifiers=None):
