@@ -188,14 +188,7 @@ class Region(object):
                 y_offs := args[1]  --  тип int; на сколько сдвинуть; h сохраняется
         '''
         if len(args) == 2 and isinstance(args[0], int) and isinstance(args[1], int):
-            if   args[0] >= 0 and args[1] >= 0:
-                return Region(self._x + args[0], self._y + args[1], self._w, self._h)
-            elif args[0] >= 0 and args[1] <  0:
-                return Region(self._x + args[0], self._h + args[1], self._w, self._h)
-            elif args[0] <  0 and args[1] >= 0:
-                return Region(self._w + args[0], self._y + args[1], self._w, self._h)
-            elif args[0] <  0 and args[1] <  0:
-                return Region(self._w + args[0], self._h + args[1], self._w, self._h)
+            return Region(self._x + args[0], self._y + args[1], self._w, self._h)
         elif len(args) == 1 and isinstance(args[0], Location):
             return Region(self._x + args[0]._x, self._y + args[0]._y, self._w, self._h)
         else:
@@ -333,10 +326,28 @@ class Region(object):
 
 
     def _wait_for_appear_or_vanish(self, ps, timeout, aov):
+        '''
+            ps может быть String или List
+            Если isinstance(ps, list), возвращается первый найденный элемент. Это можно использвоать, если требуется найти любое из переданных изображений.
+        '''
+        failExitText = 'bad \'ps\' argument; it should be a string (path to image file) or \'Pattern\' object'
         if isinstance(ps, str):
-            ps = Pattern(ps)
-        if not isinstance(ps, Pattern):
-            raise FailExit('bad \'ps\' argument; it should be a string (path to image file) or \'Pattern\' object')
+            p = Pattern(ps)
+            if not isinstance(p, Pattern):
+                raise FailExit( failExitText )
+            ps = []
+            ps.append(p)
+        elif isinstance(ps, list):
+            tmp = []
+            for p in ps:
+                p = Pattern(p)
+                if not isinstance(p, Pattern):
+                    raise FailExit( failExitText )
+                tmp.append(p)
+            ps = tmp
+        else:
+            raise FailExit( failExitText )
+        
         if timeout is None:
             timeout = self.auto_wait_timeout
         if not ( (isinstance(timeout, float) or isinstance(timeout, int)) and timeout >= 0 ):
@@ -348,25 +359,22 @@ class Region(object):
             field = self.__get_field_for_find()
 
             if prev_field is None or (prev_field != field).all():
-                pts = self.__find(ps, field)
-
-                if aov == 'appear':
-                    if len(pts) != 0:
-                        # Что-то нашли. Выреме один вариант с лучшим 'score'. Из несольких с одинаковыми 'score' будет первый при построчном проходе по экрану.
-                        pt = max(pts, key=lambda pt: pt[2])
-                        return Match(pt[0], pt[1], ps._w, ps._h, pt[2], ps.getFilename())
-
-                elif aov == 'vanish':
-                    if len(pts) == 0:
-                        return
-
-                else:
-                    raise FailExit('unknown \'aov\' = \'%s\'' % str(aov))
+                for _ps_ in ps:
+                    pts = self.__find(_ps_, field)
+                    if aov == 'appear':
+                        if len(pts) != 0:
+                            # Что-то нашли. Выберем один вариант с лучшим 'score'. Из несольких с одинаковыми 'score' будет первый при построчном проходе по экрану.
+                            pt = max(pts, key=lambda pt: pt[2])
+                            return Match(pt[0], pt[1], _ps_._w, _ps_._h, pt[2], _ps_.getFilename())
+                    elif aov == 'vanish':
+                        if len(pts) == 0:
+                            return
+                    else:
+                        raise FailExit('unknown \'aov\' = \'%s\'' % str(aov))
 
             time.sleep(DELAY_BETWEEN_CV_ATTEMPT)
             elaps_time += DELAY_BETWEEN_CV_ATTEMPT
             if elaps_time >= timeout:
-                p2c(str(ps))
                 raise FindFailed(ps)
 
 
