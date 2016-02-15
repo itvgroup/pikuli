@@ -331,22 +331,15 @@ class Region(object):
             Если isinstance(ps, list), возвращается первый найденный элемент. Это можно использвоать, если требуется найти любое из переданных изображений.
         '''
         failExitText = 'bad \'ps\' argument; it should be a string (path to image file) or \'Pattern\' object'
-        if isinstance(ps, str):
-            p = Pattern(ps)
-            if not isinstance(p, Pattern):
+
+        if not isinstance(ps, list):
+            ps = [ps]
+        
+        for (i, p) in enumerate(ps):
+            if isinstance(p, str):
+                ps[i] = Pattern(p)
+            elif not isinstance(p, Pattern):
                 raise FailExit( failExitText )
-            ps = []
-            ps.append(p)
-        elif isinstance(ps, list):
-            tmp = []
-            for p in ps:
-                p = Pattern(p)
-                if not isinstance(p, Pattern):
-                    raise FailExit( failExitText )
-                tmp.append(p)
-            ps = tmp
-        else:
-            raise FailExit( failExitText )
         
         if timeout is None:
             timeout = self.auto_wait_timeout
@@ -365,6 +358,7 @@ class Region(object):
                         if len(pts) != 0:
                             # Что-то нашли. Выберем один вариант с лучшим 'score'. Из несольких с одинаковыми 'score' будет первый при построчном проходе по экрану.
                             pt = max(pts, key=lambda pt: pt[2])
+                            p2c( 'Pikuli.find: %s has been found' % str( _ps_.getFilename() ).split("\\")[-1] )
                             return Match(pt[0], pt[1], _ps_._w, _ps_._h, pt[2], _ps_.getFilename())
                     elif aov == 'vanish':
                         if len(pts) == 0:
@@ -388,7 +382,6 @@ class Region(object):
             raise FailExit('\nNew stage of %s\n[error] Incorect \'find()\' method call:\n\tself = %s\n\tps = %s\n\ttimeout = %s' % (traceback.format_exc(), str(self), str(ps), str(timeout)))
         else:
             self._last_match = reg
-            p2c('Pikuli.find: %s has been found' % str(ps))
             return reg
 
     def waitVanish(self, ps, timeout=None):
