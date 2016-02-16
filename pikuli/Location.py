@@ -34,9 +34,9 @@ class Location(object):
         (self.x, self.y) = (self._x, self._y)
         return 'Location (%i, %i)' % (self._x, self._y)
 
-    def mouseMove(self):
+    def mouseMove(self, delay = DELAY_AFTER_MOUSE_MOVEMENT):
         win32api.SetCursorPos((self.x, self.y))
-        time.sleep(DELAY_AFTER_MOUSE_MOVEMENT)
+        time.sleep(delay)
 
     def offset(self, dx, dy):
         if isinstance(dx, int) and isinstance(dy, int):
@@ -72,6 +72,13 @@ class Location(object):
         self.mouseMove()
         win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, self.x, self.y, 0, 0)
         time.sleep(DELAY_IN_MOUSE_CLICK)
+        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, self.x, self.y, 0, 0)
+
+    def mouseDown(self):
+        self.mouseMove()
+        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, self.x, self.y, 0, 0)
+
+    def mouseUp(self):
         win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, self.x, self.y, 0, 0)
 
     def rightClick(self):

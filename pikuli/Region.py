@@ -458,5 +458,32 @@ class Region(object):
     def scroll(self, direction = 1, count = 1, click = True):
         self.getCenter().scroll(direction, count, click)
 
+    def dragndrop(self, dest_location):
+        #    # Алгоритм Брезенхема
+        #    # https://ru.wikipedia.org/wiki/%D0%90%D0%BB%D0%B3%D0%BE%D1%80%D0%B8%D1%82%D0%BC_%D0%91%D1%80%D0%B5%D0%B7%D0%B5%D0%BD%D1%85%D1%8D%D0%BC%D0%B0
+        MOVE_DELAY = 0.005
+        MOVE_STEP = 10
+
+        src_location = self.getCenter()
+        src_location.mouseDown()
+
+        if abs(dest_location.x - src_location.x) >= abs(dest_location.y - src_location.y):
+            (a1, b1, a2, b2) = (src_location.x, src_location.y, dest_location.x, dest_location.y)
+            f = lambda x, y: Location(x, y).mouseMove(MOVE_DELAY)
+        else:
+            (a1, b1, a2, b2) = (src_location.y, src_location.x, dest_location.y, dest_location.x)
+            f = lambda x, y: Location(y, x).mouseMove(MOVE_DELAY)
+        
+        k = float(b2 - b1) / (a2 - a1)
+        a_sgn = (a2 - a1) / abs(a2 - a1)
+        la = 0
+        while abs(la) <= abs(a2 - a1):
+            a = a1 + la
+            b = int(k * la) + b1
+            f(a, b)
+            la += a_sgn * MOVE_STEP
+
+        src_location.mouseUp()
+
 from Match import *
 from Screen import *
