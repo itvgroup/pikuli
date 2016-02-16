@@ -369,7 +369,10 @@ class Region(object):
             time.sleep(DELAY_BETWEEN_CV_ATTEMPT)
             elaps_time += DELAY_BETWEEN_CV_ATTEMPT
             if elaps_time >= timeout:
-                raise FindFailed(ps)
+                failedImages = ''
+                for p in ps:
+                    failedImages += p.getFilename() + ' '
+                raise FindFailed('Unable to find: %s' % failedImages )
 
 
     def find(self, ps, timeout=None):
@@ -451,6 +454,9 @@ class Region(object):
     def enter_text(self, text, click=True):
         ''' Не как в Sikuli '''
         self.getCenter().enter_text(text, click)
+
+    def scroll(self, direction = 1, count = 1, click = True):
+        self.getCenter().scroll(direction, count, click)
 
 from Match import *
 from Screen import *
