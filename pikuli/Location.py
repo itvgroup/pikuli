@@ -90,6 +90,17 @@ class Location(object):
         time.sleep(DELAY_IN_MOUSE_CLICK)
         win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, self.x, self.y, 0, 0)
 
+    def scroll(self, direction=1, count=1, click=True):
+        # direction:
+        #   1 - forward
+        #  -1 - backward
+        self.mouseMove()
+        if click:
+            self.click()
+        for i in range(0, int(count)):
+            win32api.mouse_event(win32con.MOUSEEVENTF_WHEEL, self.x, self.y, int(direction), 0)
+            time.sleep(DELAY_KBD_KEY_PRESS)
+
     def type(self, text, modifiers=None, click=True):
         ''' Не как в Sikuli '''
         if click:
