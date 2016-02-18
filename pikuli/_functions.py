@@ -10,6 +10,7 @@ import win32con
 import win32api
 import win32gui
 import win32ui
+import win32clipboard
 import time
 import numpy as np
 
@@ -125,6 +126,16 @@ def _scr_num_of_point(x, y):
     if m_tl is None:
         raise FailExit('top-left corner of the Region is out of visible area of sreens')
     return _monitor_hndl_to_screen_n(m_tl)
+
+def get_text_from_clipboard():
+    win32clipboard.OpenClipboard()
+    try:
+        data = win32clipboard.GetClipboardData()
+    except Exception as ex:
+        p2c(str(ex.message))
+        data = ''
+    win32clipboard.CloseClipboard()
+    return data
 
 
 """
