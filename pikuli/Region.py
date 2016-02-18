@@ -188,14 +188,7 @@ class Region(object):
                 y_offs := args[1]  --  тип int; на сколько сдвинуть; h сохраняется
         '''
         if len(args) == 2 and isinstance(args[0], int) and isinstance(args[1], int):
-            if   args[0] >= 0 and args[1] >= 0:
-                return Region(self._x + args[0], self._y + args[1], self._w, self._h)
-            elif args[0] >= 0 and args[1] <  0:
-                return Region(self._x + args[0], self._h + args[1], self._w, self._h)
-            elif args[0] <  0 and args[1] >= 0:
-                return Region(self._w + args[0], self._y + args[1], self._w, self._h)
-            elif args[0] <  0 and args[1] <  0:
-                return Region(self._w + args[0], self._h + args[1], self._w, self._h)
+            return Region(self._x + args[0], self._y + args[1], self._w, self._h)
         elif len(args) == 1 and isinstance(args[0], Location):
             return Region(self._x + args[0]._x, self._y + args[0]._y, self._w, self._h)
         else:
@@ -333,10 +326,21 @@ class Region(object):
 
 
     def _wait_for_appear_or_vanish(self, ps, timeout, aov):
-        if isinstance(ps, str):
-            ps = Pattern(ps)
-        if not isinstance(ps, Pattern):
-            raise FailExit('bad \'ps\' argument; it should be a string (path to image file) or \'Pattern\' object')
+        '''
+            ps может быть String или List
+            Если isinstance(ps, list), возвращается первый найденный элемент. Это можно использвоать, если требуется найти любое из переданных изображений.
+        '''
+        failExitText = 'bad \'ps\' argument; it should be a string (path to image file) or \'Pattern\' object'
+
+        if not isinstance(ps, list):
+            ps = [ps]
+        
+        for (i, p) in enumerate(ps):
+            if isinstance(p, str):
+                ps[i] = Pattern(p)
+            elif not isinstance(p, Pattern):
+                raise FailExit( failExitText )
+        
         if timeout is None:
             timeout = self.auto_wait_timeout
         if not ( (isinstance(timeout, float) or isinstance(timeout, int)) and timeout >= 0 ):
@@ -348,26 +352,27 @@ class Region(object):
             field = self.__get_field_for_find()
 
             if prev_field is None or (prev_field != field).all():
-                pts = self.__find(ps, field)
-
-                if aov == 'appear':
-                    if len(pts) != 0:
-                        # Что-то нашли. Выреме один вариант с лучшим 'score'. Из несольких с одинаковыми 'score' будет первый при построчном проходе по экрану.
-                        pt = max(pts, key=lambda pt: pt[2])
-                        return Match(pt[0], pt[1], ps._w, ps._h, pt[2], ps.getFilename())
-
-                elif aov == 'vanish':
-                    if len(pts) == 0:
-                        return
-
-                else:
-                    raise FailExit('unknown \'aov\' = \'%s\'' % str(aov))
+                for _ps_ in ps:
+                    pts = self.__find(_ps_, field)
+                    if aov == 'appear':
+                        if len(pts) != 0:
+                            # Что-то нашли. Выберем один вариант с лучшим 'score'. Из несольких с одинаковыми 'score' будет первый при построчном проходе по экрану.
+                            pt = max(pts, key=lambda pt: pt[2])
+                            p2c( 'Pikuli.find: %s has been found' % str( _ps_.getFilename() ).split("\\")[-1] )
+                            return Match(pt[0], pt[1], _ps_._w, _ps_._h, pt[2], _ps_.getFilename())
+                    elif aov == 'vanish':
+                        if len(pts) == 0:
+                            return
+                    else:
+                        raise FailExit('unknown \'aov\' = \'%s\'' % str(aov))
 
             time.sleep(DELAY_BETWEEN_CV_ATTEMPT)
             elaps_time += DELAY_BETWEEN_CV_ATTEMPT
             if elaps_time >= timeout:
-                p2c(str(ps))
-                raise FindFailed(ps)
+                failedImages = ''
+                for p in ps:
+                    failedImages += p.getFilename() + ' '
+                raise FindFailed('Unable to find: %s' % failedImages )
 
 
     def find(self, ps, timeout=None):
@@ -456,6 +461,36 @@ class Region(object):
     def enter_text(self, text, click=True):
         ''' Не как в Sikuli '''
         self.getCenter().enter_text(text, click)
+
+    def scroll(self, direction = 1, count = 1, click = True):
+        self.getCenter().scroll(direction, count, click)
+
+    def dragndrop(self, dest_location):
+        #    # Алгоритм Брезенхема
+        #    # https://ru.wikipedia.org/wiki/%D0%90%D0%BB%D0%B3%D0%BE%D1%80%D0%B8%D1%82%D0%BC_%D0%91%D1%80%D0%B5%D0%B7%D0%B5%D0%BD%D1%85%D1%8D%D0%BC%D0%B0
+        MOVE_DELAY = 0.005
+        MOVE_STEP = 10
+
+        src_location = self.getCenter()
+        src_location.mouseDown()
+
+        if abs(dest_location.x - src_location.x) >= abs(dest_location.y - src_location.y):
+            (a1, b1, a2, b2) = (src_location.x, src_location.y, dest_location.x, dest_location.y)
+            f = lambda x, y: Location(x, y).mouseMove(MOVE_DELAY)
+        else:
+            (a1, b1, a2, b2) = (src_location.y, src_location.x, dest_location.y, dest_location.x)
+            f = lambda x, y: Location(y, x).mouseMove(MOVE_DELAY)
+        
+        k = float(b2 - b1) / (a2 - a1)
+        a_sgn = (a2 - a1) / abs(a2 - a1)
+        la = 0
+        while abs(la) <= abs(a2 - a1):
+            a = a1 + la
+            b = int(k * la) + b1
+            f(a, b)
+            la += a_sgn * MOVE_STEP
+
+        src_location.mouseUp()
 
 from Match import *
 from Screen import *

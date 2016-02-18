@@ -10,9 +10,9 @@ import win32con
 import win32api
 import win32gui
 import win32ui
+import win32clipboard
 import time
 import numpy as np
-# import win32print
 
 
 from ._exceptions import FailExit
@@ -62,6 +62,14 @@ def _screen_n_to_mon_descript(n):
         raise FailExit('wrong screen number \'%s\'' % str(n))
     return m
 
+def highlight_region(x, y, w, h):
+    area = win32gui.GetDC(0)
+    #brush = win32gui.CreateSolidBrush(win32api.RGB(255,0,0))
+    win32gui.SelectObject( area, win32gui.GetStockObject( win32con.NULL_BRUSH ) );
+    pen = win32gui.CreatePen(win32con.PS_DOT, 1, win32api.RGB(148, 0, 0))
+    win32gui.SelectObject( area, pen );
+    for i in range(1, 5):
+        win32gui.Rectangle(area, int(x) - 1, int(y) - 1, int(x) + int(w) + 1, int(y) + int(h) + 1)
 
 def _grab_screen(x, y, w, h):
     '''
@@ -118,6 +126,16 @@ def _scr_num_of_point(x, y):
     if m_tl is None:
         raise FailExit('top-left corner of the Region is out of visible area of sreens')
     return _monitor_hndl_to_screen_n(m_tl)
+
+def get_text_from_clipboard():
+    win32clipboard.OpenClipboard()
+    try:
+        data = win32clipboard.GetClipboardData()
+    except Exception as ex:
+        p2c(str(ex.message))
+        data = ''
+    win32clipboard.CloseClipboard()
+    return data
 
 
 """

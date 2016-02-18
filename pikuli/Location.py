@@ -34,9 +34,9 @@ class Location(object):
         (self.x, self.y) = (self._x, self._y)
         return 'Location (%i, %i)' % (self._x, self._y)
 
-    def mouseMove(self):
+    def mouseMove(self, delay = DELAY_AFTER_MOUSE_MOVEMENT):
         win32api.SetCursorPos((self.x, self.y))
-        time.sleep(DELAY_AFTER_MOUSE_MOVEMENT)
+        time.sleep(delay)
 
     def offset(self, dx, dy):
         if isinstance(dx, int) and isinstance(dy, int):
@@ -74,6 +74,13 @@ class Location(object):
         time.sleep(DELAY_IN_MOUSE_CLICK)
         win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, self.x, self.y, 0, 0)
 
+    def mouseDown(self):
+        self.mouseMove()
+        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, self.x, self.y, 0, 0)
+
+    def mouseUp(self):
+        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, self.x, self.y, 0, 0)
+
     def rightClick(self):
         self.mouseMove()
         win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTDOWN, self.x, self.y, 0, 0)
@@ -89,6 +96,17 @@ class Location(object):
         win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, self.x, self.y, 0, 0)
         time.sleep(DELAY_IN_MOUSE_CLICK)
         win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, self.x, self.y, 0, 0)
+
+    def scroll(self, direction=1, count=1, click=True):
+        # direction:
+        #   1 - forward
+        #  -1 - backward
+        self.mouseMove()
+        if click:
+            self.click()
+        for i in range(0, int(count)):
+            win32api.mouse_event(win32con.MOUSEEVENTF_WHEEL, self.x, self.y, int(direction), 0)
+            time.sleep(DELAY_KBD_KEY_PRESS)
 
     def type(self, text, modifiers=None, click=True):
         ''' Не как в Sikuli '''
