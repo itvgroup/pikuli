@@ -317,9 +317,9 @@ class Region(object):
 
             pts = self.__find(ps, self.__get_field_for_find())
             p2c('Pikuli.findAll: try to find %s' % str(ps))
-            result = map(lambda pt: Match(pt[0], pt[1], ps._w, ps._h, pt[2], ps.getFilename()), pts)
-            p2c('Pikuli.findAll: total found: %s matches' % str(len(result)) )
-            return result
+            self._last_match = map(lambda pt: Match(pt[0], pt[1], ps._w, ps._h, pt[2], ps.getFilename()), pts)
+            p2c('Pikuli.findAll: total found: %s matches' % str(len(self._last_match)) )
+            return self._last_match
 
         except FailExit as e:
             raise FailExit('[error] Incorect \'findAll()\' method call:\n\tps = %s\n\tadditional comment: %s' % (str(ps), str(e)))
@@ -380,31 +380,35 @@ class Region(object):
         Возвращает Region, если паттерн появился, и исключение FindFailed, если нет. '''
         p2c('Pikuli.find: try to find %s' % str(ps))
         try:
-            reg = self._wait_for_appear_or_vanish(ps, timeout, 'appear')
-        except FailExit as e:
+            self._last_match = self._wait_for_appear_or_vanish(ps, timeout, 'appear')
+        except FailExit:
+            self._last_match = None
             raise FailExit('\nNew stage of %s\n[error] Incorect \'find()\' method call:\n\tself = %s\n\tps = %s\n\ttimeout = %s' % (traceback.format_exc(), str(self), str(ps), str(timeout)))
         else:
-            self._last_match = reg
-            return reg
+            p2c('Pikuli.find: %s has been found' % str(ps))
+            return self._last_match
 
     def waitVanish(self, ps, timeout=None):
         ''' Ждет, пока паттерн не исчезнет. Если паттерна уже не было к началу выполнения процедуры, то завершается успешно.
         timeout может быть положительным числом или None. timeout = 0 означает однократную проверку; None -- использование дефолтного значения.'''
         try:
             self._wait_for_appear_or_vanish(ps, timeout, 'vanish')
-        except FailExit as e:
+        except FailExit:
             raise FailExit('\nNew stage of %s\n[error] Incorect \'waitVanish()\' method call:\n\tself = %s\n\tps = %s\n\ttimeout = %s' % (traceback.format_exc(), str(self), str(ps), str(timeout)))
         except FindFailed:
             p2c(str(ps))
             return False
         else:
             return True
+        finally:
+            self._last_match = None
 
 
     def exists(self, ps):
+        self._last_match = None
         try:
-            self._wait_for_appear_or_vanish(ps, 0, 'appear')
-        except FailExit as e:
+            self._last_match = self._wait_for_appear_or_vanish(ps, 0, 'appear')
+        except FailExit:
             raise FailExit('\nNew stage of %s\n[error] Incorect \'exists()\' method call:\n\tself = %s\n\tps = %s' % (traceback.format_exc(), str(self), str(ps)))
         except FindFailed:
             p2c(str(ps))
@@ -421,14 +425,17 @@ class Region(object):
                 time.sleep(timeout)
         else:
             try:
-                reg = self._wait_for_appear_or_vanish(ps, timeout, 'appear')
-            except FailExit as e:
+                self._last_match = self._wait_for_appear_or_vanish(ps, timeout, 'appear')
+            except FailExit:
+                self._last_match = None
                 raise FailExit('\nNew stage of %s\n[error] Incorect \'wait()\' method call:\n\tself = %s\n\tps = %s\n\ttimeout = %s' % (traceback.format_exc(), str(self), str(ps), str(timeout)))
             else:
-                return reg
+                return self._last_match
 
 
     def getLastMatch(self):
+        if self._last_match is None or self._last_match == []:
+            raise FindFailed('getLastMatch() is empty')
         return self._last_match
 
 
