@@ -243,7 +243,7 @@ class WindowsForm(object):
             for t in extra['in_title']:
                 if ( (not title_regexp and t == GetWindowText(hwnd)) or (title_regexp and t.match(GetWindowText(hwnd))) )  and  win_class.lower() in GetClassName(hwnd).lower().split('.'):
                         extra['hwnds'] += [hwnd]
-        EnumChildWindows(self.hwnd_main_win, EnumChildWindows_callback, extra)
+        EnumChildWindows(self.hwnd, EnumChildWindows_callback, extra)
 
         if len(extra['hwnds']) == 0:
             raise FindFailed('pikuli: winforms: find: not win_class = \'%s\' and title = \'%s\' was found.' % (str(win_class), str(title)))
@@ -256,7 +256,7 @@ class WindowsForm(object):
                 raise Exception('pikuli: winforms: find: more than one elemnt was found with win_class = \'%s\' and title = \'%s\': extra[\'hwnds\'] = %s' %
                                 (str(win_class), str(title), str(extra['hwnds'])))
 
-            if _is_visible(self.hwnd_main_win):
+            if _is_visible(self.hwnd):
                 return WindowsForm(extra['hwnds'][0])
             else:
                 raise FindFailed('pikuli: winforms: find: window %s with win_class = \'%s\' and title = \'%s\' has visible = False.' % (hex(extra['hwnds'][0]), str(win_class), str(title)))

@@ -205,8 +205,8 @@ class Region(object):
                 x_offs := args[0]  --  тип int; на сколько сдвинуть; w сохраняется
                 y_offs := args[1]  --  тип int; на сколько сдвинуть; h сохраняется
         '''
-        if len(args) == 2 and isinstance(args[0], int) and isinstance(args[1], int):
-            return Region(self._x + args[0], self._y + args[1], self._w, self._h)
+        if len(args) == 2 and (isinstance(args[0], int) or isinstance(args[0], float)) and (isinstance(args[1], int) or isinstance(args[1], float)):
+            return Region(self._x + int(args[0]), self._y + int(args[1]), self._w, self._h)
         elif len(args) == 1 and isinstance(args[0], Location):
             return Region(self._x + args[0]._x, self._y + args[0]._y, self._w, self._h)
         else:
