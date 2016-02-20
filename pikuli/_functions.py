@@ -66,11 +66,11 @@ def _screen_n_to_mon_descript(n):
 
 def highlight_region(x, y, w, h):
     area = win32gui.GetDC(0)
-    # brush = win32gui.CreateSolidBrush(win32api.RGB(255,0,0))
-    win32gui.SelectObject( area, win32gui.GetStockObject( win32con.NULL_BRUSH ) )
+    #brush = win32gui.CreateSolidBrush(win32api.RGB(255,0,0))
+    win32gui.SelectObject( area, win32gui.GetStockObject( win32con.NULL_BRUSH ) );
     pen = win32gui.CreatePen(win32con.PS_DOT, 1, win32api.RGB(148, 0, 0))
-    win32gui.SelectObject( area, pen )
-    for i in range(1, 5):
+    win32gui.SelectObject( area, pen );
+    for i in range(1, 2):
         win32gui.Rectangle(area, int(x) - 1, int(y) - 1, int(x) + int(w) + 1, int(y) + int(h) + 1)
 
 
