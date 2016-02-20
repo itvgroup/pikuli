@@ -15,6 +15,7 @@ import _functions
 from _exceptions import *
 from Pattern import *
 from Location import *
+import winforms
 
 
 RELATIONS = ['top-left', 'center']
@@ -65,15 +66,32 @@ class Region(object):
         # "Объявляем" переменные, которые будут заданы ниже через self.setRect(...):
         (self.x, self.y, self._x, self._y) = (None, None, None, None)
         (self.w, self.h, self._w, self._h) = (None, None, None, None)
-        self.title = None
         self._last_match = None
 
+        self._title = None                 # Идентификатор для человека.
+        if 'title' in kwargs:
+            self._title = str(kwargs['title'])
+        self._id = kwargs.get('id', None)  # Идентификатор для использования в коде.
+
+        self._winctrl = None
+
+        # # Здесь будет храниться экземпляр класса winforms, если Region найдем с помощью win32api:
+        # self.winctrl = winforms.WindowsForm()
+
         try:
-            if 'title' in kwargs:
-                self.title = str(kwargs['title'])
             self.setRect(*args, **kwargs)
         except FailExit:
             raise FailExit('\nNew stage of %s\n[error] Incorect \'Region\' class constructor call:\n\targs = %s\n\tkwargs = %s' % (traceback.format_exc(), str(args), str(kwargs)))
+
+
+    def get_id(self):
+        return self._id
+
+    def set_id(self, id):
+        self._id = id
+
+    def get_wincrtl(self):
+        return _winctrl
 
 
     def __str__(self):
@@ -309,6 +327,7 @@ class Region(object):
 
 
     def findAll(self, ps):
+        ''' Если ничего не найдено, то вернется пустой list, и исключения FindFailed не возникнет. '''
         try:
             if isinstance(ps, str):
                 ps = Pattern(ps)
@@ -334,13 +353,13 @@ class Region(object):
 
         if not isinstance(ps, list):
             ps = [ps]
-        
+
         for (i, p) in enumerate(ps):
             if isinstance(p, str):
                 ps[i] = Pattern(p)
             elif not isinstance(p, Pattern):
                 raise FailExit( failExitText )
-        
+
         if timeout is None:
             timeout = self.auto_wait_timeout
         if not ( (isinstance(timeout, float) or isinstance(timeout, int)) and timeout >= 0 ):
@@ -480,7 +499,7 @@ class Region(object):
         else:
             (a1, b1, a2, b2) = (src_location.y, src_location.x, dest_location.y, dest_location.x)
             f = lambda x, y: Location(y, x).mouseMove(MOVE_DELAY)
-        
+
         k = float(b2 - b1) / (a2 - a1)
         a_sgn = (a2 - a1) / abs(a2 - a1)
         la = 0
@@ -491,6 +510,10 @@ class Region(object):
             la += a_sgn * MOVE_STEP
 
         src_location.mouseUp()
+
+    '''def is_button_checked():
+        return self.winctrl.is_button_checked()'''
+
 
 from Match import *
 from Screen import *

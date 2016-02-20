@@ -34,7 +34,7 @@ class Location(object):
         (self.x, self.y) = (self._x, self._y)
         return 'Location (%i, %i)' % (self._x, self._y)
 
-    def mouseMove(self, delay = DELAY_AFTER_MOUSE_MOVEMENT):
+    def mouseMove(self, delay=DELAY_AFTER_MOUSE_MOVEMENT):
         win32api.SetCursorPos((self.x, self.y))
         time.sleep(delay)
 
