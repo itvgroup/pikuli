@@ -43,7 +43,9 @@ class Region(object):
                 'top-left' -- x,y являются координатам левого верхнего угла области-прямоуголника; область строится от этой точки
                 'center'   -- x,y являются координатам центра области-прямоуголника; область строится от этой точки
             title:
-                строка     -- просто строка
+                строка     -- Идентификатор для человека (просто строка)
+                id         -- Идентификатор для использования в коде
+                winctrl    -- None или указатель на экземпляр класса WindowsForm
 
         Дополнительная справка:
             Внутренние поля класса:
@@ -72,8 +74,7 @@ class Region(object):
         if 'title' in kwargs:
             self._title = str(kwargs['title'])
         self._id = kwargs.get('id', None)  # Идентификатор для использования в коде.
-
-        self._winctrl = None
+        self._winctrl = kwargs.get('winctrl', None)
 
         # # Здесь будет храниться экземпляр класса winforms, если Region найдем с помощью win32api:
         # self.winctrl = winforms.WindowsForm()
@@ -90,8 +91,8 @@ class Region(object):
     def set_id(self, id):
         self._id = id
 
-    def get_wincrtl(self):
-        return _winctrl
+    def winctrl(self):
+        return self._winctrl
 
 
     def __str__(self):
@@ -232,7 +233,7 @@ class Region(object):
         ''' Возвращает область слева от self. Self не включено. Высота новой области совпадает с self. Длина новой области len или до конца экрана, если len не задана. '''
         try:
             if l is None:
-                #scr = Screen(_scr_num_of_point(self._x, self._y))
+                # scr = Screen(_scr_num_of_point(self._x, self._y))
                 scr = Screen('virt')
                 reg = Region(scr.x, self._y, (self._x - 1) - scr.x + 1, self._h)
             elif isinstance(l, int) and l > 0:
@@ -248,7 +249,7 @@ class Region(object):
         ''' Возвращает область сверху от self. Self не включено. Ширина новой области совпадает с self. Высота новой области len или до конца экрана, если len не задана. '''
         try:
             if l is None:
-                #scr = Screen(_scr_num_of_point(self._x, self._y))
+                # scr = Screen(_scr_num_of_point(self._x, self._y))
                 scr = Screen('virt')
                 reg = Region(self._x, scr.y, self._w, (self._y - 1) - scr.y + 1)
             elif isinstance(l, int) and l > 0:
@@ -264,7 +265,7 @@ class Region(object):
         ''' Возвращает область снизу от self. Self не включено. Ширина новой области совпадает с self. Высота новой области len или до конца экрана, если len не задана. '''
         try:
             if l is None:
-                #scr = Screen(_scr_num_of_point(self._x, self._y))
+                # scr = Screen(_scr_num_of_point(self._x, self._y))
                 scr = Screen('virt')
                 reg = Region(self._x, self._y + self._h, self._w, (scr.y + scr.h - 1) - (self._y + self._h) + 1)
             elif isinstance(l, int) and l > 0:
@@ -274,7 +275,20 @@ class Region(object):
                 raise FailExit()
         except FailExit:
             raise FailExit('\nNew stage of %s\n[error] Incorect \'below()\' method call:\n\tl = %s' % (traceback.format_exc(), str(l)))
-        p2c(str(reg))
+        return reg
+
+    def nearby(self, l=0):
+        ''' Возвращает область воукруг self. Self включено. Ширина новой области совпадает с self. Высота новой области len или до конца экрана, если len не задана. '''
+        try:
+            if isinstance(l, int):
+                if (l >= 0) or (l < 0 and (-2*l) < self._w and (-2*l) < self._h):
+                    reg = Region(self._x - l, self._y - l, self._w + 2*l, self._h + 2*l)
+                else:
+                    raise FailExit()
+            else:
+                raise FailExit()
+        except FailExit:
+            raise FailExit('\nNew stage of %s\n[error] Incorect \'nearby()\' method call:\n\tl = %s' % (traceback.format_exc(), str(l)))
         return reg
 
 
@@ -513,6 +527,11 @@ class Region(object):
 
     '''def is_button_checked():
         return self.winctrl.is_button_checked()'''
+
+
+    def highlight(self, timeout=-1):
+        ''' TODO: сделать актиным парметр таймаута подсветки границ области. '''
+        highlight_region(self._x, self._y, self._w, self._h)
 
 
 from Match import *

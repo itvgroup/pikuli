@@ -5,6 +5,8 @@
 import psutil
 import types
 import sys
+import re
+
 from win32api import *
 from win32gui import *
 from win32process import *
@@ -135,7 +137,8 @@ class WindowsForm(object):
             нет аргуметов       --  пустой экземпляр класса. Вызов его методов будет приводить к исключениям с понятными текстовыми сообщениями.
         '''
 
-        self._id = kwargs.get('id', None)  # Идентификатор для использования в коде.
+        self._id  = kwargs.get('id', None)  # Идентификатор для использования в коде.
+        self._reg = None
 
         if len(args) == 2 and isinstance(args[0], types.StringType) and (isinstance(args[1], types.StringType) or isinstance(args[1], types.ListType)):
             self.proc_name = args[0]
@@ -183,7 +186,6 @@ class WindowsForm(object):
             raise Exception('pikuli: winforms: constructor error; args = %s' % str(args))
 
         if not self.is_empty():
-            self.title = GetWindowText(self.hwnd)
             self.class_name = GetClassName(self.hwnd)
 
     def get_id(self):
@@ -191,6 +193,9 @@ class WindowsForm(object):
 
     def set_id(self, id):
         self._id = id
+
+    def title(self):
+        return GetWindowText(self.hwnd)
 
 
     '''def _hwnd2reg(self, hwnd, title=None):
@@ -210,13 +215,19 @@ class WindowsForm(object):
         return (self.proc_name is None)
 
 
-    def find(self, win_class, title, process_name=False, title_regexp=False, return_list=False):
+    def find_all(self, win_class, title, process_name=False, title_regexp=False):
+        return self.find(win_class, title, process_name=process_name, title_regexp=title_regexp, find_all=True)
+
+
+    def find(self, win_class, title, process_name=False, title_regexp=False, find_all=False):
         '''
         Поиск дочернего окна-объекта любого уровня вложенности. Под окном пнимается любой WinForms-элемент любого класса.
             win_class     --  Искомое окно должно обладать таким WinForms-классом.
-            title         --  Искомое окно должно иметь такой заголвоок (текст); в точности такое или это регулярное выражение, в зависимости от флага title_regexp.
+            title         --  Искомое окно должно иметь такой заголвоок (текст); Варианты:
+                                1. title_regexp == False: Строка или список строк. Возвращается контрол с первым точным совпадением.
+                                2. title_regexp == True:  Регулярное выражение или их список. Возвращается контрол с первым regexp-совпадением.
             title_regexp  --  В title передается регулярное выржение для поиска.
-            return_list   --  Если True, то возвращается список найденных окон. Если False, то возвращается только одно значение или происходит Exception, если найдено несколько элементов.
+            find_all      --  Если True, то возвращается список _всех_ найденных окон. Если False, то возвращается только одно значение или происходит Exception, если найдено несколько элементов.
         Возвращает объект типа Region.
         '''
 
@@ -241,14 +252,15 @@ class WindowsForm(object):
             if hwnd == 0:
                 return
             for t in extra['in_title']:
-                if ( (not title_regexp and t == GetWindowText(hwnd)) or (title_regexp and t.match(GetWindowText(hwnd))) )  and  win_class.lower() in GetClassName(hwnd).lower().split('.'):
+                if ( (not title_regexp and t == GetWindowText(hwnd)) or (title_regexp and t.match(GetWindowText(hwnd))) )  and \
+                   win_class.lower() in GetClassName(hwnd).lower().split('.'):
                         extra['hwnds'] += [hwnd]
         EnumChildWindows(self.hwnd, EnumChildWindows_callback, extra)
 
         if len(extra['hwnds']) == 0:
             raise FindFailed('pikuli: winforms: find: not win_class = \'%s\' and title = \'%s\' was found.' % (str(win_class), str(title)))
 
-        if return_list:
+        if find_all:
             return [WindowsForm(h) for h in extra['hwnds'] if _is_visible(h)]
 
         else:
@@ -262,20 +274,19 @@ class WindowsForm(object):
                 raise FindFailed('pikuli: winforms: find: window %s with win_class = \'%s\' and title = \'%s\' has visible = False.' % (hex(extra['hwnds'][0]), str(win_class), str(title)))
 
 
-    def reg(self):
+    def reg(self, force_new_reg=False):
         ''' Возвращает Region для self-элемента WindowsForm. '''
         if self.is_empty():
             raise Exception('WindowsForm: this is an empty class. Initialise it first.')
 
-        # полчение размеров клменскй области окна
-        (_, _, wc, hc) = GetClientRect(self.hwnd)
-        # получение координат левого верхнего угла клиенской области осносительно угла экрана
-        (xc, yc) = ClientToScreen(self.hwnd, (0, 0) )
-        reg = Region.Region(xc, yc, wc, hc)
-        reg._winctrl = self
-        reg._title = self.title
+        if force_new_reg or self._reg is None:
+            # полчение размеров клменскй области окна
+            (_, _, wc, hc) = GetClientRect(self.hwnd)
+            # получение координат левого верхнего угла клиенской области осносительно угла экрана
+            (xc, yc) = ClientToScreen(self.hwnd, (0, 0) )
+            self._reg = Region.Region(xc, yc, wc, hc, winctrl=self, title=self.title())
 
-        return reg
+        return self._reg
 
     def bring_to_front(self):
         if self.is_empty():

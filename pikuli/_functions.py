@@ -66,10 +66,10 @@ def _screen_n_to_mon_descript(n):
 
 def highlight_region(x, y, w, h):
     area = win32gui.GetDC(0)
-    #brush = win32gui.CreateSolidBrush(win32api.RGB(255,0,0))
-    win32gui.SelectObject( area, win32gui.GetStockObject( win32con.NULL_BRUSH ) );
+    # brush = win32gui.CreateSolidBrush(win32api.RGB(255,0,0))
+    win32gui.SelectObject(area, win32gui.GetStockObject(win32con.NULL_BRUSH))
     pen = win32gui.CreatePen(win32con.PS_DOT, 1, win32api.RGB(148, 0, 0))
-    win32gui.SelectObject( area, pen );
+    win32gui.SelectObject(area, pen)
     for i in range(1, 2):
         win32gui.Rectangle(area, int(x) - 1, int(y) - 1, int(x) + int(w) + 1, int(y) + int(h) + 1)
 
@@ -214,15 +214,22 @@ for (m, i) in (lambda l: zip(l, range(len(l))))(['ALT', 'CTRL', 'SHIFT']):
 
 
 class Key(object):
-    ''' Ноль-символ и VirtualCode специальных клавиш. Именно такую пару можно вставлять прямо в текстовую
+    '''
+    Ноль-символ и VirtualCode специальных клавиш. Именно такую пару можно вставлять прямо в текстовую
     строку, подаваемую на вход type_text(). Ноль-символ говорит о том, что за ним идет не литера, а коды
-    специальной клавиши. '''
-    ENTER = chr(0) + chr(win32con.VK_RETURN)
-    TAB   = chr(0) + chr(win32con.VK_TAB)
-    LEFT  = chr(0) + chr(win32con.VK_LEFT)
-    UP    = chr(0) + chr(win32con.VK_UP)
-    RIGHT = chr(0) + chr(win32con.VK_RIGHT)
-    DOWN  = chr(0) + chr(win32con.VK_DOWN)
+    специальной клавиши.
+
+    https://msdn.microsoft.com/en-us/library/windows/desktop/dd375731(v=vs.85).aspx ("MSDN: Virtual-Key Codes")
+    '''
+    ENTER      = chr(0) + chr(win32con.VK_RETURN)
+    ESC        = chr(0) + chr(win32con.VK_ESCAPE)
+    TAB        = chr(0) + chr(win32con.VK_TAB)
+    LEFT       = chr(0) + chr(win32con.VK_LEFT)
+    UP         = chr(0) + chr(win32con.VK_UP)
+    RIGHT      = chr(0) + chr(win32con.VK_RIGHT)
+    DOWN       = chr(0) + chr(win32con.VK_DOWN)
+    PAGE_UP    = chr(0) + chr(win32con.VK_PRIOR)
+    PAGE_DOWN  = chr(0) + chr(win32con.VK_NEXT)
     BACKSPACE  = chr(0) + chr(win32con.VK_BACK)
 
 
@@ -233,7 +240,7 @@ def type_text(s, modifiers=None):
            Т.е., будет игнорироваться необходимость нажимать Shift, если есть заглавные символы.
     '''
     # https://mail.python.org/pipermail/python-win32/2013-July/012862.html
-    # https://msdn.microsoft.com/ru-ru/library/windows/desktop/ms646304(v=vs.85).aspx
+    # https://msdn.microsoft.com/ru-ru/library/windows/desktop/ms646304(v=vs.85).aspx ("MSDN: keybd_event function")
     # http://stackoverflow.com/questions/4790268/how-to-generate-keystroke-combination-in-win32-api
     # http://stackoverflow.com/questions/11906925/python-simulate-keydown
     # https://ru.wikipedia.org/wiki/Скан-код
