@@ -16,7 +16,8 @@ from _exceptions import *
 from Pattern import *
 from Location import *
 import winforms
-
+import datetime
+import os
 
 RELATIONS = ['top-left', 'center']
 
@@ -297,6 +298,9 @@ class Region(object):
     def __get_field_for_find(self):
         return _functions._grab_screen(self._x, self._y, self._w, self._h)
 
+    def save_as_png(self, full_filename):
+        cv2.imwrite(full_filename, _functions._grab_screen(self._x, self._y, self._w, self._h))
+
     def __find(self, ps, field):
         CF = 0
         if CF == 0:
@@ -390,7 +394,10 @@ class Region(object):
             if elaps_time >= timeout:
                 failedImages = ''
                 for p in ps:
-                    failedImages += p.getFilename() + ' '
+                    failedImages += p.getFilename().split('\\')[-1] + ','
+                if not os.path.exists(os.environ['TEMP'] + '\\find_failed'):
+                    os.mkdir(os.environ['TEMP'] + '\\find_failed')
+                self.save_as_png(os.environ['TEMP'] + '\\find_failed\\' + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + '_' + str(failedImages) + '.png')
                 raise FindFailed('Unable to find: %s' % failedImages )
 
 
