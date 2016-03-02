@@ -353,7 +353,7 @@ class Region(object):
             ps может быть String или List
             Если isinstance(ps, list), возвращается первый найденный элемент. Это можно использвоать, если требуется найти любое из переданных изображений.
         '''
-        failExitText = 'bad \'ps\' argument; it should be a string (path to image file) or \'Pattern\' object'
+        failExitText = 'bad \'ps\' argument; it should be a string (path to image file) or \'Pattern\' object: %s'
 
         if not isinstance(ps, list):
             ps = [ps]
@@ -362,7 +362,7 @@ class Region(object):
             if isinstance(p, str):
                 ps[i] = Pattern(p)
             elif not isinstance(p, Pattern):
-                raise FailExit( failExitText )
+                raise FailExit( failExitText % str(p) )
 
         if timeout is None:
             timeout = self.auto_wait_timeout
