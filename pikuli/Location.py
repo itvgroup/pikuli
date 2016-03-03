@@ -106,7 +106,7 @@ class Location(object):
             self.click()
         for i in range(0, int(count)):
             win32api.mouse_event(win32con.MOUSEEVENTF_WHEEL, self.x, self.y, int(direction), 0)
-            time.sleep(DELAY_KBD_KEY_PRESS)
+            time.sleep(DELAY_IN_MOUSE_CLICK)
 
     def type(self, text, modifiers=None, click=True):
         ''' Не как в Sikuli '''
