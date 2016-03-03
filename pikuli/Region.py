@@ -411,7 +411,6 @@ class Region(object):
             self._last_match = None
             raise FailExit('\nNew stage of %s\n[error] Incorect \'find()\' method call:\n\tself = %s\n\tps = %s\n\ttimeout = %s' % (traceback.format_exc(), str(self), str(ps), str(timeout)))
         else:
-            p2c('Pikuli.find: %s has been found' % str(ps))
             return self._last_match
 
     def waitVanish(self, ps, timeout=None):
