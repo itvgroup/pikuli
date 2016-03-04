@@ -224,6 +224,18 @@ class Key(object):
     RIGHT = chr(0) + chr(win32con.VK_RIGHT)
     DOWN  = chr(0) + chr(win32con.VK_DOWN)
     BACKSPACE  = chr(0) + chr(win32con.VK_BACK)
+    F1    = chr(0) + chr(win32con.VK_F1)
+    F2    = chr(0) + chr(win32con.VK_F2)
+    F3    = chr(0) + chr(win32con.VK_F3)
+    F4    = chr(0) + chr(win32con.VK_F4)
+    F5    = chr(0) + chr(win32con.VK_F5)
+    F6    = chr(0) + chr(win32con.VK_F6)
+    F7    = chr(0) + chr(win32con.VK_F7)
+    F8    = chr(0) + chr(win32con.VK_F8)
+    F9    = chr(0) + chr(win32con.VK_F9)
+    F10   = chr(0) + chr(win32con.VK_F10)
+    F11   = chr(0) + chr(win32con.VK_F11)
+    F12   = chr(0) + chr(win32con.VK_F12)
 
 
 def type_text(s, modifiers=None):
