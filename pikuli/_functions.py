@@ -72,7 +72,7 @@ def highlight_region(x, y, w, h):
     win32gui.SelectObject(area, pen)
     for i in range(1, 2):
         win32gui.Rectangle(area, int(x) - 1, int(y) - 1, int(x) + int(w) + 1, int(y) + int(h) + 1)
-
+    win32gui.ReleaseDC(area, 0)
 
 def _grab_screen(x, y, w, h):
     '''
