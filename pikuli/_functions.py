@@ -127,7 +127,7 @@ def _scr_num_of_point(x, y):
     ''' Вернет номер (от нуля) того экрана, на котором располоржен левый верхний угол текущего Region. '''
     m_tl = win32api.MonitorFromPoint((x, y), win32con.MONITOR_DEFAULTTONULL)
     if m_tl is None:
-        raise FailExit('top-left corner of the Region is out of visible area of sreens')
+        raise FailExit('top-left corner of the Region is out of visible area of sreens (%s, %s)' % (str(x), str(y)))
     return _monitor_hndl_to_screen_n(m_tl)
 
 
