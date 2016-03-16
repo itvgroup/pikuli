@@ -353,7 +353,7 @@ class Region(object):
                 raise FailExit('bad \'ps\' argument; it should be a string (path to image file) or \'Pattern\' object')
 
             pts = self.__find(ps, self.__get_field_for_find())
-            p2c('Pikuli.findAll: try to find %s' % str(ps))
+            #p2c('Pikuli.findAll: try to find %s' % str(ps))
             self._last_match = map(lambda pt: Match(pt[0], pt[1], ps._w, ps._h, pt[2], ps.getFilename()), pts)
             p2c('Pikuli.findAll: total found: %s matches' % str(len(self._last_match)) )
             return self._last_match
@@ -418,7 +418,7 @@ class Region(object):
     def find(self, ps, timeout=None):
         ''' Ждет, пока паттерн не появится. timeout может быть положительным числом или None. timeout = 0 означает однократную проверку; None -- использование дефолтного значения.
         Возвращает Region, если паттерн появился, и исключение FindFailed, если нет. '''
-        p2c('Pikuli.find: try to find %s' % str(ps))
+        #p2c('Pikuli.find: try to find %s' % str(ps))
         try:
             self._last_match = self._wait_for_appear_or_vanish(ps, timeout, 'appear')
         except FailExit:
