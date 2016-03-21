@@ -112,10 +112,11 @@ class Location(object):
         ''' Не как в Sikuli '''
         if click:
             self.click()
-        type_text(text, modifiers)
+        type_text(str(text), modifiers)
 
     def enter_text(self, text, modifiers=None, click=True):
         ''' Не как в Sikuli '''
         if click:
             self.click()
-        type_text(text + Key.ENTER, modifiers)
+        type_text('a', KeyModifier.CTRL)
+        type_text(str(text) + Key.ENTER, modifiers)

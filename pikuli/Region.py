@@ -15,7 +15,7 @@ import _functions
 from _exceptions import *
 from Pattern import *
 from Location import *
-import winforms
+# import winforms
 
 
 RELATIONS = ['top-left', 'center']
@@ -45,7 +45,7 @@ class Region(object):
             title:
                 строка     -- Идентификатор для человека (просто строка)
                 id         -- Идентификатор для использования в коде
-                winctrl    -- None или указатель на экземпляр класса WindowsForm
+                winctrl    -- None или указатель на экземпляр класса HWNDElement
 
         Дополнительная справка:
             Внутренние поля класса:
@@ -77,7 +77,7 @@ class Region(object):
         self._winctrl = kwargs.get('winctrl', None)
 
         # # Здесь будет храниться экземпляр класса winforms, если Region найдем с помощью win32api:
-        # self.winctrl = winforms.WindowsForm()
+        # self.winctrl = winforms.HWNDElement()
 
         try:
             self.setRect(*args, **kwargs)
@@ -487,13 +487,13 @@ class Region(object):
     def doubleClick(self):
         self.getCenter().doubleClick()
 
-    def type(self, text, m = None, click = True):
+    def type(self, text, modifiers=None, click = True):
         ''' Не как в Sikuli '''
-        self.getCenter().type(text, m, click)
+        self.getCenter().type(text, modifiers=modifiers, click=click)
 
-    def enter_text(self, text, click=True):
+    def enter_text(self, text, modifiers=None, click=True):
         ''' Не как в Sikuli '''
-        self.getCenter().enter_text(text, click)
+        self.getCenter().enter_text(text, modifiers=modifiers, click=click)
 
     def scroll(self, direction = 1, count = 1, click = True):
         self.getCenter().scroll(direction, count, click)
