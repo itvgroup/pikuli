@@ -315,6 +315,10 @@ class Region(object):
     def save_as_jpg(self, full_filename):
         cv2.imwrite(full_filename, _functions._grab_screen(self._x, self._y, self._w, self._h), [cv2.IMWRITE_JPEG_QUALITY, 70])
 
+    def save_as_png(self, full_filename):
+        cv2.imwrite(full_filename, _functions._grab_screen(self._x, self._y, self._w, self._h))
+
+
     def __find(self, ps, field):
         CF = 0
         if CF == 0:
