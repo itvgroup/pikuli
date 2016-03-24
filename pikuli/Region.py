@@ -312,8 +312,8 @@ class Region(object):
     def __get_field_for_find(self):
         return _functions._grab_screen(self._x, self._y, self._w, self._h)
 
-    def save_as_png(self, full_filename):
-        cv2.imwrite(full_filename, _functions._grab_screen(self._x, self._y, self._w, self._h))
+    def save_as_jpg(self, full_filename):
+        cv2.imwrite(full_filename, _functions._grab_screen(self._x, self._y, self._w, self._h), [cv2.IMWRITE_JPEG_QUALITY, 70])
 
     def __find(self, ps, field):
         CF = 0
@@ -411,7 +411,7 @@ class Region(object):
                     failedImages += p.getFilename().split('\\')[-1] + ','
                 if not os.path.exists(os.environ['TEMP'] + '\\find_failed'):
                     os.mkdir(os.environ['TEMP'] + '\\find_failed')
-                self.save_as_png(os.environ['TEMP'] + '\\find_failed\\' + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + '_' + str(failedImages) + '.png')
+                self.save_as_jpg(os.environ['TEMP'] + '\\find_failed\\' + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + '_' + str(failedImages) + '.jpg')
                 raise FindFailed('Unable to find: %s' % failedImages )
 
 
