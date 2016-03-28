@@ -2,10 +2,13 @@
 
 import psutil
 from inspect import currentframe, getframeinfo, isclass
+import time
+
+import win32gui
 
 import UIA
 import Region
-from _functions import p2c
+from _functions import p2c, wait_while
 from _exceptions import *
 import hwnd_element
 from oleacc_h import *
@@ -197,28 +200,28 @@ def _create_instance_of_suitable_class(winuielem):
         class_legacy_accessible_role = getattr(globals()[class_], 'LEGACYACC_ROLE', None)
 
         if class_control_type is None:
-            raise Exception('pikuli.UIElement [INTERNAL]: CONTROL_TYPE is not setted for <class %s>. Processing controll \'%s\'' % (class_, UIElement(winuielem).name()))
+            raise Exception('pikuli.UIElement [INTERNAL]: CONTROL_TYPE is not setted for <class %s>. Processing controll \'%s\'' % (class_, UIElement(winuielem).Name))
 
         elif class_control_type != 'Custom' and winuielem_ControlType != UIA.UIA_automation_control_type_identifiers_mapping['Custom']:
             class_control_type_id = UIA.UIA_automation_control_type_identifiers_mapping.get(class_control_type, None)  # Ищем тип class_control_type среди известных нам.
             if class_control_type_id is None:
-                raise Exception('pikuli.UIElement [INTERNAL]: CONTROL_TYPE = \'%s\' in <class %s> is unknown.Processing controll \'%s\'' % (class_control_type, class_, UIElement(winuielem).name()))
+                raise Exception('pikuli.UIElement [INTERNAL]: CONTROL_TYPE = \'%s\' in <class %s> is unknown.Processing controll \'%s\'' % (class_control_type, class_, UIElement(winuielem).Name))
             if winuielem_ControlType == class_control_type_id:
                 if class_by_controltype is not None or class_by_legacy is not None:
-                    raise Exception('pikuli.UIElement [INTERNAL]: more than one class are suitable for UI-element \'%s\':' % UIElement(winuielem).name() +
+                    raise Exception('pikuli.UIElement [INTERNAL]: more than one class are suitable for UI-element \'%s\':' % UIElement(winuielem).Name +
                                     '\n\tclass_by_controltype = \'%s\'\n\tclass_by_legacy = \'%s\'\n\tclass_ = \'%s\'' % (class_by_controltype, class_by_legacy, class_))
                 class_by_controltype = class_
 
         elif class_control_type == 'Custom' and winuielem_ControlType == UIA.UIA_automation_control_type_identifiers_mapping['Custom']:
             if class_legacy_accessible_role is None:
-                raise Exception('pikuli.UIElement [INTERNAL]: CONTROL_TYPE = \'Custom\', but LEGACYACC_ROLE is not setted for <class %s>. Processing controll \'%s\'' % (class_, UIElement(winuielem).name()))
+                raise Exception('pikuli.UIElement [INTERNAL]: CONTROL_TYPE = \'Custom\', but LEGACYACC_ROLE is not setted for <class %s>. Processing controll \'%s\'' % (class_, UIElement(winuielem).Name))
             else:
                 class_legacy_accessible_role_id = ROLE_SYSTEM.get(class_legacy_accessible_role, None)
                 if class_legacy_accessible_role_id is None:
-                    raise Exception('pikuli.UIElement [INTERNAL]: \'class_legacy_accessible_role_id\' is None for UIElement Control \'%s\'.' % UIElement(winuielem).name())
+                    raise Exception('pikuli.UIElement [INTERNAL]: \'class_legacy_accessible_role_id\' is None for UIElement Control \'%s\'.' % UIElement(winuielem).Name)
                 if winuielem_CurrentRole == class_legacy_accessible_role_id:
                     if class_by_controltype is not None or class_by_legacy is not None:
-                        raise Exception('pikuli.UIElement [INTERNAL]: more than one class are suitable for UI-element \'%s\':' % UIElement(winuielem).name() +
+                        raise Exception('pikuli.UIElement [INTERNAL]: more than one class are suitable for UI-element \'%s\':' % UIElement(winuielem).Name +
                                         '\n\tclass_by_controltype = \'%s\'\n\tclass_by_legacy = \'%s\'\n\tclass_ = \'%s\'' % (class_by_controltype, class_by_legacy, class_))
                     class_by_legacy = class_
 
@@ -257,23 +260,35 @@ class UIElement(object):
              3. Если по какой-то причние пункты 1 и 2 выше не позволили подобрать класс, то испульзуется родительский UIElement.
              4. Если нашлось несколько подходящих классов, то генерируется исключение.
         '''
-        if isinstance(pointer2elem, UIA.type_IUIAutomationElement):
-            self._winuiaelem = pointer2elem
-            self._from_hwnd = False
-        elif isinstance(pointer2elem, UIElement):
-            self._winuiaelem = pointer2elem._winuiaelem
-            self._from_hwnd = False
-        elif isinstance(pointer2elem, int) or isinstance(pointer2elem, long):
-            self._winuiaelem = UIA.IUIAutomation_object.ElementFromHandle(pointer2elem)
-            self._from_hwnd = True
-        else:
-            raise Exception('pikuli.UIElement: can not construct UIElement')
+        self._reg = None
 
-        self.pid   = self._winuiaelem.CurrentProcessId
-        self.hwnd  = self._winuiaelem.CurrentNativeWindowHandle
-        for proc in psutil.process_iter():
-            if proc.pid == self._winuiaelem.CurrentProcessId:
-                self.proc_name = proc.name()
+        if pointer2elem == 0:
+            # Коренвой элемент.
+            self._winuiaelem = UIA.IUIAutomation_object.GetRootElement()
+            self._from_hwnd  = True
+            self.pid         = None
+            self.hwnd        = 0
+            self.proc_name   = None
+
+        else:
+            if isinstance(pointer2elem, UIA.type_IUIAutomationElement):
+                self._winuiaelem = pointer2elem
+                self._from_hwnd = False
+            elif isinstance(pointer2elem, UIElement):
+                self._winuiaelem = pointer2elem._winuiaelem
+                self._from_hwnd = False
+            elif isinstance(pointer2elem, int) or isinstance(pointer2elem, long):
+                self._winuiaelem = UIA.IUIAutomation_object.ElementFromHandle(pointer2elem)
+                self._from_hwnd = True
+            else:
+                raise Exception('pikuli.UIElement: can not construct UIElement')
+
+            self.pid   = self._winuiaelem.CurrentProcessId
+            self.hwnd  = self._winuiaelem.CurrentNativeWindowHandle
+            for proc in psutil.process_iter():
+                if proc.pid == self._winuiaelem.CurrentProcessId:
+                    self.proc_name = proc.name()
+                    break
 
     def __getattr__(self, name):
         '''
@@ -308,10 +323,10 @@ class UIElement(object):
 
     def __repr__(self):
         if type(self).__name__ in CONTROLS_CLASSES:
-            return '<%s \'%s\'>' % (type(self).__name__, self.name())
+            return '<%s \'%s\',\'%s\'>' % (type(self).__name__, self.Name, getattr(self, 'AutomationId', ''))
         control_type_id = self.get_property('ControlType')
         legacy_role_id  = self.get_pattern('LegacyIAccessiblePattern').CurrentRole
-        return '<%s %s,%s,\'%s\'>' % (type(self).__name__, UIA.UIA_automation_control_type_identifiers_mapping_rev.get(control_type_id, control_type_id), ROLE_SYSTEM_rev.get(legacy_role_id, legacy_role_id), self.name())
+        return '<%s %s,%s,\'%s\',\'%s\'>' % (type(self).__name__, UIA.UIA_automation_control_type_identifiers_mapping_rev.get(control_type_id, control_type_id), ROLE_SYSTEM_rev.get(legacy_role_id, legacy_role_id), self.Name, getattr(self, 'AutomationId', ''))
 
     def get_property(self, name):
         if not hasattr(self, '_winuiaelem'):
@@ -334,31 +349,34 @@ class UIElement(object):
         return True
 
 
-    def find_all(self, *args, **kwargs):
+    def find_all(self, **kwargs):
         kwargs['find_first_only'] = False
-        return self.find(*args, **kwargs)
+        return self.find(**kwargs)
 
 
-    def find(self, AutomationId=None, ClassName=None, Name=None,
-             find_first_only=True, max_descend_level=None, exact_level=None, exception_on_find_fail=None):
+    #def find(self, _criteria, find_first_only=True, max_descend_level=None, exact_level=None, exception_on_find_fail=None):
+    #def find(self, AutomationId=True, ClassName=True, Name=True, ControlType=True, ProcessId=True,
+    #         find_first_only=True, max_descend_level=None, exact_level=None, exception_on_find_fail=None):
+    def find(self, **kwargs):
         '''
         Поиск дочернего окна-объекта любого уровня вложенности. Под окном пнимается любой WinForms-элемент любого класса.
 
         В **kwargs можно передавать следующие поля, использующиеся для сравнения с одноименноыми UIA-свойствами элементов интерфейса:
             AutomationId     --  Неки текстовый ID, который, видимо, может назанчаться при создании тестируемой программы.
             ClassName        --  Имя класса. К примеру, "WindowsForms10.Window.8.app.0.1e929c1_r9_ad1".
-            #ControlType      --  Тип контрола. Строковое название из структуры UIA_automationcontrol_type_identifiers_mapping / списка UIA_automationcontrol_type_identifiers.
-            #                     (см. также "Control Type Identifiers", https://msdn.microsoft.com/en-us/library/windows/desktop/ee671198(v=vs.85).aspx)
             Name             --  Имя (title) искомого элемента UI.
+            ControlType      --  Тип контрола. Строковое название из структуры UIA_automation_control_type_identifiers_mapping / списка UIA_automation_control_type_identifiers.
+                                 (см. также "Control Type Identifiers", https://msdn.microsoft.com/en-us/library/windows/desktop/ee671198(v=vs.85).aspx)
+            ProcessId        --  Для UAI это число (PID). Дополним возможность указания строки -- имени исполняемого файла, по которому предварительно будем определять PID.
 
         Наличие нескольких критериев подразумевает логические AND между ними.
 
-        При поиске Name и ClassName парметр в kwargs может быть:
+        При поиске [AutomationId, Name, ClassName] парметр может быть:
             1. Строкой. Элемент UI будет добавлять к списку найденных, если эта строка точно соответствует его атрибуту (с учетом регистра).
             2. Списком строк. Каждая из этих строка должна быть подстрокой в атрибуте искомого элемента UI (с учетом регистра).
             3. re.compile
 
-        Также в **kwargs возможгы следующие управляющие инструкции:
+        Также в **kwargs возможны следующие управляющие инструкции:
             find_first_only    --  Если False, то возвращается список _всех_ найденных окон (пустой, если ничего не найдено).
                                    Если True, то возвращается только одно значение первого найденного элемента (после первого обнаружения поиск останавливается!). Если ничего
                                    не найденно, то возвращает None или создает исключение (см. exception_on_find_fail).
@@ -369,12 +387,19 @@ class UIElement(object):
                                     > 0 -- поиск среди дочерних выбранной глубины
                                     < 0 -- возвращает предка выбранной дальности
             exception_on_find_fail  --  По умолчанию None. Это означает, что переприсовится True при find_first_only = True, False при find_first_only = False.
+
         Возвращает:
             объект типа Region.
         '''
         self._test4readiness()
+        # p2c(kwargs)
 
-        # Обработка воходных аргументов **kwargs:
+        # Обработка воходных аргументов:
+        find_first_only        = kwargs.pop('find_first_only', True)
+        max_descend_level      = kwargs.pop('max_descend_level', None)
+        exact_level            = kwargs.pop('exact_level', None)
+        exception_on_find_fail = kwargs.pop('exception_on_find_fail', None)
+
         if exception_on_find_fail is None:
             exception_on_find_fail = find_first_only
 
@@ -384,15 +409,38 @@ class UIElement(object):
             raise Exception('pikuli.UIElement.find: max_descend_level is not None and max_descend_level < 1')
 
         criteria = {}
-        locals_ = locals()
+        not_none_criteria = {}
         for key in ['AutomationId', 'ClassName', 'Name']:
-            if locals_[key] is not None:
-                if isinstance(locals_[key], list) and not reduce(lambda r, t: r and isinstance(t, str), locals_[key], True) or \
-                   not isinstance(locals_[key], list) and not (hasattr(locals_[key], 'match') or isinstance(locals_[key], str)):
-                        raise Exception('pikuli.UIElement.find: wrong locals_[\'%s\'])' % str(key))
-                criteria[key] = locals_[key]
-            else:
-                criteria[key] = None
+            val = kwargs.pop(key, None)
+            if val is not None:
+                not_none_criteria[key] = val
+                if isinstance(val, unicode):
+                    val = str(val)
+                if isinstance(val, list) and not reduce(lambda r, t: r and isinstance(t, str), val, True) or \
+                   not isinstance(val, list) and not (hasattr(val, 'match') or isinstance(val, str)):
+                        raise Exception('pikuli.UIElement.find: wrong kwargs[\'%s\'] = \'%s\'' % (str(key), str(val)))
+            criteria[key] = val
+
+        val = kwargs.pop('ControlType', None)
+        if val is not None:
+            not_none_criteria['ControlType'] = val
+            if val not in UIA.UIA_automation_control_type_identifiers_mapping:
+                raise Exception('pikuli.UIElement.find: ControlType is not None (\'%s\'), but not from UIA.UIA_automation_control_type_identifiers_mapping' % ControlType)
+            val = UIA.UIA_automation_control_type_identifiers_mapping[val]
+        criteria['ControlType'] = val
+
+        val = kwargs.pop('ProcessId', None)
+        if val is not None and isinstance(val, str):
+            not_none_criteria['ProcessId'] = val
+            for proc in psutil.process_iter():
+                if val == proc.name():
+                    val = proc.pid
+                    break
+        criteria['ProcessId'] = val
+
+
+        if len(kwargs) != 0:
+            raise Exception('pikuli.UIElement.find: kwargs has unknown fields %s\n\tkwargs = %s' % (kwargs.keys(), str(kwargs)))
 
         #  Начинаем поиск по очереди по всем критериям. Поиск элементов с помощью рекурсивного
         # вызова нашей функции. Будем искать через TreeWalker с условием CreateTrueCondition(), так
@@ -402,8 +450,18 @@ class UIElement(object):
                 self.winuiaelem = winuiaelem
                 super(Exception, self).__init__()
 
-        def _is_winuiaelem_suitable(keys, winuiaelem):
-            for key in keys:
+
+        def _is_winuiaelem_suitable(winuiaelem):
+            if criteria['ProcessId'] is not None and criteria['ProcessId'] != winuiaelem.CurrentProcessId:
+                return False
+
+            if criteria['ControlType'] is not None and \
+               criteria['ControlType'] != winuiaelem.GetCurrentPropertyValue(UIA.UIA_automation_element_property_identifers_mapping['ControlType']):
+                return False
+
+            for key in ['AutomationId', 'ClassName', 'Name']:
+                if criteria[key] is None:
+                    continue
                 uielem_val = winuiaelem.GetCurrentPropertyValue(UIA.UIA_automation_element_property_identifers_mapping[key])
                 if isinstance(criteria[key], list):
                     for substr in criteria[key]:
@@ -415,49 +473,89 @@ class UIElement(object):
                 else:  # re.complile
                     if not (criteria[key].match(uielem_val) is not None):
                         return False
+
             return True
 
-        def _search_with_method(keys, start_winuiaelem, method_f):
+
+        def _search_with_method(start_winuiaelem, method_f):
             found_winuiaelem_arr_local = []
             next_winuiaelem = method_f(start_winuiaelem)
             while next_winuiaelem:
-                if _is_winuiaelem_suitable(keys, next_winuiaelem):
+                if _is_winuiaelem_suitable(next_winuiaelem):
                     if find_first_only:
                         raise FirstFoundEx(next_winuiaelem)
                     found_winuiaelem_arr_local.append(next_winuiaelem)
                 next_winuiaelem = method_f(next_winuiaelem)
             return found_winuiaelem_arr_local
 
-        def _descendants_range_level(keys, walker, winuiaelem, level):
+
+        '''
+        # Поиск по веткам элементов:
+        def _descendants_range_level(walker, winuiaelem, level=0):
             found_winuiaelem_arr = []
 
             if max_descend_level is None or level < max_descend_level:  # max_descend_level > 0; level от вызова к вызову +1 (растет от 0).
                 child_winuiaelem = walker.GetFirstChildElement(winuiaelem)
                 while child_winuiaelem:
-                    if _is_winuiaelem_suitable(keys, child_winuiaelem):
+                    if _is_winuiaelem_suitable(child_winuiaelem):
                         if find_first_only:
                             raise FirstFoundEx(child_winuiaelem)
                         found_winuiaelem_arr += [child_winuiaelem]
 
                     if max_descend_level is None or level < max_descend_level - 1:
-                        found_winuiaelem_arr += _descendants_range_level(keys, walker, child_winuiaelem, level+1)
+                        found_winuiaelem_arr += _descendants_range_level(walker, child_winuiaelem, level+1)
 
                     child_winuiaelem = walker.GetNextSiblingElement(child_winuiaelem)
 
+            return found_winuiaelem_arr'''
+
+        # Поиск по слоям сложенности:
+        def _descendants_range_level(walker, winuiaelem):
+            found_winuiaelem_arr   = []
+            current_level_todo_arr = []
+            next_level_todo_arr    = []
+            level                  = 0
+
+            def _add_to_next_level_todo(root_elem):
+                if max_descend_level is None or level < max_descend_level:
+                    elem   = walker.GetFirstChildElement(root_elem)
+                    while elem:
+                        next_level_todo_arr.append( elem )
+                        elem = walker.GetNextSiblingElement(elem)
+
+            def _goto_next_level():
+                return (next_level_todo_arr, [], level+1)
+
+            _add_to_next_level_todo(winuiaelem)
+            (current_level_todo_arr, next_level_todo_arr, level) = _goto_next_level()
+
+            while len(current_level_todo_arr) != 0:
+
+                while len(current_level_todo_arr) != 0:
+                    elem = current_level_todo_arr.pop(0)
+                    if _is_winuiaelem_suitable(elem):
+                        if find_first_only:
+                            raise FirstFoundEx(elem)
+                        found_winuiaelem_arr.append( child_winuiaelem )
+                    _add_to_next_level_todo(elem)
+
+                (current_level_todo_arr, next_level_todo_arr, level) = _goto_next_level()
+
             return found_winuiaelem_arr
 
-        def _descendants_exact_level(keys, walker, winuiaelem, level):
+
+        def _descendants_exact_level(walker, winuiaelem, level=0):
             if level < exact_level:  # exact_level > 0; level от вызова к вызову +1 (растет от 0).
                 found_winuiaelem_arr = []
                 child_winuiaelem = walker.GetFirstChildElement(winuiaelem)
                 while child_winuiaelem:
-                    # print '*', found_winuiaelem_arr, _descendants_exact_level(keys, walker, child_winuiaelem, level+1)
-                    found_winuiaelem_arr += _descendants_exact_level(keys, walker, child_winuiaelem, level+1)
+                    # print '*', found_winuiaelem_arr, _descendants_exact_level(walker, child_winuiaelem, level+1)
+                    found_winuiaelem_arr += _descendants_exact_level(walker, child_winuiaelem, level+1)
                     child_winuiaelem = walker.GetNextSiblingElement(child_winuiaelem)
                 return found_winuiaelem_arr
 
             elif level == exact_level:
-                if _is_winuiaelem_suitable(keys, winuiaelem):
+                if _is_winuiaelem_suitable(winuiaelem):
                     if find_first_only:
                         raise FirstFoundEx(winuiaelem)
                     return [winuiaelem]
@@ -468,9 +566,7 @@ class UIElement(object):
                                 tuple(map(str, [exact_level, level])))
         # - subroutines: end -
 
-        keys   = filter(lambda key: criteria[key] is not None, ['AutomationId', 'ClassName', 'Name'])
         walker = UIA.IUIAutomation_object.CreateTreeWalker(UIA.IUIAutomation_object.CreateTrueCondition())
-
         try:
             # Исключение FirstFoundEx используется как goto.
             if exact_level is not None:
@@ -486,88 +582,161 @@ class UIElement(object):
 
                 # Обработаем варианты поиска братьев-сестер:
                 elif exact_level == 0:
-                    found_winuiaelem_arr = _search_with_method(keys, self._winuiaelem, walker.GetNextSiblingElement)
+                    found_winuiaelem_arr = _search_with_method(self._winuiaelem, walker.GetNextSiblingElement)
                     if find_first_only and len(found_winuiaelem_arr) != 0:
                         raise FirstFoundEx(found_winuiaelem_arr[0])
-                    found_winuiaelem_arr += _search_with_method(keys, self._winuiaelem, walker.GetPreviousSiblingElement)
+                    found_winuiaelem_arr += _search_with_method(self._winuiaelem, walker.GetPreviousSiblingElement)
                     if find_first_only:
                         if len(found_winuiaelem_arr) == 0:
                             raise FirstFoundEx(None)
                         raise FirstFoundEx(found_winuiaelem_arr[0])
 
-                # Обработаем вариант поиска потомков (descendants):
+                # Обработаем вариант поиска потомков (descendants).
                 else:
-                    found_winuiaelem_arr = _descendants_exact_level(keys, walker, self._winuiaelem, 0)
+                    # Поиск по веткам элементов:
+                    found_winuiaelem_arr = _descendants_exact_level(walker, self._winuiaelem)
                     if find_first_only:
                         if len(found_winuiaelem_arr) == 0:
                             raise FirstFoundEx(None)
                         raise FirstFoundEx(found_winuiaelem_arr[0])
 
             else:
-                # Теперь обработаем вариант поиска потомков в диапазоне возможных вложенностей:
-                found_winuiaelem_arr = _descendants_range_level(keys, walker, self._winuiaelem, 0)
+                # Теперь обработаем вариант поиска потомков в диапазоне возможных вложенностей.
+                # Будем искать по слоям вложенности элементов, а не по веткам. Это немного сложнее сделать, но должно быть эффективнее.
+                found_winuiaelem_arr = _descendants_range_level(walker, self._winuiaelem)
 
         except FirstFoundEx as ex:
             if ex.winuiaelem is None:
                 if exception_on_find_fail:
-                    raise FindFailed('pikuli.UIElement.find: no one elements was found)')
+                    raise FindFailed('pikuli.UIElement.find: no one elements was found\n\tself = %s\n\tkwargs = %s\n\tcriteria = %s' % (repr(self), str(kwargs), str(criteria)))
+                p2c( 'Pikuli.ui_element.UIElement.find: %s has been found: None' % str(not_none_criteria))
                 return None
-            return _create_instance_of_suitable_class(ex.winuiaelem)
+            found_elem = _create_instance_of_suitable_class(ex.winuiaelem)
+            p2c( 'Pikuli.ui_element.UIElement.find: %s has been found: %s' % (str(not_none_criteria), repr(found_elem)))
+            return found_elem
 
         # В норме если мы тут, то не нашлось ни одного элемента или ищем все (если ищем только первый,
         # то должно было ппроизойти и перехватиться исключение FirstFoundEx).
         if len(found_winuiaelem_arr) == 0:
             if exception_on_find_fail:
-                raise FindFailed('pikuli.UIElement.find: no one elements was found)')
+                raise FindFailed('pikuli.UIElement.find: no one elements was found\n\tself = %s\n\tkwargs = %s\n\tcriteria = %s' % (repr(self), str(kwargs), str(criteria)))
             if find_first_only:
+                p2c( 'Pikuli.ui_element.UIElement.find: %s has been found: None' % str(not_none_criteria))
                 return None
+            p2c( 'Pikuli.ui_element.UIElement.find: %s has been found: []' % str(not_none_criteria))
             return []
 
         if find_first_only:
             raise('pikuli.UIElement.find [INTERNAL]: Strange! We should not be here: ' + str(getframeinfo(currentframe())))
 
-        return map(_create_instance_of_suitable_class, found_winuiaelem_arr)
+        found_elem = map(_create_instance_of_suitable_class, found_winuiaelem_arr)
+        p2c( 'Pikuli.ui_element.UIElement.find: %s has been found: %s' % (str(not_none_criteria), repr(found_elem)))
+        return found_elem
 
 
-    def name(self):
-        return self._winuiaelem.CurrentName
-
-
-    def value(self):
-        return self.get_pattern('LegacyIAccessiblePattern').Value
-
-
-    def reg(self, get_client_rect=True):
+    def reg(self, get_client_rect_by_hwnd=False):
         '''
         Возвращает Region для self-элемента HWNDElement.
-            -- get_client_rect = True:  через прстое Win32API запрашвается клиентская часть окна.
-               get_client_rect = False: через UIA запрашивается область элемента. К примеру для обычного окна это область внешней рамки.
-                                        То есть прямоуголник зависит от декорирования окна в Windows, так как включается не только клиентская часть.
+            -- get_client_rect_by_hwnd = True:  через прстое Win32API запрашвается клиентская часть окна.
+               get_client_rect_by_hwnd = False: через UIA запрашивается область элемента. К примеру для обычного окна это область внешней рамки.
+                                                То есть прямоуголник зависит от декорирования окна в Windows, так как включается не только клиентская часть.
         '''
         self._test4readiness()
 
-        if get_client_rect:
+        if get_client_rect_by_hwnd:
+            if self.hwnd is None or self.hwnd == 0:
+                raise Exception('pikuli.UIElemen.reg(...): \'%s\' has no hwnd, but get_client_rect_by_hwnd = True' % (repr(self)))
             # полчение размеров клменскй области окна
-            (_, _, wc, hc) = GetClientRect(self.hwnd)
+            (_, _, wc, hc) = win32gui.GetClientRect(self.hwnd)
             # получение координат левого верхнего угла клиенской области осносительно угла экрана
-            (xc, yc) = ClientToScreen(self.hwnd, (0, 0) )
-            self._reg = Region.Region(xc, yc, wc, hc, winctrl=self, title=self.name())
+            (xc, yc) = win32gui.ClientToScreen(self.hwnd, (0, 0) )
+            self._reg = Region.Region(xc, yc, wc, hc, winctrl=self, title=self.Name)
         else:
             rect = self._winuiaelem.GetCurrentPropertyValue(UIA.UIA_automation_element_property_identifers_mapping['BoundingRectangle'])
-            self._reg = Region.Region(*rect, winctrl=self, title=self.name())
+            try:
+                rect = map(int, rect)
+            except ValueError:
+                raise FailExit('pikuli.UIElemen.reg(...): can not round numbers in rect = %s' % str(rect))
+            self._reg = Region.Region(*rect, winctrl=self, title=self.Name)
 
         return self._reg
+
+
+    def wait_prop_chage(self, prop_name, timeout=None):
+        ''' TODO: events
+        IUIAutomation_object.AddFocusChangedEventHandler
+
+        from inspect import currentframe, getframeinfo, getargspec
+        import comtypes
+        import ctypes
+
+        print comtypes.POINTER(comtypes.c_int)()
+
+        import sys
+        sys.path.append(r'Z:\python-shared-modules')
+        from pikuli.ui_element import *
+        from pikuli.UIA import *
+
+        #print hasattr(UIA_wrapper, 'IUnknown')
+        #print hasattr(UIA_wrapper, 'IUIAutomationPropertyChangedEventHandler')
+        print '1>', filter(lambda f: 'uui' in f, dir(UIA_wrapper))
+        print '2>', filter(lambda f: 'uui' in f, dir(IUIAutomation_object))
+        print UIA_wrapper.IUIAutomation
+        print UIA_wrapper.CUIAutomation
+        print comtypes.POINTER(UIA_wrapper.IUIAutomationPropertyChangedEventHandler)()._iid_
+        print comtypes.POINTER(UIA_wrapper.IUIAutomationPropertyChangedEventHandler)()
+
+        """CreateObject(
+            comtypes.POINTER(UIA_wrapper.IUIAutomationPropertyChangedEventHandler)()._iid_,
+            None,
+            None,
+            UIA_wrapper.IUIAutomationPropertyChangedEventHandler
+        )"""
+
+        but = Button(0x500C6)
+        print IUIAutomation_object.AddPropertyChangedEventHandlerNativeArray(
+            but._winuiaelem,
+            UIA_wrapper.TreeScope_Element,
+            None,
+            comtypes.POINTER(UIA_wrapper.IUIAutomationPropertyChangedEventHandler)(),
+            [30005],
+            1
+        )
+        '''
+        prop_id = UIA.UIA_automation_element_property_identifers_mapping.get(prop_name, None)
+        if prop_id is None:
+            raise FailExit('...')
+        self.__wait_chages__prev_prop = self._winuiaelem.GetCurrentPropertyValue(prop_id)
+        wait_while(lambda: self.__wait_chages__prev_prop == self._winuiaelem.GetCurrentPropertyValue(prop_id), timeout)
+
+
+    def wait_prop_chage_to(self, prop_name, new_val, timeout=None):
+        prop_id = UIA.UIA_automation_element_property_identifers_mapping.get(prop_name, None)
+        if prop_id is None:
+            raise FailExit('...')
+        wait_while(lambda: new_val != self._winuiaelem.GetCurrentPropertyValue(prop_id), timeout)
+
+
+    def wait_appear(self, **kwargs):
+        timeout = kwargs.pop('timeout', None)
+        return wait_while(lambda: not self.find(**dict(kwargs, exception_on_find_fail=False)), timeout)
+
+    def wait_vanish(self, **kwargs):
+        timeout = kwargs.pop('timeout', None)
+        return wait_while(lambda: self.find(**dict(kwargs, exception_on_find_fail=False)), timeout)
 
 
 class _uielement_Control(UIElement):
 
     def __init__(self, *args, **kwargs):
-        required_patterns = kwargs.pop('required_patterns', [])
+        if hasattr(self, 'REQUIRED_PATTERNS'):
+            required_patterns = self.REQUIRED_PATTERNS
+        else:
+            required_patterns = []
         super(_uielement_Control, self).__init__(*args, **kwargs)
         for pattern in ['LegacyIAccessiblePattern'] + required_patterns:
             if self.get_property('Is'+pattern+'Available') is None:
-                raise Exception('pikuli.UIElement: UIElement Control \'%s\' does not support \'%s\'' % (self.name(), pattern))
-
+                raise Exception('pikuli.UIElement: UIElement Control \'%s\' does not support \'%s\'' % (self.Name, pattern))
 
     def is_unavailable(self):
         return bool(self.get_pattern('LegacyIAccessiblePattern').CurrentState & STATE_SYSTEM['UNAVAILABLE'])
@@ -580,10 +749,23 @@ class _uielement_Control(UIElement):
 
     def bring_to_front(self):
         self._test4readiness()
-        return hwnd_element.HWNDElement(self).bring_to_front()
+        return HWNDElement(self).bring_to_front()
 
 
-class MainWindow(_uielement_Control):
+class _ValuePattern_methods(UIElement):
+
+    def get_value(self):
+        return self.get_pattern('ValuePattern').CurrentValue
+
+    def set_value(self, text):
+        self.get_pattern('ValuePattern').SetValue(text)
+
+    def is_readoly(self):
+        return bool(self.get_pattern('ValuePattern').CurrentIsReadOnly)
+
+
+
+"""class MainWindow(_uielement_Control):
 
     def __init__(self, *args, **kwargs):
         '''
@@ -637,61 +819,57 @@ class MainWindow(_uielement_Control):
         # Нашли, что хотели => вызываем конструктор класса-предка:
         super(MainWindow, self).__init__(winuiaelem_arr.GetElement(i))
         if self.get_property('ControlType') != UIA.UIA_automation_control_type_identifiers_mapping['Window']:
-            raise Exception('pikuli.ui_element: UIElement Control \'%s\' is not a \'Window\' as desired.' % self.name())
+            raise Exception('pikuli.ui_element: UIElement Control \'%s\' is not a \'Window\' as desired.' % self.Name)"""
+
+
+class Window(_uielement_Control):
+
+    CONTROL_TYPE = 'Window'
 
 
 class Pane(_uielement_Control):
 
     CONTROL_TYPE = 'Pane'
 
-    def __init__(self, *args, **kwargs):
-        super(Button, self).__init__(*args, **kwargs)
-
 
 class Button(_uielement_Control):
 
     CONTROL_TYPE = 'Button'
 
-    def __init__(self, *args, **kwargs):
-        super(Button, self).__init__(*args, **kwargs)
+    def is_avaliable(self):
+        return not bool(self.get_pattern('LegacyIAccessiblePattern').CurrentState & STATE_SYSTEM['UNAVAILABLE'])
+
+    def is_unavaliable(self):
+        return bool(self.get_pattern('LegacyIAccessiblePattern').CurrentState & STATE_SYSTEM['UNAVAILABLE'])
 
 
 class CheckBox(_uielement_Control):
 
     CONTROL_TYPE = 'CheckBox'
 
-    def __init__(self, *args, **kwargs):
-        super(CheckBox, self).__init__(*args, **kwargs)
-
     def is_checked(self):
         return bool(self.get_pattern('LegacyIAccessiblePattern').CurrentState & STATE_SYSTEM['CHECKED'])
 
 
-class Edit(_uielement_Control):
+class Edit(_uielement_Control, _ValuePattern_methods):
 
     CONTROL_TYPE = 'Edit'
+    REQUIRED_PATTERNS = ['ValuePattern']
 
-    def __init__(self, *args, **kwargs):
-        super(Edit, self).__init__(*args, **dict(required_patterns=['ValuePattern'], **kwargs))
-        if self.get_property('ValuePattern') is None:
-            raise Exception('pikuli.ui_element: UIElement Control \'%s\' does not support \'ValuePattern\'.' % self.name())
 
-    def get_value(self):
-        return self.get_pattern('ValuePattern').CurrentValue
+class ComboBox(_uielement_Control, _ValuePattern_methods):
 
-    def set_value(self, text):
-        self.get_pattern('ValuePattern').SetValue(text)
-
-    def is_readoly(self):
-        return bool(self.get_pattern('ValuePattern').CurrentIsReadOnly)
+    CONTROL_TYPE = 'ComboBox'
+    REQUIRED_PATTERNS = ['ValuePattern']
 
 
 class Tree(_uielement_Control):
 
     CONTROL_TYPE = 'Tree'
+    REQUIRED_PATTERNS = ['SelectionPattern']
 
     def __init__(self, *args, **kwargs):
-        super(Tree, self).__init__(*args, **dict(required_patterns=['SelectionPattern'], **kwargs))
+        super(Tree, self).__init__(*args, **kwargs)
         self._last_tree = []
 
     def get_current_tree(self):
@@ -740,22 +918,23 @@ class Tree(_uielement_Control):
             item_name -- Cписок строк-названий эелементов дерева, пречисленных по их вложенности один в другой. Последняя строка в списке -- искомый элемент.
             force_expand -- разворачивать ли свернутые элементы на пути поиска искового.
         '''
+        p2c(item_name, force_expand)
         if not isinstance(item_name, list):
             raise Exception('pikuli.ui_element.Tree: not isinstance(item_name, list); item_name = %s' % str(item_name))
         if len(item_name) == 0:
             raise Exception('pikuli.ui_element.Tree: len(item_name) == 0')
         if len(item_name) == 1:
-            return self.find(Name=item_name[0], exact_level=1)
+            found_elem = self.find(Name=item_name[0], exact_level=1)
         else:
-            return self.find(Name=item_name[0], exact_level=1).find_item(item_name[1:], force_expand)
+            found_elem = self.find(Name=item_name[0], exact_level=1).find_item(item_name[1:], force_expand)
+        p2c( 'Pikuli.ui_element.Tree.find_item: %s has been found by criteria \'%s\'' % (str(item_name), repr(found_elem)))
+        return found_elem
 
 
 class TreeItem(_uielement_Control):
 
     CONTROL_TYPE = 'TreeItem'
-
-    def __init__(self, *args, **kwargs):
-        super(TreeItem, self).__init__(*args, **dict(required_patterns=['SelectionItemPattern', 'ExpandCollapsePattern'], **kwargs))
+    REQUIRED_PATTERNS = ['SelectionItemPattern', 'ExpandCollapsePattern']
 
     def is_selected(self):
         return bool(self.get_pattern('SelectionItemPattern').CurrentIsSelected)
@@ -779,13 +958,13 @@ class TreeItem(_uielement_Control):
         if self.has_subitems() and not self.is_expanded():
             self.get_pattern('ExpandCollapsePattern').Expand()
         if not self.is_expanded():
-            raise Exception('pikuli.ui_element: can not expand TreeItem \'%s\'' % self.name())
+            raise Exception('pikuli.ui_element: can not expand TreeItem \'%s\'' % self.Name)
 
     def collapse(self):
         if self.has_subitems() and not self.is_collapsed():
             self.get_pattern('ExpandCollapsePattern').Collapse()
         if not self.is_collapsed():
-            raise Exception('pikuli.ui_element: can not collapse TreeItem \'%s\'' % self.name())
+            raise Exception('pikuli.ui_element: can not collapse TreeItem \'%s\'' % self.Name)
 
     def list_current_subitems(self):
         ''' Вернут список дочерних узелков (1 уровень вложенности), если текущий узел развернут. Вернет [], если узел свернут полностью или частично. Вернет None, если нет дочерних узелков. '''
@@ -805,12 +984,14 @@ class TreeItem(_uielement_Control):
         if len(item_name) == 0:
             raise Exception('pikuli.ui_element.TreeItem: len(item_name) == 0')
         if not self.is_expanded() and not force_expand:
-            raise FindFailed('pikuli.ui_element.TreeItem: item \'%s\' was found, but it is not fully expanded. Try to set force_expand = True.\nSearch arguments:\n\titem_name = %s\n\tforce_expand = %s' % (self.name(), str(item_name), str(force_expand)))
+            raise FindFailed('pikuli.ui_element.TreeItem: item \'%s\' was found, but it is not fully expanded. Try to set force_expand = True.\nSearch arguments:\n\titem_name = %s\n\tforce_expand = %s' % (self.Name, str(item_name), str(force_expand)))
         self.expand()
         if len(item_name) == 1:
-            return self.find(Name=item_name[0], exact_level=1)
+            found_elem = self.find(Name=item_name[0], exact_level=1)
         else:
-            return self.find(Name=item_name[0], exact_level=1).find_item(item_name[1:], force_expand)
+            found_elem = self.find(Name=item_name[0], exact_level=1).find_item(item_name[1:], force_expand)
+        p2c( 'Pikuli.ui_element.TreeItem.find_item: \'%s\' has been found: %s' % (str(item_name), repr(found_elem)))
+        return found_elem
 
 
 class ANPropGrid_Table(_uielement_Control):
@@ -853,9 +1034,11 @@ class ANPropGrid_Table(_uielement_Control):
                 row.expand()
                 row = row.find(Name=nested_name, exact_level=0, exception_on_find_fail=False)  # Так функция сперва изет Next, а потом -- Previous. Т.о., максимальная скорость (если строки не найдется, то фейл теста -- можно и потратить время на previous-поиск)
             _check_row(row)
-            return row
+            found_elem = row
         else:
-            return self.find(Name=row_name, exact_level=1)
+            found_elem = self.find(Name=row_name, exact_level=1)
+        p2c( 'Pikuli.ui_element.ANPropGrid_Table.find_row: \'%s\' has been found: %s' % (str(row_name), repr(found_elem)))
+        return found_elem
 
 
 class ANPropGrid_Row(_uielement_Control):
@@ -864,9 +1047,6 @@ class ANPropGrid_Row(_uielement_Control):
 
     CONTROL_TYPE = 'Custom'
     LEGACYACC_ROLE = 'ROW'  # Идентификатор из ROLE_SYSTEM
-
-    def __init__(self, *args, **kwargs):
-        super(ANPropGrid_Row, self).__init__(*args, **kwargs)
 
     def has_subrows(self):
         current_state = self.get_pattern('LegacyIAccessiblePattern').CurrentState
@@ -891,13 +1071,13 @@ class ANPropGrid_Row(_uielement_Control):
         if self.is_collapsed():
             self.get_pattern('LegacyIAccessiblePattern').DoDefaultAction()
         if not self.is_expanded():
-            raise Exception('pikuli.ANPropGrid_Row.expand: string \'%s\' was not expanded.' % self.name())
+            raise Exception('pikuli.ANPropGrid_Row.expand: string \'%s\' was not expanded.' % self.Name)
 
     def collase(self):
         if self.is_expanded():
             self.get_pattern('LegacyIAccessiblePattern').DoDefaultAction()
         if not self.is_collapsed():
-            raise Exception('pikuli.ANPropGrid_Row.expand: string \'%s\' was not collapsed.' % self.name())
+            raise Exception('pikuli.ANPropGrid_Row.expand: string \'%s\' was not collapsed.' % self.Name)
 
     def get_value(self):
         return self.get_pattern('LegacyIAccessiblePattern').CurrentValue

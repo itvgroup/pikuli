@@ -25,7 +25,7 @@ comtypes.client.GetModule('oleacc.dll')             # Что-то там наг�
 from comtypes.gen.Accessibility import IAccessible  # ... и теперь чать этого импортируем
 
 import Region
-from _functions import p2c
+from _functions import p2c, wait_while, wait_while_not
 from _exceptions import *
 import ui_element
 
@@ -122,6 +122,7 @@ def _find_window_by_process_name_and_title(proc_name, in_title):
     return (extra['pid'], extra['hwnd'])
 
 
+"""
 def _wait_for(func, timeout):
     DELAY_BETWEEN_ATTEMTS = 0.5
     elaps_time = 0
@@ -134,7 +135,7 @@ def _wait_for(func, timeout):
             return False
         time.sleep(DELAY_BETWEEN_ATTEMTS)
         elaps_time += DELAY_BETWEEN_ATTEMTS
-
+"""
 
 
 class HWNDElement(object):
@@ -378,11 +379,11 @@ class HWNDElement(object):
         return _is_visible(self.hwnd)
 
     def wait_for_visible(self, timeout=5):
-        if not _wait_for(self.is_visible, timeout):
+        if not wait_while_not(self.is_visible, timeout):
             raise Exception('pikuli.HWNDElement: wait_for_visible(...) of %s was failed' % str(self))
 
     def wait_for_invisible(self, timeout=5):
-        if not _wait_for(lambda: not self.is_visible(), timeout):
+        if not wait_while(self.is_visible, timeout):
             raise Exception('pikuli.HWNDElement: wait_for_invisible(...) of %s was failed' % str(self))
 
 
@@ -415,11 +416,11 @@ class HWNDElement(object):
             return bool(SendMessage(self.hwnd, BM_GETCHECK, 0, 0))
 
     def wait_for_button_checked(self, timeout=5):
-        if not _wait_for(self.is_button_checked, timeout):
+        if not wait_while_not(self.is_button_checked, timeout):
             raise Exception('pikuli.HWNDElement: wait_for_button_checked(...) of %s was failed' % str(self))
 
     def wait_for_button_unchecked(self, timeout=5):
-        if not _wait_for(lambda: not self.is_button_checked(), timeout):
+        if not wait_while(self.is_button_checked, timeout):
             raise Exception('pikuli.HWNDElement: wait_for_button_unchecked(...) of %s was failed' % str(self))
 
 
@@ -439,11 +440,11 @@ class HWNDElement(object):
             raise Exception('pikuli.HWNDElement: is_button_marked: Non-HWNDElements control is unsupported.')
 
     def wait_for_button_marked(self, timeout=5):
-        if not _wait_for(self.is_button_marked, timeout):
+        if not wait_while_not(self.is_button_marked, timeout):
             raise Exception('pikuli.HWNDElement: wait_for_button_marked(...) of %s was failed' % str(self))
 
     def wait_for_button_unmarked(self, timeout=5):
-        if not _wait_for(lambda: not self.is_button_marked(), timeout):
+        if not wait_while(self.is_button_marked, timeout):
             raise Exception('pikuli.HWNDElement: wait_for_button_unmarked(...) of %s was failed' % str(self))
 
 

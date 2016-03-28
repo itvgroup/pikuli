@@ -50,10 +50,18 @@ if IUIAutomation_object is None:
 if type_IUIAutomationElement is None:
     raise Exception('pikuli.UIA: can not obtain class \'IUIAutomationElement\'')
 
+# Проверим, что доступны методы работы с событиями:
+IUIAutomation_methods_events = \
+    ['AddFocusChangedEventHandler', 'AddPropertyChangedEventHandler', 'AddPropertyChangedEventHandlerNativeArray', 'AddStructureChangedEventHandler',
+     'RemoveAutomationEventHandler', 'RemoveFocusChangedEventHandler', 'RemovePropertyChangedEventHandler', 'RemoveStructureChangedEventHandler', 'RemoveAllEventHandlers']
+for method in IUIAutomation_methods_events:
+    if not hasattr(IUIAutomation_object, method):
+        raiseException('pikuli.UIA: \'IUIAutomation_object\' does not support \'%s\' method to deal with events.' % method)
 
 ##############################
 #UI Automation Enumerations
 #http://msdn.microsoft.com/en-us/library/windows/desktop/ee671210(v=vs.85).aspx
+# Структура будет заполнятся занчениями ниже после проверки их существования в системе.
 ##############################
 UIA_enums = {
 "ActiveEnd"                 : {
