@@ -285,10 +285,16 @@ class UIElement(object):
 
             self.pid   = self._winuiaelem.CurrentProcessId
             self.hwnd  = self._winuiaelem.CurrentNativeWindowHandle
+            self.proc_name = None
             for proc in psutil.process_iter():
-                if proc.pid == self._winuiaelem.CurrentProcessId:
-                    self.proc_name = proc.name()
-                    break
+                try:
+                    if proc.pid == self._winuiaelem.CurrentProcessId:
+                        self.proc_name = proc.name()
+                        break
+                except psutil.NoSuchProcess:
+                    pass
+            if self.proc_name is None:
+                raise Exception('pikuli.ui_element.UIElement.__init__(): self.proc_name is None')
 
     def __getattr__(self, name):
         '''
@@ -431,12 +437,18 @@ class UIElement(object):
         criteria['ControlType'] = val
 
         val = kwargs.pop('ProcessId', None)
-        if val is not None and isinstance(val, str):
-            not_none_criteria['ProcessId'] = val
-            for proc in psutil.process_iter():
-                if val == proc.name():
-                    val = proc.pid
-                    break
+        if val is not None:
+            if isinstance(val, str):
+                not_none_criteria['ProcessId'] = val
+                for proc in psutil.process_iter():
+                    try:
+                        if val == proc.name():
+                            val = proc.pid
+                            break
+                    except psutil.NoSuchProcess:
+                        pass
+            if isinstance(val, str):
+                raise Exception('pikuli.ui_element.UIElement.find(): can not find process by its name; ProcessId = \'%s\'' % str(val))
         criteria['ProcessId'] = val
 
 

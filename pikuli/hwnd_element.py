@@ -107,9 +107,12 @@ def _find_window_by_process_name_and_title(proc_name, in_title):
 
     extra = {'in_title': in_title}
     for proc in psutil.process_iter():
-        if proc.name() == proc_name:
-            extra.update({'pid': proc.pid})
-            break
+        try:
+            if proc.name() == proc_name:
+                extra.update({'pid': proc.pid})
+                break
+        except psutil.NoSuchProcess:
+            pass
     if extra is None:
         raise FindFailed('pikuli.HWNDElement: can not find process of \'%s\'' % str(proc_name))
 
@@ -190,9 +193,12 @@ class HWNDElement(object):
 
             self.proc_name = None
             for proc in psutil.process_iter():
-                if self.pid == proc.pid:
-                    self.proc_name = proc.name()
-                    break
+                try:
+                    if self.pid == proc.pid:
+                        self.proc_name = proc.name()
+                        break
+                except psutil.NoSuchProcess:
+                    pass
             if self.proc_name is None:
                 raise FindFailed('pikuli.HWNDElement: can not find name of process with PID = %s' % str(self.pid))
 
