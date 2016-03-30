@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 
 '''
    Region - прямоугольная область экрана, которая определяется координатами левого верхнего угла, шириной и высотой.
@@ -15,7 +15,7 @@ import _functions
 from _exceptions import *
 from Pattern import *
 from Location import *
-import winforms
+# import winforms
 import datetime
 import os
 
@@ -46,7 +46,7 @@ class Region(object):
             title:
                 строка     -- Идентификатор для человека (просто строка)
                 id         -- Идентификатор для использования в коде
-                winctrl    -- None или указатель на экземпляр класса WindowsForm
+                winctrl    -- None или указатель на экземпляр класса HWNDElement
 
         Дополнительная справка:
             Внутренние поля класса:
@@ -78,7 +78,7 @@ class Region(object):
         self._winctrl = kwargs.get('winctrl', None)
 
         # # Здесь будет храниться экземпляр класса winforms, если Region найдем с помощью win32api:
-        # self.winctrl = winforms.WindowsForm()
+        # self.winctrl = winforms.HWNDElement()
 
         try:
             self.setRect(*args, **kwargs)
@@ -420,7 +420,13 @@ class Region(object):
 
 
     def find(self, ps, timeout=None):
-        ''' Ждет, пока паттерн не появится. timeout может быть положительным числом или None. timeout = 0 означает однократную проверку; None -- использование дефолтного значения.
+        '''
+        Ждет, пока паттерн не появится.
+
+        timeout может быть положительным числом или None:
+            timeout = 0     --  однократная проверка
+            timeout = None  --  использование дефолтного значения
+
         Возвращает Region, если паттерн появился, и исключение FindFailed, если нет. '''
         #p2c('Pikuli.find: try to find %s' % str(ps))
         try:
@@ -497,13 +503,13 @@ class Region(object):
     def doubleClick(self):
         self.getCenter().doubleClick()
 
-    def type(self, text, m = None, click = True):
+    def type(self, text, modifiers=None, click = True):
         ''' Не как в Sikuli '''
-        self.getCenter().type(text, m, click)
+        self.getCenter().type(text, modifiers=modifiers, click=click)
 
-    def enter_text(self, text, click=True):
+    def enter_text(self, text, modifiers=None, click=True):
         ''' Не как в Sikuli '''
-        self.getCenter().enter_text(text, click)
+        self.getCenter().enter_text(text, modifiers=modifiers, click=click)
 
     def scroll(self, direction = 1, count = 1, click = True):
         self.getCenter().scroll(direction, count, click)

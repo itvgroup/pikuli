@@ -23,9 +23,36 @@ DELAY_KBD_KEY_PRESS = 0.020
 
 
 def p2c(*msgs):
-    for m in msgs:
-        sys.__stdout__.write('*** ' + str(m) + '\n')
-    sys.__stdout__.flush()
+    try:
+        addgap = ''
+        for m in msgs:
+            sys.__stdout__.write('*** ' + addgap + str(m) + '\n')
+        sys.__stdout__.flush()
+    except Exception as ex:
+        print('[warn] error in function \'p2c\': %s' % str(ex))
+        print(' '.join(map(str, msgs)))
+
+
+def wait_while(f_logic, timeout):
+    DELAY_BETWEEN_ATTEMTS = 0.5
+    elaps_time = 0
+    while f_logic():
+        if timeout is not None and elaps_time > timeout:
+            return False
+        time.sleep(DELAY_BETWEEN_ATTEMTS)
+        elaps_time += DELAY_BETWEEN_ATTEMTS
+    return True
+
+
+def wait_while_not(f_logic, timeout):
+    DELAY_BETWEEN_ATTEMTS = 0.5
+    elaps_time = 0
+    while not f_logic():
+        if timeout is not None and elaps_time > timeout:
+            return False
+        time.sleep(DELAY_BETWEEN_ATTEMTS)
+        elaps_time += DELAY_BETWEEN_ATTEMTS
+    return True
 
 
 def addImagePath(path):
@@ -270,8 +297,7 @@ def type_text(s, modifiers=None):
         press_key(char, 0)
         release_key(char, 0)
 
-    if not isinstance(s, str):
-        raise FailExit('incorrect string = \'%s\'' % str(s))
+    s = str(s)
 
     if modifiers is not None:
         if not isinstance(modifiers, int):
