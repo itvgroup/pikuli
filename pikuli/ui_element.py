@@ -322,11 +322,12 @@ class UIElement(object):
         return docstring
 
     def __repr__(self):
+        name = repr(self.Name)  #.encode('utf-8')
         if type(self).__name__ in CONTROLS_CLASSES:
-            return '<%s \'%s\',\'%s\'>' % (type(self).__name__, self.Name, getattr(self, 'AutomationId', ''))
+            return u'<%s \'%s\',\'%s\'>' % (type(self).__name__, name, getattr(self, 'AutomationId', ''))
         control_type_id = self.get_property('ControlType')
         legacy_role_id  = self.get_pattern('LegacyIAccessiblePattern').CurrentRole
-        return '<%s %s,%s,\'%s\',\'%s\'>' % (type(self).__name__, UIA.UIA_automation_control_type_identifiers_mapping_rev.get(control_type_id, control_type_id), ROLE_SYSTEM_rev.get(legacy_role_id, legacy_role_id), self.Name, getattr(self, 'AutomationId', ''))
+        return u'<%s %s,%s,\'%s\',\'%s\'>' % (type(self).__name__, UIA.UIA_automation_control_type_identifiers_mapping_rev.get(control_type_id, control_type_id), ROLE_SYSTEM_rev.get(legacy_role_id, legacy_role_id), name, getattr(self, 'AutomationId', ''))
 
     def get_property(self, name):
         if not hasattr(self, '_winuiaelem'):
@@ -509,7 +510,7 @@ class UIElement(object):
 
             return found_winuiaelem_arr'''
 
-        # Поиск по слоям сложенности:
+        # Поиск по слоям вложенности:
         def _descendants_range_level(walker, winuiaelem):
             found_winuiaelem_arr   = []
             current_level_todo_arr = []
@@ -536,8 +537,13 @@ class UIElement(object):
                     if _is_winuiaelem_suitable(elem):
                         if find_first_only:
                             raise FirstFoundEx(elem)
-                        found_winuiaelem_arr.append( child_winuiaelem )
+                        found_winuiaelem_arr.append( elem )
                     _add_to_next_level_todo(elem)
+
+                    """try:
+                        p2c(repr(UIElement(elem)))
+                    except:
+                        p2c('-- some exception --')"""
 
                 (current_level_todo_arr, next_level_todo_arr, level) = _goto_next_level()
 
@@ -630,7 +636,7 @@ class UIElement(object):
             raise('pikuli.UIElement.find [INTERNAL]: Strange! We should not be here: ' + str(getframeinfo(currentframe())))
 
         found_elem = map(_create_instance_of_suitable_class, found_winuiaelem_arr)
-        p2c( 'Pikuli.ui_element.UIElement.find: %s has been found: %s' % (str(not_none_criteria), repr(found_elem)))
+        p2c('Pikuli.ui_element.UIElement.find: %s has been found: %s' % (str(not_none_criteria), repr(found_elem)))
         return found_elem
 
 
@@ -758,7 +764,7 @@ class _ValuePattern_methods(UIElement):
         return self.get_pattern('ValuePattern').CurrentValue
 
     def set_value(self, text):
-        self.get_pattern('ValuePattern').SetValue(text)
+        self.get_pattern('ValuePattern').SetValue(str(text))
 
     def is_readoly(self):
         return bool(self.get_pattern('ValuePattern').CurrentIsReadOnly)
@@ -849,6 +855,9 @@ class CheckBox(_uielement_Control):
 
     def is_checked(self):
         return bool(self.get_pattern('LegacyIAccessiblePattern').CurrentState & STATE_SYSTEM['CHECKED'])
+
+    def is_unchecked(self):
+        return not bool(self.get_pattern('LegacyIAccessiblePattern').CurrentState & STATE_SYSTEM['CHECKED'])
 
 
 class Edit(_uielement_Control, _ValuePattern_methods):
