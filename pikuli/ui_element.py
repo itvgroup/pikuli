@@ -432,7 +432,7 @@ class UIElement(object):
         if val is not None:
             not_none_criteria['ControlType'] = val
             if val not in UIA.UIA_automation_control_type_identifiers_mapping:
-                raise Exception('pikuli.UIElement.find: ControlType is not None (\'%s\'), but not from UIA.UIA_automation_control_type_identifiers_mapping' % ControlType)
+                raise Exception('pikuli.UIElement.find: ControlType is not None (\'%s\'), but not from UIA.UIA_automation_control_type_identifiers_mapping' % val)
             val = UIA.UIA_automation_control_type_identifiers_mapping[val]
         criteria['ControlType'] = val
 
@@ -878,10 +878,42 @@ class Edit(_uielement_Control, _ValuePattern_methods):
     REQUIRED_PATTERNS = ['ValuePattern']
 
 
+class Text(_uielement_Control, _ValuePattern_methods):
+
+    CONTROL_TYPE = 'Text'
+    REQUIRED_PATTERNS = ['ValuePattern']
+
+
 class ComboBox(_uielement_Control, _ValuePattern_methods):
 
     CONTROL_TYPE = 'ComboBox'
     REQUIRED_PATTERNS = ['ValuePattern']
+
+    def list_items(self):
+        '''
+            Если меню открыто, то вренут списко объектов, описывающих каждый пункт меню (теоретически, это может быть пустой список).
+            Если меню закрыто, то вернет None.
+        '''
+        l = self.find(ControlType='List', exact_level=1, exception_on_find_fail=False)
+        if l is None:
+            return None
+        return l.list_items()
+
+    def name_of_choosed(self):
+        ''' Вернет тектсовую строку того пукта выпдающего меню, который выбран. '''
+        return self.find(ControlType='Text', exact_level=1).get_value()
+
+    def get_item_by_name(self, item_name):
+        ''' Если список ракрыт, то вернут подходящий объект ListItem. Если объекта не нашлось в списке или список свернут, то будет исключение FindFailed. '''
+        item_name = str(item_name)
+        l = self.find(ControlType='List', exact_level=1, exception_on_find_fail=False)
+        if l is None:
+            raise FindFailed('List of ComboBox %s was not found. Is this list collapsed?' % repr(self))
+        for i in l.find_all(ControlType='ListItem', exact_level=1):
+            if i.Name == item_name:
+                return i
+        raise FindFailed('Item \'%s\' was not found in list of ComboBox %s.' % (item_name, repr(self)))
+
 
 
 class Tree(_uielement_Control):
@@ -1105,6 +1137,23 @@ class ANPropGrid_Row(_uielement_Control):
 
     def set_value(self, text):
         self.get_pattern('LegacyIAccessiblePattern').SetValue(text)
+
+
+
+class List(_uielement_Control):
+    ''' Неки список из ListItem'ов. '''
+
+    CONTROL_TYPE = 'List'
+
+    def list_items(self):
+        return self.find_all(ControlType='ListItem', exact_level=1)
+
+
+class ListItem(_uielement_Control):
+    ''' Элементы списка ListItem. '''
+
+    CONTROL_TYPE = 'ListItem'
+
 
 
 locals_keys = locals().keys()
