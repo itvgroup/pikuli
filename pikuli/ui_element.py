@@ -767,7 +767,7 @@ class _uielement_Control(UIElement):
 
     def bring_to_front(self):
         self._test4readiness()
-        return HWNDElement(self).bring_to_front()
+        return hwnd_element.HWNDElement(self).bring_to_front()
 
 
 class _ValuePattern_methods(UIElement):
