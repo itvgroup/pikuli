@@ -18,9 +18,6 @@ from ctypes import byref
 import comtypes
 import comtypes.client
 
-import pywinauto
-win32defines = pywinauto.win32defines
-
 comtypes.client.GetModule('oleacc.dll')             # Что-то там нагенерирует ...
 from comtypes.gen.Accessibility import IAccessible  # ... и теперь чать этого импортируем
 
@@ -487,6 +484,10 @@ class HWNDElement(object):
 
 
 
+"""
+import pywinauto
+win32defines = pywinauto.win32defines
+
 '''
 -= Tree View: =-
     pywinauto.controls.common_controls.TreeViewWrapper (https://github.com/pywinauto/pywinauto)
@@ -498,4 +499,4 @@ def _treeview_element__reg(self):
     rect = self.Rectangle()
     return Region(rect.left, rect.top, rect.width, rect.height)
 setattr(pywinauto.controls.common_controls._treeview_element, 'reg', _treeview_element__reg)
-
+"""
