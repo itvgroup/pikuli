@@ -91,15 +91,43 @@ def _screen_n_to_mon_descript(n):
     return m
 
 
-def highlight_region(x, y, w, h):
-    area = win32gui.GetDC(0)
+def highlight_region(x, y, w, h, delay=0.5):
+    def _cp_boundary(dest_dc, dest_x0, dest_y0, src_dc, src_x0, src_y0, w, h):
+        win32gui.BitBlt(dest_dc, dest_x0+0,   dest_y0+0,   w,   1,   src_dc, src_x0,     src_y0,     win32con.SRCCOPY)
+        win32gui.BitBlt(dest_dc, dest_x0+0,   dest_y0+h-1, w,   1,   src_dc, src_x0,     src_y0+h-1, win32con.SRCCOPY)
+        win32gui.BitBlt(dest_dc, dest_x0+0,   dest_y0+1,   1,   h-2, src_dc, src_x0,     src_y0,     win32con.SRCCOPY)
+        win32gui.BitBlt(dest_dc, dest_x0+w-1, dest_y0+1,   1,   h-2, src_dc, src_x0+w-1, src_y0,     win32con.SRCCOPY)
+
+    [x, y, w, h] = map(int, [x, y, w, h])
+    delay = float(delay)
+
+    n = _scr_num_of_point(x, y)
+    scr_hdc = win32gui.CreateDC('DISPLAY', _screen_n_to_monitor_name(n), None)
+
+    mem_hdc = win32gui.CreateCompatibleDC(scr_hdc)  # New context of memory device. This one is compatible with 'scr_hdc'
+    new_bitmap_h = win32gui.CreateCompatibleBitmap(scr_hdc, w+2, h+2)
+    win32gui.SelectObject(mem_hdc, new_bitmap_h)    # Returns 'old_bitmap_h'. It will be deleted automatically.
+
+    # Сохраняем рамочку в 1 пиксель (она вокруг области (x,y,w,h)):
+    (_, _, m_rect) = _screen_n_to_mon_descript(n)
+    _cp_boundary(mem_hdc, 0, 0, scr_hdc, x-m_rect[0]-1, y-m_rect[1]-1, w+2, h+2)
+
+    # Рисуем подсветку области:
+    area = scr_hdc  # win32gui.GetDC(0)
     # brush = win32gui.CreateSolidBrush(win32api.RGB(255,0,0))
     win32gui.SelectObject(area, win32gui.GetStockObject(win32con.NULL_BRUSH))
     pen = win32gui.CreatePen(win32con.PS_DOT, 1, win32api.RGB(148, 0, 0))
     win32gui.SelectObject(area, pen)
     for i in range(1, 2):
-        win32gui.Rectangle(area, int(x) - 1, int(y) - 1, int(x) + int(w) + 1, int(y) + int(h) + 1)
+        win32gui.Rectangle(area, x-1, y-1, x+w+1, y+h+1)
     win32gui.ReleaseDC(area, 0)
+
+    # Восстаналиваема рамочку:
+    time.sleep(delay)
+    _cp_boundary(scr_hdc, x-m_rect[0]-1, y-m_rect[1]-1, mem_hdc, 0, 0, w+2, h+2)
+
+    # TODO: send redraw signal
+
 
 def _grab_screen(x, y, w, h):
     '''
@@ -118,6 +146,8 @@ def _grab_screen(x, y, w, h):
     # http://stackoverflow.com/questions/3291167/how-to-make-screen-screenshot-with-win32-in-c
     # http://stackoverflow.com/questions/18733486/python-win32api-bitmap-getbitmapbits
     # http://stackoverflow.com/questions/24129253/screen-capture-with-opencv-and-python-2-7
+    # http://vsokovikov.narod.ru/New_MSDN_API/Bitmaps/captur_image.htm
+    #
     # Как узнать рамер экрана:
     #   Варинат 1:
     #       (_, _, scr_rect) = _screen_n_to_mon_descript(n)
@@ -125,6 +155,7 @@ def _grab_screen(x, y, w, h):
     #   Варинат 2:
     #       w = win32print.GetDeviceCaps(scr_hdc, win32con.HORZRES)
     #       h = win32print.GetDeviceCaps(scr_hdc, win32con.VERTRES)
+    [x, y, w, h] = map(int, [x, y, w, h])
     n = _scr_num_of_point(x, y)
     scr_hdc = win32gui.CreateDC('DISPLAY', _screen_n_to_monitor_name(n), None)
 
@@ -258,25 +289,25 @@ class Key(object):
     PAGE_UP    = chr(0) + chr(win32con.VK_PRIOR)
     PAGE_DOWN  = chr(0) + chr(win32con.VK_NEXT)
     BACKSPACE  = chr(0) + chr(win32con.VK_BACK)
-    F1    = chr(0) + chr(win32con.VK_F1)
-    F2    = chr(0) + chr(win32con.VK_F2)
-    F3    = chr(0) + chr(win32con.VK_F3)
-    F4    = chr(0) + chr(win32con.VK_F4)
-    F5    = chr(0) + chr(win32con.VK_F5)
-    F6    = chr(0) + chr(win32con.VK_F6)
-    F7    = chr(0) + chr(win32con.VK_F7)
-    F8    = chr(0) + chr(win32con.VK_F8)
-    F9    = chr(0) + chr(win32con.VK_F9)
-    F10   = chr(0) + chr(win32con.VK_F10)
-    F11   = chr(0) + chr(win32con.VK_F11)
-    F12   = chr(0) + chr(win32con.VK_F12)
+    F1         = chr(0) + chr(win32con.VK_F1)
+    F2         = chr(0) + chr(win32con.VK_F2)
+    F3         = chr(0) + chr(win32con.VK_F3)
+    F4         = chr(0) + chr(win32con.VK_F4)
+    F5         = chr(0) + chr(win32con.VK_F5)
+    F6         = chr(0) + chr(win32con.VK_F6)
+    F7         = chr(0) + chr(win32con.VK_F7)
+    F8         = chr(0) + chr(win32con.VK_F8)
+    F9         = chr(0) + chr(win32con.VK_F9)
+    F10        = chr(0) + chr(win32con.VK_F10)
+    F11        = chr(0) + chr(win32con.VK_F11)
+    F12        = chr(0) + chr(win32con.VK_F12)
 
 
 def type_text(s, modifiers=None):
     '''
     Особенности:
-        -- Если установлены modifiers, то не будет различия между строчными и загалвными буксами.
-           Т.е., будет игнорироваться необходимость нажимать Shift, если есть заглавные символы.
+        -- Если установлены modifiers, то не будет различия между строчными и загалавными буквами.
+           Т.е., будет если в строке "s" есть заглавные буквы, то Shift нажиматься не будет.
     '''
     # https://mail.python.org/pipermail/python-win32/2013-July/012862.html
     # https://msdn.microsoft.com/ru-ru/library/windows/desktop/ms646304(v=vs.85).aspx ("MSDN: keybd_event function")

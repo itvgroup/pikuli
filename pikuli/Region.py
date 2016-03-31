@@ -410,13 +410,11 @@ class Region(object):
             time.sleep(DELAY_BETWEEN_CV_ATTEMPT)
             elaps_time += DELAY_BETWEEN_CV_ATTEMPT
             if elaps_time >= timeout:
-                failedImages = ''
-                for p in ps:
-                    failedImages += p.getFilename().split('\\')[-1] + ','
+                failedImages = ', '.join(map(lambda p: p.getFilename().split('\\')[-1], ps))
                 if not os.path.exists(os.environ['TEMP'] + '\\find_failed'):
                     os.mkdir(os.environ['TEMP'] + '\\find_failed')
                 self.save_as_jpg(os.environ['TEMP'] + '\\find_failed\\' + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + '_' + str(failedImages) + '.jpg')
-                raise FindFailed('Unable to find: %s' % failedImages )
+                raise FindFailed('Unable to find \'%s\' in %s' % (failedImages, str(self)) )
 
 
     def find(self, ps, timeout=None):
