@@ -3,7 +3,9 @@
 import psutil
 from inspect import currentframe, getframeinfo, isclass
 import time
+import datetime
 
+import _ctypes
 import win32gui
 
 import UIA
@@ -12,6 +14,11 @@ from _functions import p2c, wait_while
 from _exceptions import *
 import hwnd_element
 from oleacc_h import *
+
+
+COR_E_TIMEOUT = 0x80131505  # "A lot of HRESULT codes…" (https://blogs.msdn.microsoft.com/eldar/2007/04/03/a-lot-of-hresult-codes/)
+
+TIMEOUT_UIA_ELEMENT_SEARCH = 30
 
 
 class DriverException(Exception):
@@ -585,53 +592,65 @@ class UIElement(object):
         # - subroutines: end -
 
         walker = UIA.IUIAutomation_object.CreateTreeWalker(UIA.IUIAutomation_object.CreateTrueCondition())
-        try:
-            # Исключение FirstFoundEx используется как goto.
-            if exact_level is not None:
-                # Обработаем варианты поиска предков:
-                if exact_level < 0:
-                    winuiaelem = self._winuiaelem
-                    for level in range(-exact_level):
-                        winuiaelem = walker.GetParentElement(winuiaelem)
-                    if find_first_only:
-                        # TODO: можом получить структуру winuiaelem, указывающую на ptr=0, если нет родителя заданного уровня. Надо обработать, но не знаю пока как.
-                        raise FirstFoundEx(winuiaelem)
-                    found_winuiaelem_arr = [winuiaelem]
+        t0 = datetime.datetime.today()
+        while True:
+            try:
+                # Исключение FirstFoundEx используется как goto.
+                if exact_level is not None:
+                    # Обработаем варианты поиска предков:
+                    if exact_level < 0:
+                        winuiaelem = self._winuiaelem
+                        for level in range(-exact_level):
+                            winuiaelem = walker.GetParentElement(winuiaelem)
+                        if find_first_only:
+                            # TODO: можом получить структуру winuiaelem, указывающую на ptr=0, если нет родителя заданного уровня. Надо обработать, но не знаю пока как.
+                            raise FirstFoundEx(winuiaelem)
+                        found_winuiaelem_arr = [winuiaelem]
 
-                # Обработаем варианты поиска братьев-сестер:
-                elif exact_level == 0:
-                    found_winuiaelem_arr = _search_with_method(self._winuiaelem, walker.GetNextSiblingElement)
-                    if find_first_only and len(found_winuiaelem_arr) != 0:
-                        raise FirstFoundEx(found_winuiaelem_arr[0])
-                    found_winuiaelem_arr += _search_with_method(self._winuiaelem, walker.GetPreviousSiblingElement)
-                    if find_first_only:
-                        if len(found_winuiaelem_arr) == 0:
-                            raise FirstFoundEx(None)
-                        raise FirstFoundEx(found_winuiaelem_arr[0])
+                    # Обработаем варианты поиска братьев-сестер:
+                    elif exact_level == 0:
+                        found_winuiaelem_arr = _search_with_method(self._winuiaelem, walker.GetNextSiblingElement)
+                        if find_first_only and len(found_winuiaelem_arr) != 0:
+                            raise FirstFoundEx(found_winuiaelem_arr[0])
+                        found_winuiaelem_arr += _search_with_method(self._winuiaelem, walker.GetPreviousSiblingElement)
+                        if find_first_only:
+                            if len(found_winuiaelem_arr) == 0:
+                                raise FirstFoundEx(None)
+                            raise FirstFoundEx(found_winuiaelem_arr[0])
 
-                # Обработаем вариант поиска потомков (descendants).
+                    # Обработаем вариант поиска потомков (descendants).
+                    else:
+                        # Поиск по веткам элементов:
+                        found_winuiaelem_arr = _descendants_exact_level(walker, self._winuiaelem)
+                        if find_first_only:
+                            if len(found_winuiaelem_arr) == 0:
+                                raise FirstFoundEx(None)
+                            raise FirstFoundEx(found_winuiaelem_arr[0])
+
                 else:
-                    # Поиск по веткам элементов:
-                    found_winuiaelem_arr = _descendants_exact_level(walker, self._winuiaelem)
-                    if find_first_only:
-                        if len(found_winuiaelem_arr) == 0:
-                            raise FirstFoundEx(None)
-                        raise FirstFoundEx(found_winuiaelem_arr[0])
+                    # Теперь обработаем вариант поиска потомков в диапазоне возможных вложенностей.
+                    # Будем искать по слоям вложенности элементов, а не по веткам. Это немного сложнее сделать, но должно быть эффективнее.
+                    found_winuiaelem_arr = _descendants_range_level(walker, self._winuiaelem)
 
-            else:
-                # Теперь обработаем вариант поиска потомков в диапазоне возможных вложенностей.
-                # Будем искать по слоям вложенности элементов, а не по веткам. Это немного сложнее сделать, но должно быть эффективнее.
-                found_winuiaelem_arr = _descendants_range_level(walker, self._winuiaelem)
+            except FirstFoundEx as ex:
+                if ex.winuiaelem is None:
+                    if exception_on_find_fail:
+                        raise FindFailed('pikuli.UIElement.find: no one elements was found\n\tself = %s\n\tkwargs = %s\n\tcriteria = %s' % (repr(self), str(kwargs), str(criteria)))
+                    p2c( 'Pikuli.ui_element.UIElement.find: %s has been found: None' % str(not_none_criteria))
+                    return None
+                found_elem = _create_instance_of_suitable_class(ex.winuiaelem)
+                p2c( 'Pikuli.ui_element.UIElement.find: %s has been found: %s' % (str(not_none_criteria), repr(found_elem)))
+                return found_elem
 
-        except FirstFoundEx as ex:
-            if ex.winuiaelem is None:
-                if exception_on_find_fail:
-                    raise FindFailed('pikuli.UIElement.find: no one elements was found\n\tself = %s\n\tkwargs = %s\n\tcriteria = %s' % (repr(self), str(kwargs), str(criteria)))
-                p2c( 'Pikuli.ui_element.UIElement.find: %s has been found: None' % str(not_none_criteria))
-                return None
-            found_elem = _create_instance_of_suitable_class(ex.winuiaelem)
-            p2c( 'Pikuli.ui_element.UIElement.find: %s has been found: %s' % (str(not_none_criteria), repr(found_elem)))
-            return found_elem
+            except _ctypes.COMError as ex:
+                if ex.args[0] == COR_E_TIMEOUT:
+                    p2p('Cath COR_E_TIMEOUT exception: %s. Checking custom timeout...' % str(ex))
+                    if (datetime.datetime.today()-t0).total_seconds() >= TIMEOUT_UIA_ELEMENT_SEARCH:
+                        raise FindFailed('find(...): Timeout while looking for UIA element:\n\tself = %s\n\tkwargs = %s' % (repr(self), str(kwargs)))
+                else:
+                    raise ex
+
+            break
 
         # В норме если мы тут, то не нашлось ни одного элемента или ищем все (если ищем только первый,
         # то должно было ппроизойти и перехватиться исключение FirstFoundEx).
