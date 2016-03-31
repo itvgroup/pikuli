@@ -11,12 +11,12 @@ import win32api
 import win32gui
 import win32ui
 import win32clipboard
+import win32print
 import time
 import numpy as np
-
+import threading
 
 from ._exceptions import FailExit
-
 
 
 DELAY_KBD_KEY_PRESS = 0.020
@@ -98,43 +98,50 @@ def highlight_region(x, y, w, h, delay=0.5):
         win32gui.BitBlt(dest_dc, dest_x0+0,   dest_y0+1,   1,   h-2, src_dc, src_x0,     src_y0,     win32con.SRCCOPY)
         win32gui.BitBlt(dest_dc, dest_x0+w-1, dest_y0+1,   1,   h-2, src_dc, src_x0+w-1, src_y0,     win32con.SRCCOPY)
 
-    [x, y, w, h] = map(int, [x, y, w, h])
-    delay = float(delay)
+    def _thread_function(x, y, w, h, delay):
+        [x, y, w, h] = map(int, [x, y, w, h])
+        delay = float(delay)
 
-    n = _scr_num_of_point(x, y)
-    scr_hdc = win32gui.CreateDC('DISPLAY', _screen_n_to_monitor_name(n), None)
+        # Получим контекст всех дисплев или всего рабочего стола:
+        #scr_hdc = win32gui.GetDC(0)
+        scr_hdc = win32gui.CreateDC('DISPLAY', None, None)
 
-    mem_hdc = win32gui.CreateCompatibleDC(scr_hdc)  # New context of memory device. This one is compatible with 'scr_hdc'
-    new_bitmap_h = win32gui.CreateCompatibleBitmap(scr_hdc, w+2, h+2)
-    win32gui.SelectObject(mem_hdc, new_bitmap_h)    # Returns 'old_bitmap_h'. It will be deleted automatically.
+        mem_hdc = win32gui.CreateCompatibleDC(scr_hdc)  # New context of memory device. This one is compatible with 'scr_hdc'
+        new_bitmap_h = win32gui.CreateCompatibleBitmap(scr_hdc, w+2, h+2)
+        win32gui.SelectObject(mem_hdc, new_bitmap_h)    # Returns 'old_bitmap_h'. It will be deleted automatically.
 
-    # Сохраняем рамочку в 1 пиксель (она вокруг области (x,y,w,h)):
-    (_, _, m_rect) = _screen_n_to_mon_descript(n)
-    _cp_boundary(mem_hdc, 0, 0, scr_hdc, x-m_rect[0]-1, y-m_rect[1]-1, w+2, h+2)
+        # Сохраняем рамочку в 1 пиксель (она вокруг области (x,y,w,h)):
+        _cp_boundary(mem_hdc, 0, 0, scr_hdc, x-1, y-1, w+2, h+2)
 
-    # Рисуем подсветку области:
-    area = scr_hdc  # win32gui.GetDC(0)
-    # brush = win32gui.CreateSolidBrush(win32api.RGB(255,0,0))
-    win32gui.SelectObject(area, win32gui.GetStockObject(win32con.NULL_BRUSH))
-    pen = win32gui.CreatePen(win32con.PS_DOT, 1, win32api.RGB(148, 0, 0))
-    win32gui.SelectObject(area, pen)
-    for i in range(1, 2):
-        win32gui.Rectangle(area, x-1, y-1, x+w+1, y+h+1)
-    win32gui.ReleaseDC(area, 0)
+        # Рисуем подсветку области:
+        # brush = win32gui.CreateSolidBrush(win32api.RGB(255,0,0))
+        win32gui.SelectObject(scr_hdc, win32gui.GetStockObject(win32con.NULL_BRUSH))
+        pen = win32gui.CreatePen(win32con.PS_DOT, 1, win32api.RGB(148, 0, 0))
+        win32gui.SelectObject(scr_hdc, pen)
+        for i in range(2):
+            win32gui.Rectangle(scr_hdc, x-1, y-1, x+w+1, y+h+1)
 
-    # Восстаналиваема рамочку:
-    time.sleep(delay)
-    _cp_boundary(scr_hdc, x-m_rect[0]-1, y-m_rect[1]-1, mem_hdc, 0, 0, w+2, h+2)
+        # Восстаналиваема рамочку:
+        time.sleep(delay)
+        _cp_boundary(scr_hdc, x-1, y-1, mem_hdc, 0, 0, w+2, h+2)
 
-    # TODO: send redraw signal
+        #win32gui.ReleaseDC(scr_hdc, 0)
+        win32gui.DeleteDC(scr_hdc)
+        win32gui.DeleteDC(mem_hdc)
+        win32gui.DeleteObject(new_bitmap_h)
+
+        # TODO: send redraw signal
+
+    threading.Thread(target=_thread_function, args=(x, y, w, h, delay), name='highlight_region %s' % str((x, y, w, h, delay))).start()
 
 
-def _grab_screen(x, y, w, h):
+def _take_screenshot(x, y, w, h, hwnd=None):
     '''
     Получаем скриншот области:
-            n     --  номер экрана (от нуля)
-            x, y  --  верхний левый угол прямоуголника в системе координат виртуального рабочего стола
-            w, h  --  размеры прямоуголника
+        x, y  --  верхний левый угол прямоуголника в системе координат виртуального рабочего стола
+        w, h  --  размеры прямоуголника
+        hwnd  --  Если None, то используется контекст 'DISPLAY'. Если не None, то используется контекст окна с hwnd
+                  (если рисовать в контекст дисплея, то не портятся картинки в конетксте окон).
 
       Любопытно, что если пытаться выйти за пределы левого монитора, читая данные из его контекста, то оставшаяся
     часть скриншота сам будет браться и из контекста другого монитора. Т.о., важно знать какому монитору принадлежит
@@ -155,16 +162,25 @@ def _grab_screen(x, y, w, h):
     #   Варинат 2:
     #       w = win32print.GetDeviceCaps(scr_hdc, win32con.HORZRES)
     #       h = win32print.GetDeviceCaps(scr_hdc, win32con.VERTRES)
+    #
     [x, y, w, h] = map(int, [x, y, w, h])
-    n = _scr_num_of_point(x, y)
-    scr_hdc = win32gui.CreateDC('DISPLAY', _screen_n_to_monitor_name(n), None)
+    mpos = list(win32api.GetCursorPos())
+
+    # Получим контекст всех дисплев или всего рабочего стола:
+    if hwnd is None:
+        #scr_hdc = win32gui.GetDC(0)
+        scr_hdc = win32gui.CreateDC('DISPLAY', None, None)
+    else:
+        scr_hdc = win32gui.GetDC(hwnd)  # Контекст только клиентской части окна! Не вклчаются даже менюшеки типа 'File' и скролл-бары.
+        (x, y)  = win32gui.ScreenToClient(hwnd, (x, y))
+
+    # Спрячем курсо вне эурана: не влияние на интерфейс (подсветка чего-то при наведении), не попадет на скриншот.
+    win32api.SetCursorPos((win32print.GetDeviceCaps(scr_hdc, win32con.HORZRES) + 1, win32print.GetDeviceCaps(scr_hdc, win32con.VERTRES) + 1))
 
     mem_hdc = win32gui.CreateCompatibleDC(scr_hdc)  # New context of memory device. This one is compatible with 'scr_hdc'
     new_bitmap_h = win32gui.CreateCompatibleBitmap(scr_hdc, w, h)
     win32gui.SelectObject(mem_hdc, new_bitmap_h)    # Returns 'old_bitmap_h'. It will be deleted automatically.
-
-    (_, _, m_rect) = _screen_n_to_mon_descript(n)
-    win32gui.BitBlt(mem_hdc, 0, 0, w, h, scr_hdc, x-m_rect[0], y-m_rect[1], win32con.SRCCOPY)
+    win32gui.BitBlt(mem_hdc, 0, 0, w, h, scr_hdc, x, y, win32con.SRCCOPY)
 
     bmp = win32ui.CreateBitmapFromHandle(new_bitmap_h)
     bmp_info = bmp.GetInfo()
@@ -178,15 +194,22 @@ def _grab_screen(x, y, w, h):
     bmp_arr = list(bmp.GetBitmapBits())
     del bmp_arr[3::4]  # Dele alpha channel. TODO: Is it fast enough???
     bmp_np = np.array(bmp_arr, dtype=np.uint8).reshape((h, w, 3))
+
+    win32api.SetCursorPos(mpos)  # Возвращаем курсор.
+    #win32gui.ReleaseDC(scr_hdc, 0)
+    win32gui.DeleteDC(scr_hdc)
+    win32gui.DeleteDC(mem_hdc)
+    win32gui.DeleteObject(new_bitmap_h)
+
     return bmp_np
 
 
-def _scr_num_of_point(x, y):
+"""def _scr_num_of_point(x, y):
     ''' Вернет номер (от нуля) того экрана, на котором располоржен левый верхний угол текущего Region. '''
     m_tl = win32api.MonitorFromPoint((x, y), win32con.MONITOR_DEFAULTTONULL)
     if m_tl is None:
         raise FailExit('top-left corner of the Region is out of visible area of sreens (%s, %s)' % (str(x), str(y)))
-    return _monitor_hndl_to_screen_n(m_tl)
+    return _monitor_hndl_to_screen_n(m_tl)"""
 
 
 def get_text_from_clipboard():
@@ -213,7 +236,7 @@ def __check_reg_in_single_screen(self):
     return Screen(_monitor_hndl_to_screen_n(m_tl))
 """
 """
-def _grab_screen_(*args):
+def _take_screenshot_(*args):
     '''
     Получаем скриншот. Возможные наборы входных аргументов:
         Скриншот всего экрана:

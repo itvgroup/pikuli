@@ -24,6 +24,9 @@ class Match(Region):
     def __str__(self):
         return ('Match of \'%s\' in (%i, %i, %i, %i) with score = %f' % (str(self._img_path), self._x, self._y, self._w, self._h, self.__score))
 
+    def __repr__(self):
+        return ('<Match of \'%s\' in (%i, %i, %i, %i) with score = %f>' % (str(self._img_path), self._x, self._y, self._w, self._h, self.__score))
+
     def getScore(self):
         ''' Sikuli: Get the similarity score the image or pattern was found. The value is between 0 and 1. '''
         return self.__score

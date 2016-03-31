@@ -82,6 +82,9 @@ def _find_main_parent_window(child_hwnd, child_pid=None):
                 if long(ppid) != long(child_pid):
                     return child_hwnd
         return _fmpw(parent_hwnd, child_pid)
+
+    if child_hwnd == 0:
+        return 0
     return _fmpw(child_hwnd, child_pid)
 
 

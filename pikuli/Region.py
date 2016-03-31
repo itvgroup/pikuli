@@ -15,9 +15,11 @@ import _functions
 from _exceptions import *
 from Pattern import *
 from Location import *
-# import winforms
+import hwnd_element
+
 import datetime
 import os
+import win32gui
 
 RELATIONS = ['top-left', 'center']
 
@@ -45,8 +47,11 @@ class Region(object):
                 'center'   -- x,y являются координатам центра области-прямоуголника; область строится от этой точки
             title:
                 строка     -- Идентификатор для человека (просто строка)
-                id         -- Идентификатор для использования в коде
-                winctrl    -- None или указатель на экземпляр класса HWNDElement
+            id             -- Идентификатор для использования в коде
+            winctrl        -- None или указатель на экземпляр класса HWNDElement
+            main_window_hwnd  --  Если не указан, но этот регион наследуется от другого региона, то пробуем взять оттуда. Если нет ничего, то
+                                  определям hwnd главного окна (сразу после рабочего стола в деревер окон) под цетром прямоуголника. Если прямоугольник
+                                  поверх рабочего стола, то будет hwnd = 0.
 
         Дополнительная справка:
             Внутренние поля класса:
@@ -84,6 +89,12 @@ class Region(object):
             self.setRect(*args, **kwargs)
         except FailExit:
             raise FailExit('\nNew stage of %s\n[error] Incorect \'Region\' class constructor call:\n\targs = %s\n\tkwargs = %s' % (traceback.format_exc(), str(args), str(kwargs)))
+
+        self._main_window_hwnd = kwargs.get('main_window_hwnd', None)
+        if self._main_window_hwnd is None and len(args) == 1:
+            self._main_window_hwnd = args[0]._main_window_hwnd
+        if self._main_window_hwnd is None:
+            self._main_window_hwnd = hwnd_element._find_main_parent_window(win32gui.WindowFromPoint((self._x + self._w/2, self._y + self._h/2)))
 
 
     def get_id(self):
@@ -218,7 +229,6 @@ class Region(object):
         ''' Возвращает область справа от self. Self не включено. Высота новой области совпадает с self. Длина новой области len или до конца экрана, если len не задана. '''
         try:
             if l is None:
-                #scr = Screen(_scr_num_of_point(self._x, self._y))
                 scr = Screen('virt')
                 reg = Region(self._x + self._w, self._y, (scr.x + scr.w - 1) - (self._x + self._w) + 1, self._h)
             elif isinstance(l, int) and l > 0:
@@ -234,7 +244,6 @@ class Region(object):
         ''' Возвращает область слева от self. Self не включено. Высота новой области совпадает с self. Длина новой области len или до конца экрана, если len не задана. '''
         try:
             if l is None:
-                # scr = Screen(_scr_num_of_point(self._x, self._y))
                 scr = Screen('virt')
                 reg = Region(scr.x, self._y, (self._x - 1) - scr.x + 1, self._h)
             elif isinstance(l, int) and l > 0:
@@ -250,7 +259,6 @@ class Region(object):
         ''' Возвращает область сверху от self. Self не включено. Ширина новой области совпадает с self. Высота новой области len или до конца экрана, если len не задана. '''
         try:
             if l is None:
-                # scr = Screen(_scr_num_of_point(self._x, self._y))
                 scr = Screen('virt')
                 reg = Region(self._x, scr.y, self._w, (self._y - 1) - scr.y + 1)
             elif isinstance(l, int) and l > 0:
@@ -266,7 +274,6 @@ class Region(object):
         ''' Возвращает область снизу от self. Self не включено. Ширина новой области совпадает с self. Высота новой области len или до конца экрана, если len не задана. '''
         try:
             if l is None:
-                # scr = Screen(_scr_num_of_point(self._x, self._y))
                 scr = Screen('virt')
                 reg = Region(self._x, self._y + self._h, self._w, (scr.y + scr.h - 1) - (self._y + self._h) + 1)
             elif isinstance(l, int) and l > 0:
@@ -310,13 +317,13 @@ class Region(object):
 
 
     def __get_field_for_find(self):
-        return _functions._grab_screen(self._x, self._y, self._w, self._h)
+        return _functions._take_screenshot(self._x, self._y, self._w, self._h, self._main_window_hwnd)
 
     def save_as_jpg(self, full_filename):
-        cv2.imwrite(full_filename, _functions._grab_screen(self._x, self._y, self._w, self._h), [cv2.IMWRITE_JPEG_QUALITY, 70])
+        cv2.imwrite(full_filename, _functions._take_screenshot(self._x, self._y, self._w, self._h, self._main_window_hwnd), [cv2.IMWRITE_JPEG_QUALITY, 70])
 
     def save_as_png(self, full_filename):
-        cv2.imwrite(full_filename, _functions._grab_screen(self._x, self._y, self._w, self._h))
+        cv2.imwrite(full_filename, _functions._take_screenshot(self._x, self._y, self._w, self._h, self._main_window_hwnd))
 
 
     def __find(self, ps, field):
@@ -513,8 +520,8 @@ class Region(object):
         self.getCenter().scroll(direction, count, click)
 
     def dragndrop(self, dest_location):
-        #    # Алгоритм Брезенхема
-        #    # https://ru.wikipedia.org/wiki/%D0%90%D0%BB%D0%B3%D0%BE%D1%80%D0%B8%D1%82%D0%BC_%D0%91%D1%80%D0%B5%D0%B7%D0%B5%D0%BD%D1%85%D1%8D%D0%BC%D0%B0
+        # Алгоритм Брезенхема
+        # https://ru.wikipedia.org/wiki/%D0%90%D0%BB%D0%B3%D0%BE%D1%80%D0%B8%D1%82%D0%BC_%D0%91%D1%80%D0%B5%D0%B7%D0%B5%D0%BD%D1%85%D1%8D%D0%BC%D0%B0
         MOVE_DELAY = 0.005
         MOVE_STEP = 10
 
@@ -543,9 +550,8 @@ class Region(object):
         return self.winctrl.is_button_checked()'''
 
 
-    def highlight(self, timeout=-1):
-        ''' TODO: сделать актиным парметр таймаута подсветки границ области. '''
-        highlight_region(self._x, self._y, self._w, self._h)
+    def highlight(self, delay=1.5):
+        highlight_region(self._x, self._y, self._w, self._h, delay)
 
 
 from Match import *
