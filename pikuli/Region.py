@@ -352,6 +352,11 @@ class Region(object):
         y_arr = map(lambda y: int(y) + self._y, loc[0])
         s_arr = map(lambda s: float(s), res[loc[0], loc[1]])
         return zip(x_arr, y_arr, s_arr)'''
+
+        # t = time.time()
+        # cv2.imwrite('d:\\tmp\\%i-%06i-field.png' % (int(t), (t-int(t))*10**6), field)
+        # cv2.imwrite('d:\\tmp\\%i-%06i-pattern.png' % (int(t), (t-int(t))*10**6), ps._cv2_pattern)
+
         return map(lambda x, y, s: (int(x) + self._x, int(y) + self._y, float(s)), loc[1], loc[0], res[loc[0], loc[1]])
 
 
