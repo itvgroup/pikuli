@@ -3,20 +3,25 @@
 '''
    Файл содержит вспомогательные функции, используемые в Pikuli.
 '''
-import pikuli
-
 import sys
+import time
+import threading
+
 import win32con
 import win32api
 import win32gui
 import win32ui
 import win32clipboard
 import win32print
-import time
-import numpy as np
-import threading
 
+import numpy as np
+
+import pikuli
 from ._exceptions import FailExit
+
+
+# Константа отсутствует в win32con, но есть в http://userpages.umbc.edu/~squire/download/WinGDI.h:
+CAPTUREBLT = 0x40000000
 
 
 DELAY_KBD_KEY_PRESS = 0.020
@@ -149,11 +154,15 @@ def _take_screenshot(x, y, w, h, hwnd=None):
     остальные углы этой области. Вообще без проблем можно право и вниз уйти за пределы всех мониторов.
       Однако, надо помнить, что при копировании буфера через BitBlt() надо указывать начальные координаты с системе
     отсчета монитора, а не виртуального рабочего стола. Т.о. входные (x,y) надо пересчитывать.
+      Еще нюанс: копирование данных из контекста окна дает белый фон на чисто OpenGL'ой раскледке камер. Аналогично
+    с windll.user32.PrintWindow(...). Помогает применение флага CAPTUREBLT у BitBlt(...). Но надо еще изучать (TODO here).
     '''
     # http://stackoverflow.com/questions/3291167/how-to-make-screen-screenshot-with-win32-in-c
     # http://stackoverflow.com/questions/18733486/python-win32api-bitmap-getbitmapbits
     # http://stackoverflow.com/questions/24129253/screen-capture-with-opencv-and-python-2-7
     # http://vsokovikov.narod.ru/New_MSDN_API/Bitmaps/captur_image.htm
+    # http://stackoverflow.com/questions/19695214/python-screenshot-of-inactive-window-printwindow-win32gui  --  скриншот окна
+    # https://msdn.microsoft.com/en-us/library/windows/desktop/dd183402(v=vs.85).aspx
     #
     # Как узнать рамер экрана:
     #   Варинат 1:
@@ -180,7 +189,9 @@ def _take_screenshot(x, y, w, h, hwnd=None):
     mem_hdc = win32gui.CreateCompatibleDC(scr_hdc)  # New context of memory device. This one is compatible with 'scr_hdc'
     new_bitmap_h = win32gui.CreateCompatibleBitmap(scr_hdc, w, h)
     win32gui.SelectObject(mem_hdc, new_bitmap_h)    # Returns 'old_bitmap_h'. It will be deleted automatically.
-    win32gui.BitBlt(mem_hdc, 0, 0, w, h, scr_hdc, x, y, win32con.SRCCOPY)
+
+    # Прямое копирование из контекста окна
+    win32gui.BitBlt(mem_hdc, 0, 0, w, h, scr_hdc, x, y, win32con.SRCCOPY | CAPTUREBLT)
 
     bmp = win32ui.CreateBitmapFromHandle(new_bitmap_h)
     bmp_info = bmp.GetInfo()
@@ -196,8 +207,10 @@ def _take_screenshot(x, y, w, h, hwnd=None):
     bmp_np = np.array(bmp_arr, dtype=np.uint8).reshape((h, w, 3))
 
     win32api.SetCursorPos(mpos)  # Возвращаем курсор.
-    #win32gui.ReleaseDC(scr_hdc, 0)
-    win32gui.DeleteDC(scr_hdc)
+    if hwnd is None:
+        win32gui.DeleteDC(scr_hdc)
+    else:
+        win32gui.ReleaseDC(hwnd, scr_hdc)
     win32gui.DeleteDC(mem_hdc)
     win32gui.DeleteObject(new_bitmap_h)
 
