@@ -427,9 +427,9 @@ class Region(object):
                     os.mkdir(os.environ['TEMP'] + '\\find_failed')
                 self.save_as_jpg(os.environ['TEMP'] + '\\find_failed\\' + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + '_' + str(failedImages) + '.jpg')
 
-                #t = time.time()
-                #cv2.imwrite('d:\\tmp\\%i-%06i-pattern.png' % (int(t), (t-int(t))*10**6), ps[0]._cv2_pattern)
-                #cv2.imwrite('d:\\tmp\\%i-%06i-field.png' % (int(t), (t-int(t))*10**6), field)
+                # t = time.time()
+                # cv2.imwrite('d:\\tmp\\%i-%06i-pattern.png' % (int(t), (t-int(t))*10**6), ps[0]._cv2_pattern)
+                # cv2.imwrite('d:\\tmp\\%i-%06i-field.png' % (int(t), (t-int(t))*10**6), field)
 
                 raise FindFailed('Unable to find \'%s\' in %s' % (failedImages, str(self)) )
 
