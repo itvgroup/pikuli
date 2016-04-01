@@ -15,8 +15,9 @@ from _exceptions import *
 import hwnd_element
 from oleacc_h import *
 
+# "A lot of HRESULT codes…" (https://blogs.msdn.microsoft.com/eldar/2007/04/03/a-lot-of-hresult-codes/)
+COR_E_TIMEOUT = -2146233083  # -2146233083 =<математически>= -0x80131505;   0x80131505 =<в разрядной сетке>= (-2146233083 & 0xFFFFFFFF)
 
-COR_E_TIMEOUT = 0x80131505  # "A lot of HRESULT codes…" (https://blogs.msdn.microsoft.com/eldar/2007/04/03/a-lot-of-hresult-codes/)
 
 TIMEOUT_UIA_ELEMENT_SEARCH = 30
 
