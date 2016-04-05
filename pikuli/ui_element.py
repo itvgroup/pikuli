@@ -402,6 +402,7 @@ class UIElement(object):
                                     > 0 -- поиск среди дочерних выбранной глубины
                                     < 0 -- возвращает предка выбранной дальности
             exception_on_find_fail  --  По умолчанию None. Это означает, что переприсовится True при find_first_only = True, False при find_first_only = False.
+            timeout            --  Если ищем только один эелемент (find_first_only=True) и ничего не нашлось, то будем повторять попытки в течение этого времени. По умолчанию равно 0.
 
         Возвращает:
             объект типа Region.
@@ -414,6 +415,7 @@ class UIElement(object):
         max_descend_level      = kwargs.pop('max_descend_level', None)
         exact_level            = kwargs.pop('exact_level', None)
         exception_on_find_fail = kwargs.pop('exception_on_find_fail', None)
+        timeout                = kwargs.pop('timeout', 0)
 
         if exception_on_find_fail is None:
             exception_on_find_fail = find_first_only
@@ -459,6 +461,18 @@ class UIElement(object):
                 raise Exception('pikuli.ui_element.UIElement.find(): can not find process by its name; ProcessId = \'%s\'' % str(val))
         criteria['ProcessId'] = val
 
+        # Сделаем not_none_criteria и criteria, которые выводится на экран, крсивее:
+        #   -- информативный вывод регулярных выражений
+        def _criteria_pretty_print(cri):
+            _cri = {}
+            for (k, v) in cri.items():
+                if hasattr(v, 'pattern'):
+                    _cri[k] = v.pattern
+                else:
+                    _cri[k] = v
+            return str(_cri)
+        str__not_none_criteria = _criteria_pretty_print(not_none_criteria)
+        str__criteria          = _criteria_pretty_print(criteria)
 
         if len(kwargs) != 0:
             raise Exception('pikuli.UIElement.find: kwargs has unknown fields %s\n\tkwargs = %s' % (kwargs.keys(), str(kwargs)))
@@ -636,11 +650,11 @@ class UIElement(object):
             except FirstFoundEx as ex:
                 if ex.winuiaelem is None:
                     if exception_on_find_fail:
-                        raise FindFailed('pikuli.UIElement.find: no one elements was found\n\tself = %s\n\tkwargs = %s\n\tcriteria = %s' % (repr(self), str(kwargs), str(criteria)))
-                    p2c( 'Pikuli.ui_element.UIElement.find: %s has been found: None' % str(not_none_criteria))
+                        raise FindFailed('pikuli.UIElement.find: no one elements was found\n\tself = %s\n\tkwargs = %s\n\tcriteria = %s' % (repr(self), str(kwargs), str__criteria))
+                    p2c( 'Pikuli.ui_element.UIElement.find: %s has been found: None' % str__not_none_criteria)
                     return None
                 found_elem = _create_instance_of_suitable_class(ex.winuiaelem)
-                p2c( 'Pikuli.ui_element.UIElement.find: %s has been found: %s' % (str(not_none_criteria), repr(found_elem)))
+                p2c( 'Pikuli.ui_element.UIElement.find: %s has been found: %s' % (str__not_none_criteria, repr(found_elem)))
                 return found_elem
 
             except _ctypes.COMError as ex:
@@ -653,24 +667,27 @@ class UIElement(object):
                     raise ex
 
             else:
-                break
+                # Ищем один элемент и все никак его не найдем или ищем много элементов:
+                if not find_first_only or (datetime.datetime.today()-t0).total_seconds() >= timeout:
+                    break
+                t0 = datetime.datetime.today()
 
         # В норме если мы тут, то не нашлось ни одного элемента или ищем все (если ищем только первый,
-        # то должно было ппроизойти и перехватиться исключение FirstFoundEx).
+        # то должно было произойти и перехватиться исключение FirstFoundEx).
         if len(found_winuiaelem_arr) == 0:
             if exception_on_find_fail:
-                raise FindFailed('pikuli.UIElement.find: no one elements was found\n\tself = %s\n\tkwargs = %s\n\tcriteria = %s' % (repr(self), str(kwargs), str(criteria)))
+                raise FindFailed('pikuli.UIElement.find: no one elements was found\n\tself = %s\n\tkwargs = %s\n\tcriteria = %s' % (repr(self), str(kwargs), str__criteria))
             if find_first_only:
-                p2c( 'Pikuli.ui_element.UIElement.find: %s has been found: None' % str(not_none_criteria))
+                p2c( 'Pikuli.ui_element.UIElement.find: %s has been found: None' % str__not_none_criteria)
                 return None
-            p2c( 'Pikuli.ui_element.UIElement.find: %s has been found: []' % str(not_none_criteria))
+            p2c( 'Pikuli.ui_element.UIElement.find: %s has been found: []' % str__not_none_criteria)
             return []
 
         if find_first_only:
             raise('pikuli.UIElement.find [INTERNAL]: Strange! We should not be here: ' + str(getframeinfo(currentframe())))
 
         found_elem = map(_create_instance_of_suitable_class, found_winuiaelem_arr)
-        p2c('Pikuli.ui_element.UIElement.find: %s has been found: %s' % (str(not_none_criteria), repr(found_elem)))
+        p2c('Pikuli.ui_element.UIElement.find: %s has been found: %s' % (str__not_none_criteria, repr(found_elem)))
         return found_elem
 
 
@@ -921,9 +938,9 @@ class ComboBox(_uielement_Control, _ValuePattern_methods):
             return None
         return l.list_items()
 
-    def name_of_choosed(self):
+    """def name_of_choosed(self):  --  есть метод _ValuePattern_methods.get_value()
         ''' Вернет тектсовую строку того пукта выпдающего меню, который выбран. '''
-        return self.find(ControlType='Text', exact_level=1).get_value()
+        return self.find(ControlType='Text', exact_level=1).get_value()"""
 
     def get_item_by_name(self, item_name):
         ''' Если список ракрыт, то вернут подходящий объект ListItem. Если объекта не нашлось в списке или список свернут, то будет исключение FindFailed. '''
@@ -988,7 +1005,7 @@ class Tree(_uielement_Control):
             return None
         return items
 
-    def find_item(self, item_name, force_expand=False):
+    def find_item(self, item_name, force_expand=False, timeout=0):
         '''
             item_name -- Cписок строк-названий эелементов дерева, пречисленных по их вложенности один в другой. Последняя строка в списке -- искомый элемент.
             force_expand -- разворачивать ли свернутые элементы на пути поиска искового.
@@ -999,9 +1016,9 @@ class Tree(_uielement_Control):
         if len(item_name) == 0:
             raise Exception('pikuli.ui_element.Tree: len(item_name) == 0')
         if len(item_name) == 1:
-            found_elem = self.find(Name=item_name[0], exact_level=1)
+            found_elem = self.find(Name=item_name[0], exact_level=1, timeout=timeout)
         else:
-            found_elem = self.find(Name=item_name[0], exact_level=1).find_item(item_name[1:], force_expand)
+            found_elem = self.find(Name=item_name[0], exact_level=1, timeout=timeout).find_item(item_name[1:], force_expand, timeout=timeout)
         p2c( 'Pikuli.ui_element.Tree.find_item: %s has been found by criteria \'%s\'' % (str(item_name), repr(found_elem)))
         return found_elem
 
@@ -1049,7 +1066,7 @@ class TreeItem(_uielement_Control):
             return self.find_all(exact_level=1)
         return []
 
-    def find_item(self, item_name, force_expand=False):
+    def find_item(self, item_name, force_expand=False, timeout=0):
         '''
             item_name -- Cписок строк-названий эелементов дерева, пречисленных по их вложенности один в другой. Последняя строка в списке -- искомый элемент.
             force_expand -- разворачивать ли свернутые элементы на пути поиска искового.
@@ -1062,9 +1079,9 @@ class TreeItem(_uielement_Control):
             raise FindFailed('pikuli.ui_element.TreeItem: item \'%s\' was found, but it is not fully expanded. Try to set force_expand = True.\nSearch arguments:\n\titem_name = %s\n\tforce_expand = %s' % (self.Name, str(item_name), str(force_expand)))
         self.expand()
         if len(item_name) == 1:
-            found_elem = self.find(Name=item_name[0], exact_level=1)
+            found_elem = self.find(Name=item_name[0], exact_level=1, timeout=timeout)
         else:
-            found_elem = self.find(Name=item_name[0], exact_level=1).find_item(item_name[1:], force_expand)
+            found_elem = self.find(Name=item_name[0], exact_level=1, timeout=timeout).find_item(item_name[1:], force_expand, timeout=timeout)
         p2c( 'Pikuli.ui_element.TreeItem.find_item: \'%s\' has been found: %s' % (str(item_name), repr(found_elem)))
         return found_elem
 

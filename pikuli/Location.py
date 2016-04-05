@@ -13,6 +13,9 @@ DELAY_IN_MOUSE_CLICK = 0.100        # Время в [c] между нажати�
 DELAY_MOUSE_DOUBLE_CLICK = 0.100    # Время в [c] между кликами (замерял сам и гуглил)
 DELAY_KBD_KEY_PRESS = 0.020
 
+DEALY_AFTER_CLICK            = 0.3  # В частности, время бездейставия между кликом в область и началом введения текста (по умолчанию).
+DELAY_BETWEEN_CLICK_AND_TYPE = DEALY_AFTER_CLICK
+
 
 class Location(object):
 
@@ -68,11 +71,12 @@ class Location(object):
         else:
             raise FailExit('Location.right: incorrect value')
 
-    def click(self):
+    def click(self, after_cleck_delay=DEALY_AFTER_CLICK):
         self.mouseMove()
         win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, self.x, self.y, 0, 0)
         time.sleep(DELAY_IN_MOUSE_CLICK)
         win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, self.x, self.y, 0, 0)
+        time.sleep(DEALY_AFTER_CLICK)
 
     def mouseDown(self):
         self.mouseMove()
@@ -81,13 +85,14 @@ class Location(object):
     def mouseUp(self):
         win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, self.x, self.y, 0, 0)
 
-    def rightClick(self):
+    def rightClick(self, after_cleck_delay=DEALY_AFTER_CLICK):
         self.mouseMove()
         win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTDOWN, self.x, self.y, 0, 0)
         time.sleep(DELAY_IN_MOUSE_CLICK)
         win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTUP, self.x, self.y, 0, 0)
+        time.sleep(DEALY_AFTER_CLICK)
 
-    def doubleClick(self):
+    def doubleClick(self, after_cleck_delay=DEALY_AFTER_CLICK):
         self.mouseMove()
         win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, self.x, self.y, 0, 0)
         time.sleep(DELAY_IN_MOUSE_CLICK)
@@ -96,6 +101,7 @@ class Location(object):
         win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, self.x, self.y, 0, 0)
         time.sleep(DELAY_IN_MOUSE_CLICK)
         win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, self.x, self.y, 0, 0)
+        time.sleep(DEALY_AFTER_CLICK)
 
     def scroll(self, direction=1, count=1, click=True):
         # direction:
@@ -108,15 +114,15 @@ class Location(object):
             win32api.mouse_event(win32con.MOUSEEVENTF_WHEEL, self.x, self.y, int(direction), 0)
             time.sleep(DELAY_IN_MOUSE_CLICK)
 
-    def type(self, text, modifiers=None, click=True):
+    def type(self, text, modifiers=None, click=True, click_type_delay=DELAY_BETWEEN_CLICK_AND_TYPE):
         ''' Не как в Sikuli '''
         if click:
-            self.click()
+            self.click(after_cleck_delay=click_type_delay)
         type_text(str(text), modifiers)
 
-    def enter_text(self, text, modifiers=None, click=True):
+    def enter_text(self, text, modifiers=None, click=True, click_type_delay=DELAY_BETWEEN_CLICK_AND_TYPE):
         ''' Не как в Sikuli '''
         if click:
-            self.click()
+            self.click(after_cleck_delay=click_type_delay)
         type_text('a', KeyModifier.CTRL)
         type_text(str(text) + Key.ENTER, modifiers)

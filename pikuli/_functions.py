@@ -333,6 +333,8 @@ class Key(object):
     DOWN       = chr(0) + chr(win32con.VK_DOWN)
     PAGE_UP    = chr(0) + chr(win32con.VK_PRIOR)
     PAGE_DOWN  = chr(0) + chr(win32con.VK_NEXT)
+    HOME       = chr(0) + chr(win32con.VK_HOME)
+    END        = chr(0) + chr(win32con.VK_END)
     BACKSPACE  = chr(0) + chr(win32con.VK_BACK)
     F1         = chr(0) + chr(win32con.VK_F1)
     F2         = chr(0) + chr(win32con.VK_F2)
@@ -411,3 +413,18 @@ def type_text(s, modifiers=None):
             if modifiers & k != 0:
                 release_key(_KeyCodes[KeyModifier._rev[k]][0], _KeyCodes[KeyModifier._rev[k]][1])
 
+
+
+
+
+def cmbbox_select(cmbbox, item_name):
+    '''
+    Выбрать пункт в ComboBox через UIA API.
+        cmbbox     --  экземпляр класса UIElement
+        item_name  --  строка
+    '''
+    if cmbbox.get_value() != item_name:
+        cmbbox.reg().click()
+        cmbbox.get_item_by_name(item_name).reg().click()
+        if cmbbox.get_value() != item_name:
+            raise Exception('cmbbox_select(...): cmbbox.get_value() != item_name\n\tcmbbox.get_value() = \'%s\'\n\titem_name = \'%s\'' % (str(cmbbox.get_value()), str(item_name)))
