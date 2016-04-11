@@ -4,6 +4,7 @@ import psutil
 from inspect import currentframe, getframeinfo, isclass
 import time
 import datetime
+import traceback
 
 import _ctypes
 import win32gui
@@ -664,6 +665,9 @@ class UIElement(object):
                         raise FindFailed('find(...): Timeout while looking for UIA element:\n\tself = %s\n\tkwargs = %s' % (repr(self), str(kwargs)))
                     t0 = datetime.datetime.today()
                 else:
+                    tb_text = ''.join(traceback.format_list(traceback.extract_tb(sys.exc_info()[2])[1:]))
+                    full_text = 'Traceback for error point:\n' + tb_text.rstrip() + '\nError message:\n  ' + type(e).__name__ + ': ' + str(e)
+                    p2c(full_text)
                     raise ex
 
             else:
