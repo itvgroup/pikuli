@@ -139,7 +139,7 @@ class Region(object):
         ''' 'top-left' -- не надо менять x; 'center' --  не надо менять x '''
         (self.x, self.y, self.h) = (self._x, self._y, self._h)
         if isinstance(w, int) and w > 0 and (relation is None or relation in RELATIONS):
-            if relation is None or relation == 'center':
+            if relation == 'center':
                 self._x = self.x = self._x + (self._w - w)/2
             self._w = self.w = w
         else:
@@ -149,7 +149,7 @@ class Region(object):
         ''' 'top-left' -- не надо менять y; 'center' --  не надо менять y '''
         (self.x, self.y, self.w) = (self._x, self._y, self._w)
         if isinstance(h, int) and h > 0 and (relation is None or relation in RELATIONS):
-            if relation is None or relation == 'center':
+            if relation == 'center':
                 self._y = self.y = self._y + (self._h - h)/2
             self._h = self.h = h
         else:

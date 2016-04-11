@@ -4,6 +4,8 @@ import psutil
 from inspect import currentframe, getframeinfo, isclass
 import time
 import datetime
+import traceback
+import sys
 
 import _ctypes
 import win32gui
@@ -500,7 +502,11 @@ class UIElement(object):
             for key in ['AutomationId', 'ClassName', 'Name']:
                 if criteria[key] is None:
                     continue
-                uielem_val = winuiaelem.GetCurrentPropertyValue(UIA.UIA_automation_element_property_identifers_mapping[key])
+                try:
+                    uielem_val = winuiaelem.GetCurrentPropertyValue(UIA.UIA_automation_element_property_identifers_mapping[key])
+                except Exception as ex:
+                    p2c(str(self), repr(self))
+                    raise ex
                 if isinstance(criteria[key], list):
                     for substr in criteria[key]:
                         if not (substr in uielem_val):
@@ -662,11 +668,14 @@ class UIElement(object):
 
             except _ctypes.COMError as ex:
                 if ex.args[0] == COR_E_TIMEOUT:
-                    p2p('Cath COR_E_TIMEOUT exception: %s. Checking custom timeout...' % str(ex))
+                    p2c('Cath COR_E_TIMEOUT exception: %s. Checking custom timeout...' % str(ex))
                     if (datetime.datetime.today()-t0).total_seconds() >= TIMEOUT_UIA_ELEMENT_SEARCH:
                         raise FindFailed('find(...): Timeout while looking for UIA element:\n\tself = %s\n\tkwargs = %s' % (repr(self), str(kwargs)))
                     t0 = datetime.datetime.today()
                 else:
+                    tb_text = ''.join(traceback.format_list(traceback.extract_tb(sys.exc_info()[2])[1:]))
+                    full_text = 'Traceback for error point:\n' + tb_text.rstrip() + '\nError message:\n  ' + type(ex).__name__ + ': ' + str(ex)
+                    p2c(full_text)
                     raise ex
 
             else:
