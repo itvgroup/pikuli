@@ -189,7 +189,7 @@ def _take_screenshot(x, y, w, h, hwnd=None):
         (x, y)  = win32gui.ScreenToClient(hwnd, (x, y))
 
     # Спрячем курсо вне эурана: не влияние на интерфейс (подсветка чего-то при наведении), не попадет на скриншот.
-    win32api.SetCursorPos((win32print.GetDeviceCaps(scr_hdc, win32con.HORZRES) + 1, win32print.GetDeviceCaps(scr_hdc, win32con.VERTRES) + 1))
+    #win32api.SetCursorPos((win32print.GetDeviceCaps(scr_hdc, win32con.HORZRES) + 1, win32print.GetDeviceCaps(scr_hdc, win32con.VERTRES) + 1))
 
     mem_hdc = win32gui.CreateCompatibleDC(scr_hdc)  # New context of memory device. This one is compatible with 'scr_hdc'
     new_bitmap_h = win32gui.CreateCompatibleBitmap(scr_hdc, w, h)
@@ -211,7 +211,7 @@ def _take_screenshot(x, y, w, h, hwnd=None):
     del bmp_arr[3::4]  # Dele alpha channel. TODO: Is it fast enough???
     bmp_np = np.array(bmp_arr, dtype=np.uint8).reshape((h, w, 3))
 
-    win32api.SetCursorPos(mpos)  # Возвращаем курсор.
+    #win32api.SetCursorPos(mpos)  # Возвращаем курсор.
     if hwnd is None:
         win32gui.DeleteDC(scr_hdc)
     else:
