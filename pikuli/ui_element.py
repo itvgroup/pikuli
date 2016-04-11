@@ -10,7 +10,7 @@ import win32gui
 
 import UIA
 import Region
-from _functions import p2c, wait_while
+from _functions import p2c, wait_while, Key, type_text
 from _exceptions import *
 import hwnd_element
 from oleacc_h import *
@@ -251,12 +251,13 @@ class UIElement(object):
         proc_name      --  имя процесса (exe-файла), которому принадлежит окно
     '''
 
-    def __init__(self, pointer2elem, derived_self=None, required_patterns=[]):
+    def __init__(self, pointer2elem, derived_self=None, required_patterns=[]):  #, timeout=10):
         '''
         Аргументы:
             pointer2elem       --  Некий указатель на UI-элемент (см. ниже).
             derived_self       --  Если пришли сюда из конструктора дочернего класса, то здесь хранится self создаваемого объета (можно узнать тип дочернего класса)
             required_patterns  --  Список занвание паттернов, которые потьребуются для работы (зависит от выбранного дочернего класса, экземпляр которого создается)
+            #timeout            --  Если происходит какая-то ошибка, что пробуем повторить ошибочную процедуру, пока не превысим timeout. Пока ошибка может быть только в происке процесса по PID.
 
         Возможные значения аргумента pointer2elem:
             a) pointer2elem == hwnd искомого элемента GUI.
@@ -296,13 +297,15 @@ class UIElement(object):
             self.proc_name = None
             for proc in psutil.process_iter():
                 try:
+                    _processes = proc.as_dict(attrs=['pid', 'name'])
                     if proc.pid == self._winuiaelem.CurrentProcessId:
                         self.proc_name = proc.name()
                         break
                 except psutil.NoSuchProcess:
                     pass
             if self.proc_name is None:
-                raise Exception('pikuli.ui_element.UIElement.__init__(): self.proc_name is None')
+                raise Exception('pikuli.ui_element.UIElement.__init__(): self.proc_name is None -- Cannot find process with self.pid = %s and self.hwnd = %s\n\trepr(self) = %s\n\tstr(self):%s\n\tprocesses:\n%s'
+                                % (str(self.pid), str(self.hwnd), repr(self), str(self), str(_processes)))
 
     def __getattr__(self, name):
         '''
@@ -314,7 +317,7 @@ class UIElement(object):
         attr = self.get_pattern(name)
         if attr is not None:
             return attr
-        raise AttributeError("Attribute not exist: %s" % name)
+        raise AttributeError("Attribute not exist: %s\n  self: %s\n%s" % (name, repr(self), str(self)))
 
     def __str__(self):
         docstring = ""
@@ -1176,6 +1179,16 @@ class ANPropGrid_Row(_uielement_Control):
 
     def set_value(self, text):
         self.get_pattern('LegacyIAccessiblePattern').SetValue(text)
+
+    def type_text(self, text):
+        ''' Кликнем мышкой по строке и введем новый текст без автоматического нажания ENTER'a.
+        Клик мышкой в область с захардкоженным смещением, к сожалению -- иначе можно попасть в вертикальный разделитель колонок. '''
+        self.reg().getTopLeft(30,1).click()
+        type_text(text)
+
+    def enter_text(self, text):
+        ''' Кликнем мышкой по строке и введем новый текст c автоматическим нажания ENTER'a. Используется type_text(). '''
+        self.type_text(text + Key.ENTER)
 
 
 
