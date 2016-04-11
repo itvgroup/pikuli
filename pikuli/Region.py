@@ -39,12 +39,13 @@ class Region(object):
 
         Вариант вызова №2:
             args[0:4] == [x, y, w, h]:
-                целые числа        -- координата x,y, ширина w, высоа h; строим новую область-прямоуголник
+                целые числа        -- координаты x,y (угла или центра - см. ниже 'relation'), ширина w, высоа h; строим новую область-прямоуголник
 
         Для всех вариантов вызова есть kwargs:
             relation:
-                'top-left' -- x,y являются координатам левого верхнего угла области-прямоуголника; область строится от этой точки
+                'top-left' -- x,y являются координатам левого верхнего угла области-прямоуголника; область строится от этой точки (вариант по умолчанию)
                 'center'   -- x,y являются координатам центра области-прямоуголника; область строится от этой точки
+                None       -- выбрать вариант по умолчанию, что равносильно отстуствию параметра 'relation' в kwargs
             title:
                 строка     -- Идентификатор для человека (просто строка)
             id             -- Идентификатор для использования в коде
@@ -115,44 +116,44 @@ class Region(object):
     def setX(self, x, relation='top-left'):
         ''' 'top-left' -- x - координата угла; 'center' -- x - координата цента '''
         (self.y, self.w, self.h) = (self._y, self._w, self._h)
-        if isinstance(x, int) and relation in RELATIONS:
-            if relation == 'top-left':
+        if isinstance(x, int) and (relation is None or relation in RELATIONS):
+            if relation is None or relation == 'top-left':
                 self._x = self.x = x
             elif relation == 'center':
                 self._x = self.x = x - self._w/2
         else:
-            raise FailExit('[error] Incorect \'setX()\' method call:\n\tx = %s\n\trelation = %s' % (str(x), str(relation)))
+            raise FailExit('[error] Incorect Region.setX(...) method call:\n\tx = %s, %s\n\trelation = %s' % (str(x), type(x), str(relation)))
 
     def setY(self, y, relation='top-left'):
         ''' 'top-left' -- y - координата угла; 'center' -- у - координата цента '''
         (self.x, self.w, self.h) = (self._x, self._w, self._h)
-        if isinstance(y, int) and relation in RELATIONS:
-            if relation == 'top-left':
+        if isinstance(y, int) and (relation is None or relation in RELATIONS):
+            if relation is None or relation == 'top-left':
                 self._y = self.y = y
             elif relation == 'center':
                 self._y = self.y = y - self._h/2
         else:
-            raise FailExit('[error] Incorect \'setY()\' method call:\n\ty = %s\n\trelation = %s' % (str(y), str(relation)))
+            raise FailExit('[error] Incorect Region.setY(...) method call:\n\ty = %s, %s\n\trelation = %s' % (str(y), type(y), str(relation)))
 
     def setW(self, w, relation='top-left'):
         ''' 'top-left' -- не надо менять x; 'center' --  не надо менять x '''
         (self.x, self.y, self.h) = (self._x, self._y, self._h)
-        if isinstance(w, int) and w > 0 and relation in RELATIONS:
+        if isinstance(w, int) and w > 0 and (relation is None or relation in RELATIONS):
+            if relation is None or relation == 'center':
+                self._x = self.x = self._x + (self._w - w)/2
             self._w = self.w = w
-            if relation == 'center':
-                self._x = self.x = self._x - w/2
         else:
-            raise FailExit('[error] Incorect \'setW()\' method call:\n\tw = %s' % str(w))
+            raise FailExit('[error] Incorect Region.setW(...) method call:\n\tw = %s, %s\n\trelation = %s' % (str(w), type(w), str(relation)))
 
     def setH(self, h, relation='top-left'):
         ''' 'top-left' -- не надо менять y; 'center' --  не надо менять y '''
         (self.x, self.y, self.w) = (self._x, self._y, self._w)
-        if isinstance(h, int) and h > 0 and relation in RELATIONS:
+        if isinstance(h, int) and h > 0 and (relation is None or relation in RELATIONS):
+            if relation is None or relation == 'center':
+                self._y = self.y = self._y + (self._h - h)/2
             self._h = self.h = h
-            if relation == 'center':
-                self._y = self.y = self._y - h/2
         else:
-            raise FailExit('[error] Incorect \'setH()\' method call:\n\th = %s' % str(h))
+            raise FailExit('[error] Incorect Region.setH(...) method call:\n\th = %s, %s\n\trelation = %s' % (str(h), type(h), str(relation)))
 
 
     def setRect(self, *args, **kwargs):
@@ -165,12 +166,11 @@ class Region(object):
                     if not isinstance(a, int):
                         raise FailExit('#1')
 
-                if 'relation' in kwargs:
-                    if kwargs['relation'] not in RELATIONS:
-                        raise FailExit('#2')
-                    relation = kwargs['relation']
-                else:
+                relation = kwargs.get('relation', 'top-left')
+                if relation is None:
                     relation = 'top-left'
+                elif relation not in RELATIONS:
+                    raise FailExit('#2')
 
                 self._w = self.w = args[2]
                 self._h = self.h = args[3]
@@ -178,8 +178,8 @@ class Region(object):
                     self._x = self.x = args[0]
                     self._y = self.y = args[1]
                 elif relation == 'center':
-                    self._x = self.x = x - args[2]/2
-                    self._y = self.y = y - args[3]/2
+                    self._x = self.x = args[0] - self._w/2
+                    self._y = self.y = args[1] - self._h/2
             else:
                 raise FailExit('#3')
 
@@ -210,14 +210,18 @@ class Region(object):
         return self._h
 
 
-    def offset(self, *args):
-        ''' Возвращает область, сдвинутую, относительно self.
-            Вериант №1 (как в Sikuli):
-                loc_offs := args[0]  --  тип Location; на сколько сдвинуть; (w,h) сохраняется
-            Вериант №2:
-                x_offs := args[0]  --  тип int; на сколько сдвинуть; w сохраняется
-                y_offs := args[1]  --  тип int; на сколько сдвинуть; h сохраняется
+    def offset(self, *args, **kwargs):
         '''
+        Возвращает область, сдвинутую, относительно self.
+        Вериант №1 (как в Sikuli):
+            loc_offs := args[0]  --  тип Location; на сколько сдвинуть; (w,h) сохраняется
+        Вериант №2:
+            x_offs := args[0]  --  тип int; на сколько сдвинуть; w сохраняется
+            y_offs := args[1]  --  тип int; на сколько сдвинуть; h сохраняется
+        '''
+        if len(kwargs) != 0:
+            raise FailExit('[error] Unknown keys in kwargs = %s' % str(kwargs))
+
         if len(args) == 2 and (isinstance(args[0], int) or isinstance(args[0], float)) and (isinstance(args[1], int) or isinstance(args[1], float)):
             return Region(self._x + int(args[0]), self._y + int(args[1]), self._w, self._h)
         elif len(args) == 1 and isinstance(args[0], Location):
@@ -300,20 +304,20 @@ class Region(object):
         return reg
 
 
-    def getTopLeft(self):
-        return Location(self._x, self._y)
+    def getTopLeft(self, x_offs=0, y_offs=0):
+        return Location(self._x + x_offs,                self._y + y_offs)
 
-    def getTopRight(self):
-        return Location(self._x, self._y + self._w - 1)
+    def getTopRight(self, x_offs=0, y_offs=0):
+        return Location(self._x + x_offs + self._w - 1,  self._y + y_offs)
 
-    def getBottomLeft(self):
-        return Location(self._x + self._h - 1, self._y)
+    def getBottomLeft(self, x_offs=0, y_offs=0):
+        return Location(self._x + x_offs,                self._y + y_offs + self._h - 1)
 
-    def getBottomRight(self):
-        return Location(self._x + self._h - 1, self._y + self._w - 1)
+    def getBottomRight(self, x_offs=0, y_offs=0):
+        return Location(self._x + x_offs + self._w - 1,  self._y + y_offs + self._h - 1)
 
-    def getCenter(self):
-        return Location(self._x + self._w/2, self._y + self._h/2)
+    def getCenter(self, x_offs=0, y_offs=0):
+        return Location(self._x + x_offs + self._w/2,    self._y + y_offs + self._h/2)
 
 
     def __get_field_for_find(self):
@@ -427,9 +431,9 @@ class Region(object):
                     os.mkdir(os.environ['TEMP'] + '\\find_failed')
                 self.save_as_jpg(os.environ['TEMP'] + '\\find_failed\\' + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + '_' + str(failedImages) + '.jpg')
 
-                t = time.time()
-                cv2.imwrite('d:\\temp\\%i-%06i-pattern.png' % (int(t), (t-int(t))*10**6), ps[0]._cv2_pattern)
-                cv2.imwrite('d:\\temp\\%i-%06i-field.png' % (int(t), (t-int(t))*10**6), field)
+                # t = time.time()
+                # cv2.imwrite('d:\\tmp\\%i-%06i-pattern.png' % (int(t), (t-int(t))*10**6), ps[0]._cv2_pattern)
+                # cv2.imwrite('d:\\tmp\\%i-%06i-field.png' % (int(t), (t-int(t))*10**6), field)
 
                 raise FindFailed('Unable to find \'%s\' in %s' % (failedImages, str(self)) )
 
@@ -509,20 +513,20 @@ class Region(object):
         else:
             raise FailExit('[error] Incorect \'setAutoWaitTimeout()\' method call:\n\ttimeout = %s' % str(timeout))
 
-    def click(self):
-        self.getCenter().click()
+    def click(self, after_cleck_delay=DEALY_AFTER_CLICK):
+        self.getCenter().click(after_cleck_delay=DEALY_AFTER_CLICK)
 
-    def rightClick(self):
-        self.getCenter().rightClick()
+    def rightClick(self, after_cleck_delay=DEALY_AFTER_CLICK):
+        self.getCenter().rightClick(after_cleck_delay=DEALY_AFTER_CLICK)
 
-    def doubleClick(self):
-        self.getCenter().doubleClick()
+    def doubleClick(self, after_cleck_delay=DEALY_AFTER_CLICK):
+        self.getCenter().doubleClick(after_cleck_delay=DEALY_AFTER_CLICK)
 
-    def type(self, text, modifiers=None, click = True):
+    def type(self, text, modifiers=None, click=True, click_type_delay=DELAY_BETWEEN_CLICK_AND_TYPE):
         ''' Не как в Sikuli '''
         self.getCenter().type(text, modifiers=modifiers, click=click)
 
-    def enter_text(self, text, modifiers=None, click=True):
+    def enter_text(self, text, modifiers=None, click=True, click_type_delay=DELAY_BETWEEN_CLICK_AND_TYPE):
         ''' Не как в Sikuli '''
         self.getCenter().enter_text(text, modifiers=modifiers, click=click)
 

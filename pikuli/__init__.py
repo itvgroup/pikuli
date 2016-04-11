@@ -36,3 +36,4 @@ __all__ = ['Settings',
            'Match',
            'Location',
            'Pattern']
+

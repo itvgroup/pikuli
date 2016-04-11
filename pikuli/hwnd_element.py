@@ -335,7 +335,7 @@ class HWNDElement(object):
         EnumChildWindows(self.hwnd, EnumChildWindows_callback, extra)
 
         if len(extra['hwnds']) == 0:
-            raise FindFailed('pikuli.HWNDElement.find: not win_class = \'%s\' and title = \'%s\' was not found.' % (str(win_class), str(title)))
+            raise FindFailed('pikuli.HWNDElement.find: win_class = \'%s\' and title = \'%s\' was not found.' % (str(win_class), str(title)))
 
         if find_all:
             return [HWNDElement(h) for h in extra['hwnds'] if _is_visible(h)]

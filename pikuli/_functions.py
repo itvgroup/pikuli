@@ -13,6 +13,7 @@ import win32gui
 import win32ui
 import win32clipboard
 import win32print
+# from ctypes import windll
 
 import numpy as np
 
@@ -137,7 +138,8 @@ def highlight_region(x, y, w, h, delay=0.5):
 
         # TODO: send redraw signal
 
-    threading.Thread(target=_thread_function, args=(x, y, w, h, delay), name='highlight_region %s' % str((x, y, w, h, delay))).start()
+    #threading.Thread(target=_thread_function, args=(x, y, w, h, delay), name='highlight_region %s' % str((x, y, w, h, delay))).start()
+    return
 
 
 def _take_screenshot(x, y, w, h, hwnd=None):
@@ -156,6 +158,8 @@ def _take_screenshot(x, y, w, h, hwnd=None):
     отсчета монитора, а не виртуального рабочего стола. Т.о. входные (x,y) надо пересчитывать.
       Еще нюанс: копирование данных из контекста окна дает белый фон на чисто OpenGL'ой раскледке камер. Аналогично
     с windll.user32.PrintWindow(...). Помогает применение флага CAPTUREBLT у BitBlt(...). Но надо еще изучать (TODO here).
+
+      Нужны какие-то новые технологии типа DirectX или DWM, чтоыб наверняка сделать скриншот всего соедрежимого окна с OpenGL.
     '''
     # http://stackoverflow.com/questions/3291167/how-to-make-screen-screenshot-with-win32-in-c
     # http://stackoverflow.com/questions/18733486/python-win32api-bitmap-getbitmapbits
@@ -176,6 +180,7 @@ def _take_screenshot(x, y, w, h, hwnd=None):
     mpos = list(win32api.GetCursorPos())
 
     # Получим контекст всех дисплев или всего рабочего стола:
+    hwnd = None  # !!! не работает скриншот окна с OpenGL :(
     if hwnd is None:
         #scr_hdc = win32gui.GetDC(0)
         scr_hdc = win32gui.CreateDC('DISPLAY', None, None)
@@ -191,7 +196,7 @@ def _take_screenshot(x, y, w, h, hwnd=None):
     win32gui.SelectObject(mem_hdc, new_bitmap_h)    # Returns 'old_bitmap_h'. It will be deleted automatically.
 
     # Прямое копирование из контекста окна
-    win32gui.BitBlt(mem_hdc, 0, 0, w, h, scr_hdc, x, y, win32con.SRCCOPY | CAPTUREBLT)
+    win32gui.BitBlt(mem_hdc, 0, 0, w, h, scr_hdc, x, y, win32con.SRCCOPY)  # | CAPTUREBLT)
 
     bmp = win32ui.CreateBitmapFromHandle(new_bitmap_h)
     bmp_info = bmp.GetInfo()
@@ -213,6 +218,10 @@ def _take_screenshot(x, y, w, h, hwnd=None):
         win32gui.ReleaseDC(hwnd, scr_hdc)
     win32gui.DeleteDC(mem_hdc)
     win32gui.DeleteObject(new_bitmap_h)
+
+    # import cv2, time
+    # t = time.time()
+    # cv2.imwrite('d:\\tmp\\s-%i-%06i-field.png' % (int(t), (t-int(t))*10**6), bmp_np)
 
     return bmp_np
 
@@ -324,6 +333,8 @@ class Key(object):
     DOWN       = chr(0) + chr(win32con.VK_DOWN)
     PAGE_UP    = chr(0) + chr(win32con.VK_PRIOR)
     PAGE_DOWN  = chr(0) + chr(win32con.VK_NEXT)
+    HOME       = chr(0) + chr(win32con.VK_HOME)
+    END        = chr(0) + chr(win32con.VK_END)
     BACKSPACE  = chr(0) + chr(win32con.VK_BACK)
     F1         = chr(0) + chr(win32con.VK_F1)
     F2         = chr(0) + chr(win32con.VK_F2)
@@ -402,3 +413,18 @@ def type_text(s, modifiers=None):
             if modifiers & k != 0:
                 release_key(_KeyCodes[KeyModifier._rev[k]][0], _KeyCodes[KeyModifier._rev[k]][1])
 
+
+
+
+
+def cmbbox_select(cmbbox, item_name):
+    '''
+    Выбрать пункт в ComboBox через UIA API.
+        cmbbox     --  экземпляр класса UIElement
+        item_name  --  строка
+    '''
+    if cmbbox.get_value() != item_name:
+        cmbbox.reg().click()
+        cmbbox.get_item_by_name(item_name).reg().click()
+        if cmbbox.get_value() != item_name:
+            raise Exception('cmbbox_select(...): cmbbox.get_value() != item_name\n\tcmbbox.get_value() = \'%s\'\n\titem_name = \'%s\'' % (str(cmbbox.get_value()), str(item_name)))
