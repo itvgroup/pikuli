@@ -5,6 +5,7 @@ from inspect import currentframe, getframeinfo, isclass
 import time
 import datetime
 import traceback
+import sys
 
 import _ctypes
 import win32gui
@@ -303,7 +304,8 @@ class UIElement(object):
                 except psutil.NoSuchProcess:
                     pass
             if self.proc_name is None:
-                raise Exception('pikuli.ui_element.UIElement.__init__(): self.proc_name is None')
+                raise Exception('pikuli.ui_element.UIElement.__init__(): self.proc_name is None -- Cannot find process with self.pid = %s and self.hwnd = %s\n\trepr(self) = %s\n\tstr(self):\n'
+                                % (str(self.pid), str(self.hwnd), repr(self), str(self)))
 
     def __getattr__(self, name):
         '''
@@ -498,7 +500,11 @@ class UIElement(object):
             for key in ['AutomationId', 'ClassName', 'Name']:
                 if criteria[key] is None:
                     continue
-                uielem_val = winuiaelem.GetCurrentPropertyValue(UIA.UIA_automation_element_property_identifers_mapping[key])
+                try:
+                    uielem_val = winuiaelem.GetCurrentPropertyValue(UIA.UIA_automation_element_property_identifers_mapping[key])
+                except Exception as ex:
+                    p2c(str(self), repr(self))
+                    raise ex
                 if isinstance(criteria[key], list):
                     for substr in criteria[key]:
                         if not (substr in uielem_val):
@@ -666,7 +672,7 @@ class UIElement(object):
                     t0 = datetime.datetime.today()
                 else:
                     tb_text = ''.join(traceback.format_list(traceback.extract_tb(sys.exc_info()[2])[1:]))
-                    full_text = 'Traceback for error point:\n' + tb_text.rstrip() + '\nError message:\n  ' + type(e).__name__ + ': ' + str(e)
+                    full_text = 'Traceback for error point:\n' + tb_text.rstrip() + '\nError message:\n  ' + type(ex).__name__ + ': ' + str(ex)
                     p2c(full_text)
                     raise ex
 
