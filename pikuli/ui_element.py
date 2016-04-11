@@ -645,7 +645,7 @@ class UIElement(object):
 
             except _ctypes.COMError as ex:
                 if ex.args[0] == COR_E_TIMEOUT:
-                    p2p('Cath COR_E_TIMEOUT exception: %s. Checking custom timeout...' % str(ex))
+                    p2c('Cath COR_E_TIMEOUT exception: %s. Checking custom timeout...' % str(ex))
                     if (datetime.datetime.today()-t0).total_seconds() >= TIMEOUT_UIA_ELEMENT_SEARCH:
                         raise FindFailed('find(...): Timeout while looking for UIA element:\n\tself = %s\n\tkwargs = %s' % (repr(self), str(kwargs)))
                     t0 = datetime.datetime.today()
