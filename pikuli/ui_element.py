@@ -1126,21 +1126,24 @@ class ANPropGrid_Table(_uielement_Control):
 
             force_expand -- разворачивать ли свернутые строки, если они обнаружены при поиске строки и являются для нее группирующими.
         '''
-        def _check_row(row):
-            if row is None:
+        def _find_row_precisely(obj, nested_name, exact_level):
+            rows = [e for e in obj.find_all(Name=nested_name, exact_level=exact_level) if isinstance(e, ANPropGrid_Row)]
+            if len(rows) > 1:
+                Exception('ANPropGrid_Table.find_row._find_row_precisely(...): len(rows) != 0\n\tlen(rows) = %i\n\trows = %s' % (len(rows), str(rows)))
+            elif len(rows) == 0:
                 raise FindFailed('pikuli.ANPropGrid_Table: row \'%s\' not found.\nSearch arguments:\n\trow_name = %s\n\tforce_expand = %s' % (str(nested_name), str(row_name), str(force_expand)))
+            return rows[0]
+
         if isinstance(row_name, list):
-            row = self.find(Name=row_name[0], exact_level=1)
+            row = _find_row_precisely(self, row_name[0], 1)
             for nested_name in row_name[1:]:
-                _check_row(row)
                 if not row.is_expanded() and not force_expand:
                     raise FindFailed('pikuli.ANPropGrid_Table: row \'%s\' was found, but it is collapsed. Try to set force_expand = True.\nSearch arguments:\n\trow_name = %s\n\tforce_expand = %s' % (str(nested_name), str(row_name), str(force_expand)))
                 row.expand()
-                row = row.find(Name=nested_name, exact_level=0, exception_on_find_fail=False)  # Так функция сперва изет Next, а потом -- Previous. Т.о., максимальная скорость (если строки не найдется, то фейл теста -- можно и потратить время на previous-поиск)
-            _check_row(row)
+                row = _find_row_precisely(row, nested_name, 0)  # Раньше: Так функция сперва изет Next, а потом -- Previous. Т.о., максимальная скорость (если строки не найдется, то фейл теста -- можно и потратить время на previous-поиск)
             found_elem = row
         else:
-            found_elem = self.find(Name=row_name, exact_level=1)
+            found_elem = _find_row_precisely(self, row_name, 1)
         p2c( 'Pikuli.ui_element.ANPropGrid_Table.find_row: \'%s\' has been found: %s' % (str(row_name), repr(found_elem)))
         return found_elem
 
