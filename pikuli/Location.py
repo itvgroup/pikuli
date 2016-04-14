@@ -16,26 +16,28 @@ DELAY_KBD_KEY_PRESS = 0.020
 DEALY_AFTER_CLICK            = 0.3  # В частности, время бездейставия между кликом в область и началом введения текста (по умолчанию).
 DELAY_BETWEEN_CLICK_AND_TYPE = DEALY_AFTER_CLICK
 
+DRAGnDROP_MOVE_DELAY = 0.005
+DRAGnDROP_MOVE_STEP  = 10
+
 
 class Location(object):
 
     def __init__(self, x, y, title=None):
-        (self.x, self.y, self._x, self._y) = (None, None, None, None)
         self.title = title
-
         try:
-            if not (isinstance(x, int) and isinstance(y, int)):
-                raise FailExit()
-
-            self._x = self.x = x
-            self._y = self.y = y
-
-        except FailExit:
+            self._x = self.x = int(x)
+            self._y = self.y = int(y)
+            self._is_mouse_down = False
+        except:
             raise FailExit('[error] Incorect \'Location\' class constructor call:\n\tx = %s\n\ty = %s\n\ttitle= %s' % (str(x), str(y), str(title)))
 
     def __str__(self):
         (self.x, self.y) = (self._x, self._y)
         return 'Location (%i, %i)' % (self._x, self._y)
+
+    def get_xy(self):
+        (self.x, self.y) = (self._x, self._y)
+        return (self.x, self.y)
 
     def mouseMove(self, delay=DELAY_AFTER_MOUSE_MOVEMENT):
         win32api.SetCursorPos((self.x, self.y))
@@ -126,3 +128,51 @@ class Location(object):
             self.click(after_cleck_delay=click_type_delay)
         type_text('a', KeyModifier.CTRL)
         type_text(str(text) + Key.ENTER, modifiers)
+
+
+    def dragto(self, *dest_location):
+        if len(dest_location) == 1 and isinstance(dest_location[0], Location):
+            (dest_x, dest_y) = (dest_location[0].x, dest_location[0].y)
+        elif len(dest_location) == 2:
+            try:
+                (dest_x, dest_y) = (int(dest_location[0]), int(dest_location[1]))
+            except:
+                raise FailExit('')
+        else:
+            raise FailExit('')
+
+        if not self._is_mouse_down:
+            self.mouseDown()
+            self._is_mouse_down = True
+
+        # Алгоритм Брезенхема
+        # https://ru.wikipedia.org/wiki/%D0%90%D0%BB%D0%B3%D0%BE%D1%80%D0%B8%D1%82%D0%BC_%D0%91%D1%80%D0%B5%D0%B7%D0%B5%D0%BD%D1%85%D1%8D%D0%BC%D0%B0
+        if abs(dest_x - self.x) >= abs(dest_y - self.y):
+            (a1, b1, a2, b2) = (self.x, self.y, dest_x, dest_y)
+            f = lambda x, y: Location(x, y).mouseMove(DRAGnDROP_MOVE_DELAY)
+        else:
+            (a1, b1, a2, b2) = (self.y, self.x, dest_y, dest_x)
+            f = lambda x, y: Location(y, x).mouseMove(DRAGnDROP_MOVE_DELAY)
+
+        k = float(b2 - b1) / (a2 - a1)
+        a_sgn = (a2 - a1) / abs(a2 - a1)
+        la = 0
+        while abs(la) <= abs(a2 - a1):
+            a = a1 + la
+            b = int(k * la) + b1
+            f(a, b)
+            la += a_sgn * DRAGnDROP_MOVE_STEP
+
+        self.x = self._x = dest_x
+        self.y = self._y = dest_y
+
+    def drop(self):
+        if self._is_mouse_down:
+            self.mouseUp()
+            self._is_mouse_down = False
+        else:
+            raise FailExit('You try drop <%s>, but it is not bragged before!' % str(self))
+
+    def dragndrop(self, *dest_location):
+        self.dragto(*dest_location)
+        self.drop()

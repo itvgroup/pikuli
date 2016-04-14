@@ -262,7 +262,7 @@ class HWNDElement(object):
         return self.find(win_class, title, process_name=process_name, title_regexp=title_regexp, find_all=True, max_depth_level=max_depth_level, depth_level=depth_level)
 
 
-    def find(self, win_class, title, process_name=False, title_regexp=False, find_all=False, max_depth_level=None, depth_level=None):
+    def find(self, win_class, title, process_name=False, title_regexp=False, find_all=False, max_depth_level=None, depth_level=None):  #, timeout=None):
         '''
         Поиск дочернего окна-объекта любого уровня вложенности. Под окном пнимается любой WinForms-элемент любого класса.
             win_class        --  Искомое окно должно обладать таким WinForms-классом.
@@ -273,6 +273,11 @@ class HWNDElement(object):
             find_all         --  Если True, то возвращается список _всех_ найденных окон. Если False, то возвращается только одно значение или происходит Exception, если найдено несколько элементов.
             max_depth_level  --  максимальная глубина вложенности дочерних объектов. Нумерация от 1. None -- бесконечность. Взаимоисключающий с depth_level.
             depth_level      --  Взаимоисключающий с max_depth_level.
+            timeout          --  Определяет время, в течение которого будет повторяься неудавшийся поиск. Дейстует только при find_all=False (при find_all=True поиск будет однократный).
+                                 Возможные значения:
+                                    timeout = 0     --  однократная проверка
+                                    timeout = None  --  использование дефолтного значения
+                                    timeout = <число секунд>
 
             Если title -- это re.compile, то аргумент title_regexp игнорируется.
 

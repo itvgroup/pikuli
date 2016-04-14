@@ -21,7 +21,8 @@ from oleacc_h import *
 COR_E_TIMEOUT = -2146233083  # -2146233083 =<математически>= -0x80131505;   0x80131505 =<в разрядной сетке>= (-2146233083 & 0xFFFFFFFF)
 
 
-TIMEOUT_UIA_ELEMENT_SEARCH = 30
+# TIMEOUT_UIA_ELEMENT_SEARCH = 30
+DEFAULT_FIND_TIMEOUT = 10
 
 
 class DriverException(Exception):
@@ -262,7 +263,7 @@ class UIElement(object):
             #timeout            --  Если происходит какая-то ошибка, что пробуем повторить ошибочную процедуру, пока не превысим timeout. Пока ошибка может быть только в происке процесса по PID.
 
         Возможные значения аргумента pointer2elem:
-            a) pointer2elem == hwnd искомого элемента GUI.
+            a) pointer2elem == hwnd искомого элемента GUI. В часности ноль -- это указатель корневой UIA-элемент ("рабочий стол").
             b) pointer2elem -- это уже интерфейс к искомому элементу GUI (указатель на обект типа IUIAutomationElement или экземпляр настоящего класса UIElement)
 
         Возвращение методами этого класса объектов UI-элементов (реализовано в функции _create_instance_of_suitable_class):
@@ -271,6 +272,7 @@ class UIElement(object):
              3. Если по какой-то причние пункты 1 и 2 выше не позволили подобрать класс, то испульзуется родительский UIElement.
              4. Если нашлось несколько подходящих классов, то генерируется исключение.
         '''
+        self.default_find_timeout = DEFAULT_FIND_TIMEOUT
         self._reg = None
 
         if pointer2elem == 0:
@@ -407,7 +409,11 @@ class UIElement(object):
                                     > 0 -- поиск среди дочерних выбранной глубины
                                     < 0 -- возвращает предка выбранной дальности
             exception_on_find_fail  --  По умолчанию None. Это означает, что переприсовится True при find_first_only = True, False при find_first_only = False.
-            timeout            --  Если ищем только один эелемент (find_first_only=True) и ничего не нашлось, то будем повторять попытки в течение этого времени. По умолчанию равно 0.
+            timeout            --  Если ищем только один эелемент (find_first_only=True) и ничего не нашлось, то будем повторять попытки в течение этого времени.
+                                   Не оказывает влияния на поиск всех элементов (find_first_only=False). Возможные значения:
+                                        timeout = 0     --  однократная проверка
+                                        timeout = None  --  использование дефолтного значения (по умолчанию)
+                                        timeout = <число секунд>
 
         Возвращает:
             объект типа Region.
@@ -420,8 +426,10 @@ class UIElement(object):
         max_descend_level      = kwargs.pop('max_descend_level', None)
         exact_level            = kwargs.pop('exact_level', None)
         exception_on_find_fail = kwargs.pop('exception_on_find_fail', None)
-        timeout                = kwargs.pop('timeout', 0)
+        timeout                = kwargs.pop('timeout', None)
 
+        if timeout is None:
+            timeout = self.default_find_timeout
         if exception_on_find_fail is None:
             exception_on_find_fail = find_first_only
 
@@ -656,20 +664,27 @@ class UIElement(object):
                     # Будем искать по слоям вложенности элементов, а не по веткам. Это немного сложнее сделать, но должно быть эффективнее.
                     found_winuiaelem_arr = _descendants_range_level(walker, self._winuiaelem)
 
+                if find_first_only and len(found_winuiaelem_arr) == 0:
+                    raise FirstFoundEx(None)
+
             except FirstFoundEx as ex:
                 if ex.winuiaelem is None:
-                    if exception_on_find_fail:
-                        raise FindFailed('pikuli.UIElement.find: no one elements was found\n\tself = %s\n\tkwargs = %s\n\tcriteria = %s' % (repr(self), str(kwargs), str__criteria))
-                    p2c( 'Pikuli.ui_element.UIElement.find: %s has been found: None' % str__not_none_criteria)
-                    return None
-                found_elem = _create_instance_of_suitable_class(ex.winuiaelem)
-                p2c( 'Pikuli.ui_element.UIElement.find: %s has been found: %s' % (str__not_none_criteria, repr(found_elem)))
-                return found_elem
+                    if (datetime.datetime.today()-t0).total_seconds() >= timeout:
+                        if exception_on_find_fail:
+                            raise FindFailed('pikuli.UIElement.find: no one elements was found\n\tself = %s\n\tkwargs = %s\n\tcriteria = %s\n\ttimeout = %s'
+                                             % (repr(self), str(kwargs), str__criteria, str(timeout)))
+                        p2c( 'Pikuli.ui_element.UIElement.find: %s has been found: None' % str__not_none_criteria)
+                        return None
+                    t0 = datetime.datetime.today()
+                else:
+                    found_elem = _create_instance_of_suitable_class(ex.winuiaelem)
+                    p2c( 'Pikuli.ui_element.UIElement.find: %s has been found: %s' % (str__not_none_criteria, repr(found_elem)))
+                    return found_elem
 
             except _ctypes.COMError as ex:
                 if ex.args[0] == COR_E_TIMEOUT:
                     p2c('Cath COR_E_TIMEOUT exception: %s. Checking custom timeout...' % str(ex))
-                    if (datetime.datetime.today()-t0).total_seconds() >= TIMEOUT_UIA_ELEMENT_SEARCH:
+                    if (datetime.datetime.today()-t0).total_seconds() >= timeout:
                         raise FindFailed('find(...): Timeout while looking for UIA element:\n\tself = %s\n\tkwargs = %s' % (repr(self), str(kwargs)))
                     t0 = datetime.datetime.today()
                 else:
@@ -679,27 +694,22 @@ class UIElement(object):
                     raise ex
 
             else:
-                # Ищем один элемент и все никак его не найдем или ищем много элементов:
-                if not find_first_only or (datetime.datetime.today()-t0).total_seconds() >= timeout:
+                # Тут, если ищем один элемент и все никак его не найдем или ищем много элементов:
+                if not find_first_only or (find_first_only and (datetime.datetime.today()-t0).total_seconds() >= timeout):
                     break
                 t0 = datetime.datetime.today()
 
-        # В норме если мы тут, то не нашлось ни одного элемента или ищем все (если ищем только первый,
-        # то должно было произойти и перехватиться исключение FirstFoundEx).
+        # В норме мы тут если ищем все совпадения (если ищем только первое, то должно было произойти и перехватиться исключение FirstFoundEx).
+        if find_first_only:
+            raise('pikuli.UIElement.find [INTERNAL]: Strange! We should not be here: ' + str(getframeinfo(currentframe())))
         if len(found_winuiaelem_arr) == 0:
             if exception_on_find_fail:
                 raise FindFailed('pikuli.UIElement.find: no one elements was found\n\tself = %s\n\tkwargs = %s\n\tcriteria = %s' % (repr(self), str(kwargs), str__criteria))
-            if find_first_only:
-                p2c( 'Pikuli.ui_element.UIElement.find: %s has been found: None' % str__not_none_criteria)
-                return None
+            found_elem = []
             p2c( 'Pikuli.ui_element.UIElement.find: %s has been found: []' % str__not_none_criteria)
-            return []
-
-        if find_first_only:
-            raise('pikuli.UIElement.find [INTERNAL]: Strange! We should not be here: ' + str(getframeinfo(currentframe())))
-
-        found_elem = map(_create_instance_of_suitable_class, found_winuiaelem_arr)
-        p2c('Pikuli.ui_element.UIElement.find: %s has been found: %s' % (str__not_none_criteria, repr(found_elem)))
+        else:
+            found_elem = map(_create_instance_of_suitable_class, found_winuiaelem_arr)
+            p2c('Pikuli.ui_element.UIElement.find: %s has been found: %s' % (str__not_none_criteria, repr(found_elem)))
         return found_elem
 
 
@@ -1017,12 +1027,12 @@ class Tree(_uielement_Control):
             return None
         return items
 
-    def find_item(self, item_name, force_expand=False, timeout=0):
+    def find_item(self, item_name, force_expand=False, timeout=None):
         '''
             item_name -- Cписок строк-названий эелементов дерева, пречисленных по их вложенности один в другой. Последняя строка в списке -- искомый элемент.
             force_expand -- разворачивать ли свернутые элементы на пути поиска искового.
         '''
-        p2c(item_name, force_expand)
+        # p2c(item_name, force_expand)
         if not isinstance(item_name, list):
             raise Exception('pikuli.ui_element.Tree: not isinstance(item_name, list); item_name = %s' % str(item_name))
         if len(item_name) == 0:
@@ -1031,7 +1041,7 @@ class Tree(_uielement_Control):
             found_elem = self.find(Name=item_name[0], exact_level=1, timeout=timeout)
         else:
             found_elem = self.find(Name=item_name[0], exact_level=1, timeout=timeout).find_item(item_name[1:], force_expand, timeout=timeout)
-        p2c( 'Pikuli.ui_element.Tree.find_item: %s has been found by criteria \'%s\'' % (str(item_name), repr(found_elem)))
+        p2c('Pikuli.ui_element.Tree.find_item: %s has been found by criteria \'%s\'' % (str(item_name), repr(found_elem)))
         return found_elem
 
 
@@ -1078,7 +1088,7 @@ class TreeItem(_uielement_Control):
             return self.find_all(exact_level=1)
         return []
 
-    def find_item(self, item_name, force_expand=False, timeout=0):
+    def find_item(self, item_name, force_expand=False, timeout=None):
         '''
             item_name -- Cписок строк-названий эелементов дерева, пречисленных по их вложенности один в другой. Последняя строка в списке -- искомый элемент.
             force_expand -- разворачивать ли свернутые элементы на пути поиска искового.
@@ -1200,12 +1210,12 @@ class ANPropGrid_Row(_uielement_Control):
 
     def enter_text(self, text):
         ''' Кликнем мышкой по строке и введем новый текст c автоматическим нажания ENTER'a. Используется type_text(). '''
-        self.type_text(text + Key.ENTER)
+        self.type_text(str(text) + Key.ENTER)
 
 
 
 class List(_uielement_Control):
-    ''' Неки список из ListItem'ов. '''
+    ''' Некий список из ListItem'ов. '''
 
     CONTROL_TYPE = 'List'
 
@@ -1217,6 +1227,27 @@ class ListItem(_uielement_Control):
     ''' Элементы списка ListItem. '''
 
     CONTROL_TYPE = 'ListItem'
+
+
+
+
+class Menu(_uielement_Control):
+    ''' Контекстное меню, к примеру. Состоит из MenuItem. '''
+
+    CONTROL_TYPE = 'Menu'
+
+    def list_items(self):
+        return self.find_all(ControlType='MenuItem', exact_level=1)
+
+    def find_item(self, item_name):
+        return self.find(Name=item_name, ControlType='MenuItem', exact_level=1)
+
+
+class MenuItem(_uielement_Control):
+    ''' Контекстное меню, к примеру. '''
+
+    CONTROL_TYPE = 'MenuItem'
+
 
 
 

@@ -39,7 +39,8 @@ class Region(object):
 
         Вариант вызова №2:
             args[0:4] == [x, y, w, h]:
-                целые числа        -- координаты x,y (угла или центра - см. ниже 'relation'), ширина w, высоа h; строим новую область-прямоуголник
+                целые числа        -- координаты x,y (угла или центра - см. ниже 'relation'), ширина w, высота h; строим новую область-прямоуголник.
+                                      Ширина и высота в пикселях. Крайние пиксели принадлежат области прямоуголника.
 
         Для всех вариантов вызова есть kwargs:
             relation:
@@ -71,6 +72,7 @@ class Region(object):
 
         '''
         self.auto_wait_timeout = 3.0
+        self.drag_location = None
 
         # "Объявляем" переменные, которые будут заданы ниже через self.setRect(...):
         (self.x, self.y, self._x, self._y) = (None, None, None, None)
@@ -374,8 +376,8 @@ class Region(object):
 
             pts = self.__find(ps, self.__get_field_for_find())
             #p2c('Pikuli.findAll: try to find %s' % str(ps))
-            self._last_match = map(lambda pt: Match(pt[0], pt[1], ps._w, ps._h, pt[2], ps.getFilename()), pts)
-            p2c('Pikuli.findAll: total found: %s matches' % str(len(self._last_match)) )
+            self._last_match = map(lambda pt: Match(pt[0], pt[1], ps._w, ps._h, pt[2], ps), pts)
+            p2c('Pikuli.findAll: total found %i matches of <%s>' % (len(self._last_match), str(ps)) )
             return self._last_match
 
         except FailExit as e:
@@ -416,7 +418,7 @@ class Region(object):
                             # Что-то нашли. Выберем один вариант с лучшим 'score'. Из несольких с одинаковыми 'score' будет первый при построчном проходе по экрану.
                             pt = max(pts, key=lambda pt: pt[2])
                             p2c( 'Pikuli.find: %s has been found' % str( _ps_.getFilename() ).split("\\")[-1] )
-                            return Match(pt[0], pt[1], _ps_._w, _ps_._h, pt[2], _ps_.getFilename())
+                            return Match(pt[0], pt[1], _ps_._w, _ps_._h, pt[2], _ps_)
                     elif aov == 'vanish':
                         if len(pts) == 0:
                             return
@@ -442,9 +444,10 @@ class Region(object):
         '''
         Ждет, пока паттерн не появится.
 
-        timeout может быть положительным числом или None:
+        timeout определяет время, в течение которого будет повторяься неудавшийся поиск. Возможные значения:
             timeout = 0     --  однократная проверка
             timeout = None  --  использование дефолтного значения
+            timeout = <число секунд>
 
         Возвращает Region, если паттерн появился, и исключение FindFailed, если нет. '''
         #p2c('Pikuli.find: try to find %s' % str(ps))
@@ -533,21 +536,58 @@ class Region(object):
     def scroll(self, direction = 1, count = 1, click = True):
         self.getCenter().scroll(direction, count, click)
 
-    def dragndrop(self, dest_location):
-        # Алгоритм Брезенхема
-        # https://ru.wikipedia.org/wiki/%D0%90%D0%BB%D0%B3%D0%BE%D1%80%D0%B8%D1%82%D0%BC_%D0%91%D1%80%D0%B5%D0%B7%D0%B5%D0%BD%D1%85%D1%8D%D0%BC%D0%B0
-        MOVE_DELAY = 0.005
-        MOVE_STEP = 10
+
+    def dragto(self, *dest_location):
+        ''' Перемащает регион за его центр. '''
+        if self.drag_location is None:
+            self.drag_location = self.getCenter()
+        drag_location.dragto(*dest_location)
+
+        # Изменим у текущего объект координаты, т.к. его передвинули:
+        center = self.getCenter()
+        self._x += drag_location.x - center.x
+        self._y += drag_location.y - center.y
+        (self.x, self.y) = (self._x, self._y)
+
+
+    def drop(self):
+        if drag_location is not None:
+            self.drag_location.drop()
+            self.drag_location = None
+
+    def dragndrop(self, *dest_location):
+        ''' Перемащает регион за его центр. '''
+        if self.drag_location is None:
+            self.drag_location = self.getCenter()
+        self.dragto(*dest_location)
+        self.drop()
+
+    """
+    '''def dragto(self, *args):
+        if len(args) == 1 and isinstance(args[0], Location):
+            dest_location = args[0]
+        elif len(args) == 2:
+            try:
+                (dest_x, dest_y) = (int(args[0]), int(args[1]))
+            except:
+                raise FailExit('')
+            dest_location = Location(dest_x, dest_y)
+        else:
+            raise FailExit('')
 
         src_location = self.getCenter()
-        src_location.mouseDown()
+        if not self._is_mouse_down:
+            src_location.mouseDown()
+            self._is_mouse_down = True
 
+        # Алгоритм Брезенхема
+        # https://ru.wikipedia.org/wiki/%D0%90%D0%BB%D0%B3%D0%BE%D1%80%D0%B8%D1%82%D0%BC_%D0%91%D1%80%D0%B5%D0%B7%D0%B5%D0%BD%D1%85%D1%8D%D0%BC%D0%B0
         if abs(dest_location.x - src_location.x) >= abs(dest_location.y - src_location.y):
             (a1, b1, a2, b2) = (src_location.x, src_location.y, dest_location.x, dest_location.y)
-            f = lambda x, y: Location(x, y).mouseMove(MOVE_DELAY)
+            f = lambda x, y: Location(x, y).mouseMove(DRAGnDROP_MOVE_DELAY)
         else:
             (a1, b1, a2, b2) = (src_location.y, src_location.x, dest_location.y, dest_location.x)
-            f = lambda x, y: Location(y, x).mouseMove(MOVE_DELAY)
+            f = lambda x, y: Location(y, x).mouseMove(DRAGnDROP_MOVE_DELAY)
 
         k = float(b2 - b1) / (a2 - a1)
         a_sgn = (a2 - a1) / abs(a2 - a1)
@@ -556,12 +596,44 @@ class Region(object):
             a = a1 + la
             b = int(k * la) + b1
             f(a, b)
-            la += a_sgn * MOVE_STEP
+            la += a_sgn * DRAGnDROP_MOVE_STEP
 
-        src_location.mouseUp()
+    def drop(self):
+        if self._is_mouse_down:
+            self.getCenter().mouseUp()
+            self._is_mouse_down = False
+        else:
+            raise FailExit('You try drop <%s>, but it is not bragged before!' % str(self))
+
+    def dragndrop(self, *dest_location):
+        self.dragto(*dest_location)
+        self.drop()'''
+
+        '''# Алгоритм Брезенхема
+        # https://ru.wikipedia.org/wiki/%D0%90%D0%BB%D0%B3%D0%BE%D1%80%D0%B8%D1%82%D0%BC_%D0%91%D1%80%D0%B5%D0%B7%D0%B5%D0%BD%D1%85%D1%8D%D0%BC%D0%B0
+        src_location = self.getCenter()
+        src_location.mouseDown()
+
+        if abs(dest_location.x - src_location.x) >= abs(dest_location.y - src_location.y):
+            (a1, b1, a2, b2) = (src_location.x, src_location.y, dest_location.x, dest_location.y)
+            f = lambda x, y: Location(x, y).mouseMove(DRAGnDROP_MOVE_DELAY)
+        else:
+            (a1, b1, a2, b2) = (src_location.y, src_location.x, dest_location.y, dest_location.x)
+            f = lambda x, y: Location(y, x).mouseMove(DRAGnDROP_MOVE_DELAY)
+
+        k = float(b2 - b1) / (a2 - a1)
+        a_sgn = (a2 - a1) / abs(a2 - a1)
+        la = 0
+        while abs(la) <= abs(a2 - a1):
+            a = a1 + la
+            b = int(k * la) + b1
+            f(a, b)
+            la += a_sgn * DRAGnDROP_MOVE_STEP
+
+        src_location.mouseUp()'''
 
     '''def is_button_checked():
-        return self.winctrl.is_button_checked()'''
+        return self.winctrl.is_button_checked()'''"""
 
 
     def highlight(self, delay=1.5):
