@@ -19,6 +19,7 @@ from oleacc_h import *
 
 # "A lot of HRESULT codes…" (https://blogs.msdn.microsoft.com/eldar/2007/04/03/a-lot-of-hresult-codes/)
 COR_E_TIMEOUT = -2146233083  # -2146233083 =<математически>= -0x80131505;   0x80131505 =<в разрядной сетке>= (-2146233083 & 0xFFFFFFFF)
+COR_E_SUBSCRIBERS_FAILED = -2147220991  # -2147220991 =<математически>= -0x80040201;
 
 
 # TIMEOUT_UIA_ELEMENT_SEARCH = 30
@@ -684,6 +685,11 @@ class UIElement(object):
             except _ctypes.COMError as ex:
                 if ex.args[0] == COR_E_TIMEOUT:
                     p2c('Cath COR_E_TIMEOUT exception: %s. Checking custom timeout...' % str(ex))
+                    if (datetime.datetime.today()-t0).total_seconds() >= timeout:
+                        raise FindFailed('find(...): Timeout while looking for UIA element:\n\tself = %s\n\tkwargs = %s' % (repr(self), str(kwargs)))
+                    t0 = datetime.datetime.today()
+                elif ex.args[0] == COR_E_SUBSCRIBERS_FAILED:
+                    p2c('Cath COR_E_SUBSCRIBERS_FAILED exception: %s. Checking custom timeout...' % str(ex))
                     if (datetime.datetime.today()-t0).total_seconds() >= timeout:
                         raise FindFailed('find(...): Timeout while looking for UIA element:\n\tself = %s\n\tkwargs = %s' % (repr(self), str(kwargs)))
                     t0 = datetime.datetime.today()
