@@ -440,7 +440,7 @@ class Region(object):
                 raise FindFailed('Unable to find \'%s\' in %s' % (failedImages, str(self)) )
 
 
-    def find(self, ps, timeout=None):
+    def find(self, ps, timeout=None, exception_on_find_fail=True):
         '''
         Ждет, пока паттерн не появится.
 
@@ -449,13 +449,21 @@ class Region(object):
             timeout = None  --  использование дефолтного значения
             timeout = <число секунд>
 
-        Возвращает Region, если паттерн появился, и исключение FindFailed, если нет. '''
+        Возвращает Region, если паттерн появился. Если нет, то:
+            a. исключение FindFailed при exception_on_find_fail = True
+            b. возвращает None при exception_on_find_fail = False.
+        '''
         #p2c('Pikuli.find: try to find %s' % str(ps))
         try:
             self._last_match = self._wait_for_appear_or_vanish(ps, timeout, 'appear')
         except FailExit:
             self._last_match = None
             raise FailExit('\nNew stage of %s\n[error] Incorect \'find()\' method call:\n\tself = %s\n\tps = %s\n\ttimeout = %s' % (traceback.format_exc(), str(self), str(ps), str(timeout)))
+        except FindFailed as ex:
+            if exception_on_find_fail:
+                raise ex
+            else:
+                return None
         else:
             return self._last_match
 

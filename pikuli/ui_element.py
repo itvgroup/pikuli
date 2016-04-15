@@ -1032,7 +1032,7 @@ class Tree(_uielement_Control):
             return None
         return items
 
-    def find_item(self, item_name, force_expand=False, timeout=None):
+    def find_item(self, item_name, force_expand=False, timeout=None, exception_on_find_fail=True):
         '''
             item_name -- Cписок строк-названий эелементов дерева, пречисленных по их вложенности один в другой. Последняя строка в списке -- искомый элемент.
             force_expand -- разворачивать ли свернутые элементы на пути поиска искового.
@@ -1042,10 +1042,15 @@ class Tree(_uielement_Control):
             raise Exception('pikuli.ui_element.Tree: not isinstance(item_name, list); item_name = %s' % str(item_name))
         if len(item_name) == 0:
             raise Exception('pikuli.ui_element.Tree: len(item_name) == 0')
-        if len(item_name) == 1:
-            found_elem = self.find(Name=item_name[0], exact_level=1, timeout=timeout)
         else:
-            found_elem = self.find(Name=item_name[0], exact_level=1, timeout=timeout).find_item(item_name[1:], force_expand, timeout=timeout)
+            elem = self.find(Name=item_name[0], exact_level=1, timeout=timeout, exception_on_find_fail=exception_on_find_fail)
+            if elem is None:
+                p2c('Pikuli.ui_element.Tree.find_item: %s has not been found. No exception -- returning None' % str(item_name))
+                return None
+            if len(item_name) == 1:
+                found_elem = elem
+            else:
+                found_elem = elem.find_item(item_name[1:], force_expand, timeout=timeout, exception_on_find_fail=exception_on_find_fail)
         p2c('Pikuli.ui_element.Tree.find_item: %s has been found by criteria \'%s\'' % (str(item_name), repr(found_elem)))
         return found_elem
 
@@ -1093,7 +1098,7 @@ class TreeItem(_uielement_Control):
             return self.find_all(exact_level=1)
         return []
 
-    def find_item(self, item_name, force_expand=False, timeout=None):
+    def find_item(self, item_name, force_expand=False, timeout=None, exception_on_find_fail=True):
         '''
             item_name -- Cписок строк-названий эелементов дерева, пречисленных по их вложенности один в другой. Последняя строка в списке -- искомый элемент.
             force_expand -- разворачивать ли свернутые элементы на пути поиска искового.
@@ -1105,12 +1110,17 @@ class TreeItem(_uielement_Control):
         if not self.is_expanded() and not force_expand:
             raise FindFailed('pikuli.ui_element.TreeItem: item \'%s\' was found, but it is not fully expanded. Try to set force_expand = True.\nSearch arguments:\n\titem_name = %s\n\tforce_expand = %s' % (self.Name, str(item_name), str(force_expand)))
         self.expand()
+        elem = self.find(Name=item_name[0], exact_level=1, timeout=timeout, exception_on_find_fail=exception_on_find_fail)
+        if elem is None:
+            p2c('Pikuli.ui_element.TreeItem.find_item: %s has not been found. No exception -- returning None' % str(item_name))
+            return None
         if len(item_name) == 1:
-            found_elem = self.find(Name=item_name[0], exact_level=1, timeout=timeout)
+            found_elem = elem
         else:
-            found_elem = self.find(Name=item_name[0], exact_level=1, timeout=timeout).find_item(item_name[1:], force_expand, timeout=timeout)
+            found_elem = elem.find_item(item_name[1:], force_expand, timeout=timeout)
         p2c( 'Pikuli.ui_element.TreeItem.find_item: \'%s\' has been found: %s' % (str(item_name), repr(found_elem)))
         return found_elem
+
 
 
 class ANPropGrid_Table(_uielement_Control):
@@ -1244,8 +1254,8 @@ class Menu(_uielement_Control):
     def list_items(self):
         return self.find_all(ControlType='MenuItem', exact_level=1)
 
-    def find_item(self, item_name):
-        return self.find(Name=item_name, ControlType='MenuItem', exact_level=1)
+    def find_item(self, item_name, exception_on_find_fail=True):
+        return self.find(Name=item_name, ControlType='MenuItem', exact_level=1, exception_on_find_fail=exception_on_find_fail)
 
 
 class MenuItem(_uielement_Control):
