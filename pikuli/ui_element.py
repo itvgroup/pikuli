@@ -26,8 +26,27 @@ NAMES_of_COR_E = {
 }
 
 
-# TIMEOUT_UIA_ELEMENT_SEARCH = 30
-DEFAULT_FIND_TIMEOUT = 10
+
+'''
+    Если в функции поиска ниже явно не передатся таймаут, то будет использоваться глобальная для модуля
+переменная _default_timeout. Её _можно_ менять извне с помощью функций uia_set_default_timeout() и
+uia_set_initial_default_timeout(). Это нужно для организации цеочки поиска с помощью db_class.
+'''
+_DEFAULT_FIND_TIMEOUT = 11
+
+if '_default_timeout' not in globals():
+    _default_timeout = _DEFAULT_FIND_TIMEOUT
+
+def uia_set_default_timeout(timeout):
+    global _default_timeout
+    p2c('uia_set_default_timeout(): _default_timeout  %f -> %f' % (_default_timeout, timeout))
+    _default_timeout = float(timeout)
+
+def uia_set_initial_default_timeout():
+    global _default_timeout
+    p2c('uia_set_initial_default_timeout(): _default_timeout  %f -> %f' % (_default_timeout, _DEFAULT_FIND_TIMEOUT))
+    _default_timeout = _DEFAULT_FIND_TIMEOUT
+
 
 
 class DriverException(Exception):
@@ -277,7 +296,6 @@ class UIElement(object):
              3. Если по какой-то причние пункты 1 и 2 выше не позволили подобрать класс, то испульзуется родительский UIElement.
              4. Если нашлось несколько подходящих классов, то генерируется исключение.
         '''
-        self.default_find_timeout = DEFAULT_FIND_TIMEOUT
         self._reg = None
 
         if pointer2elem == 0:
@@ -434,7 +452,7 @@ class UIElement(object):
         timeout = _timeout     = kwargs.pop('timeout', None)
 
         if timeout is None:
-            timeout = self.default_find_timeout
+            timeout = _default_timeout
         if exception_on_find_fail is None:
             exception_on_find_fail = find_first_only
         #exception_on_find_fail = True  # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! TODO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -629,7 +647,7 @@ class UIElement(object):
                                 tuple(map(str, [exact_level, level])))
         # - subroutines: end -
 
-        txt_search_timeout        = 'searching with timeout = %s (called with %s; default is %s) ...' % (str(timeout), str(_timeout), str(self.default_find_timeout))
+        txt_search_timeout        = 'searching with timeout = %s (called with %s; default is %s) ...' % (str(timeout), str(_timeout), str(_default_timeout))
         txt_pikuli_search_pattern = 'Pikuli.UIElement.find: by criteria %s %%s' % str__not_none_criteria
         p2c(txt_pikuli_search_pattern % txt_search_timeout)
 
@@ -637,8 +655,6 @@ class UIElement(object):
         t0 = datetime.datetime.today()
         while True:
             try:
-                time.sleep(0.3)
-
                 # Исключение FirstFoundEx используется как goto.
                 if exact_level is not None:
                     # Обработаем варианты поиска предков:
@@ -685,12 +701,12 @@ class UIElement(object):
                         if exception_on_find_fail:
                             raise FindFailed('pikuli.UIElement.find: no one elements was found\n\tself     = %s\n\tkwargs   = %s\n\tcriteria = %s\n\ttimeout  = %s'
                                              % (repr(self), str(kwargs), str__criteria, str(timeout)))
-                        p2c(txt_pikuli_search_pattern % 'has been found: None', reprint_last_line=True)
+                        p2c(txt_pikuli_search_pattern % 'has been found: None (%s)' % str(timeout), reprint_last_line=True)
                         return None
                     # t0 = datetime.datetime.today()
                 else:
                     found_elem = _create_instance_of_suitable_class(ex.winuiaelem)
-                    p2c(txt_pikuli_search_pattern % ('has been found: %s' % repr(found_elem)), reprint_last_line=True)
+                    p2c(txt_pikuli_search_pattern % ('has been found: %s (%s)' % (repr(found_elem), str(timeout))), reprint_last_line=True)
                     return found_elem
 
             except _ctypes.COMError as ex:
@@ -719,10 +735,10 @@ class UIElement(object):
             if exception_on_find_fail:
                 raise FindFailed('pikuli.UIElement.find: no one elements was found\n\tself = %s\n\tkwargs = %s\n\tcriteria = %s' % (repr(self), str(kwargs), str__criteria))
             found_elem = []
-            p2c(txt_pikuli_search_pattern % ('there has been found %s: []' % str__not_none_criteria), reprint_last_line=True)
+            p2c(txt_pikuli_search_pattern % ('there has been found %s: [] (%s)' % (str__not_none_criteria, str(timeout))), reprint_last_line=True)
         else:
             found_elem = map(_create_instance_of_suitable_class, found_winuiaelem_arr)
-            p2c(txt_pikuli_search_pattern % ('there has been found %s: %s' % (str__not_none_criteria, repr(found_elem))), reprint_last_line=True)
+            p2c(txt_pikuli_search_pattern % ('there has been found %s: %s (%s)' % (str__not_none_criteria, repr(found_elem), str(timeout))), reprint_last_line=True)
         return found_elem
 
 

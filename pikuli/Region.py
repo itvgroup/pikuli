@@ -81,7 +81,10 @@ class Region(object):
 
         self._title = None                 # Идентификатор для человека.
         if 'title' in kwargs:
-            self._title = str(kwargs['title'])
+            try:
+                self._title = str(kwargs['title'])
+            except:
+                self._title = repr(kwargs['title'])
         self._id = kwargs.get('id', None)  # Идентификатор для использования в коде.
         self._winctrl = kwargs.get('winctrl', None)
 
