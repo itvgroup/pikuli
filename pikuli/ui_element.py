@@ -431,12 +431,13 @@ class UIElement(object):
         max_descend_level      = kwargs.pop('max_descend_level', None)
         exact_level            = kwargs.pop('exact_level', None)
         exception_on_find_fail = kwargs.pop('exception_on_find_fail', None)
-        timeout                = kwargs.pop('timeout', None)
+        timeout = _timeout     = kwargs.pop('timeout', None)
 
         if timeout is None:
             timeout = self.default_find_timeout
         if exception_on_find_fail is None:
             exception_on_find_fail = find_first_only
+        #exception_on_find_fail = True  # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! TODO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         if max_descend_level is not None and exact_level is not None:
             raise Exception('pikuli.UIElement.find: max_descend_level is not None and exact_level is not None')
@@ -628,10 +629,16 @@ class UIElement(object):
                                 tuple(map(str, [exact_level, level])))
         # - subroutines: end -
 
+        txt_search_timeout        = 'searching with timeout = %s (called with %s; default is %s) ...' % (str(timeout), str(_timeout), str(self.default_find_timeout))
+        txt_pikuli_search_pattern = 'Pikuli.UIElement.find: by criteria %s %%s' % str__not_none_criteria
+        p2c(txt_pikuli_search_pattern % txt_search_timeout)
+
         walker = UIA.IUIAutomation_object.CreateTreeWalker(UIA.IUIAutomation_object.CreateTrueCondition())
         t0 = datetime.datetime.today()
         while True:
             try:
+                time.sleep(0.3)
+
                 # Исключение FirstFoundEx используется как goto.
                 if exact_level is not None:
                     # Обработаем варианты поиска предков:
@@ -676,22 +683,23 @@ class UIElement(object):
                 if ex.winuiaelem is None:
                     if (datetime.datetime.today()-t0).total_seconds() >= timeout:
                         if exception_on_find_fail:
-                            raise FindFailed('pikuli.UIElement.find: no one elements was found\n\tself = %s\n\tkwargs = %s\n\tcriteria = %s\n\ttimeout = %s'
+                            raise FindFailed('pikuli.UIElement.find: no one elements was found\n\tself     = %s\n\tkwargs   = %s\n\tcriteria = %s\n\ttimeout  = %s'
                                              % (repr(self), str(kwargs), str__criteria, str(timeout)))
-                        p2c( 'Pikuli.ui_element.UIElement.find: %s has been found: None' % str__not_none_criteria)
+                        p2c(txt_pikuli_search_pattern % 'has been found: None', reprint_last_line=True)
                         return None
-                    t0 = datetime.datetime.today()
+                    # t0 = datetime.datetime.today()
                 else:
                     found_elem = _create_instance_of_suitable_class(ex.winuiaelem)
-                    p2c( 'Pikuli.ui_element.UIElement.find: %s has been found: %s' % (str__not_none_criteria, repr(found_elem)))
+                    p2c(txt_pikuli_search_pattern % ('has been found: %s' % repr(found_elem)), reprint_last_line=True)
                     return found_elem
 
             except _ctypes.COMError as ex:
                 if ex.args[0] == COR_E_TIMEOUT or ex.args[0] == COR_E_SUBSCRIBERS_FAILED:
-                    p2c('Cath %s exception: %s. Checking custom timeout...' % (NAMES_of_COR_E[ex.args[0] ], str(ex)))
+                    p2c('Cath %s exception: \"%s\". Checking timeout...' % (NAMES_of_COR_E[ex.args[0] ], str(ex)))
+                    p2c(txt_pikuli_search_pattern % txt_search_timeout)
                     if (datetime.datetime.today()-t0).total_seconds() >= timeout:
                         raise FindFailed('find(...): Timeout while looking for UIA element:\n\tself = %s\n\tkwargs = %s' % (repr(self), str(kwargs)))
-                    t0 = datetime.datetime.today()
+                    # t0 = datetime.datetime.today()
                 else:
                     tb_text = ''.join(traceback.format_list(traceback.extract_tb(sys.exc_info()[2])[1:]))
                     full_text = 'Traceback for error point:\n' + tb_text.rstrip() + '\nError message:\n  ' + type(ex).__name__ + ': ' + str(ex)
@@ -702,7 +710,7 @@ class UIElement(object):
                 # Тут, если ищем один элемент и все никак его не найдем или ищем много элементов:
                 if not find_first_only or (find_first_only and (datetime.datetime.today()-t0).total_seconds() >= timeout):
                     break
-                t0 = datetime.datetime.today()
+                # t0 = datetime.datetime.today()
 
         # В норме мы тут если ищем все совпадения (если ищем только первое, то должно было произойти и перехватиться исключение FirstFoundEx).
         if find_first_only:
@@ -711,10 +719,10 @@ class UIElement(object):
             if exception_on_find_fail:
                 raise FindFailed('pikuli.UIElement.find: no one elements was found\n\tself = %s\n\tkwargs = %s\n\tcriteria = %s' % (repr(self), str(kwargs), str__criteria))
             found_elem = []
-            p2c( 'Pikuli.ui_element.UIElement.find: %s has been found: []' % str__not_none_criteria)
+            p2c(txt_pikuli_search_pattern % ('there has been found %s: []' % str__not_none_criteria), reprint_last_line=True)
         else:
             found_elem = map(_create_instance_of_suitable_class, found_winuiaelem_arr)
-            p2c('Pikuli.ui_element.UIElement.find: %s has been found: %s' % (str__not_none_criteria, repr(found_elem)))
+            p2c(txt_pikuli_search_pattern % ('there has been found %s: %s' % (str__not_none_criteria, repr(found_elem))), reprint_last_line=True)
         return found_elem
 
 
@@ -1038,6 +1046,7 @@ class Tree(_uielement_Control):
             force_expand -- разворачивать ли свернутые элементы на пути поиска искового.
         '''
         # p2c(item_name, force_expand)
+        p2c('Pikuli.Tree.find_item: searching by criteria item_name = \'%s\'' % str(item_name), reprint_last_line=True)
         if not isinstance(item_name, list):
             raise Exception('pikuli.ui_element.Tree: not isinstance(item_name, list); item_name = %s' % str(item_name))
         if len(item_name) == 0:
@@ -1051,7 +1060,7 @@ class Tree(_uielement_Control):
                 found_elem = elem
             else:
                 found_elem = elem.find_item(item_name[1:], force_expand, timeout=timeout, exception_on_find_fail=exception_on_find_fail)
-        p2c('Pikuli.ui_element.Tree.find_item: %s has been found by criteria \'%s\'' % (str(item_name), repr(found_elem)))
+        # p2c('Pikuli.Tree.find_item: %s has been found by criteria \'%s\'' % (str(item_name), repr(found_elem)))
         return found_elem
 
 
@@ -1109,6 +1118,7 @@ class TreeItem(_uielement_Control):
             raise Exception('pikuli.ui_element.TreeItem: len(item_name) == 0')
         if not self.is_expanded() and not force_expand:
             raise FindFailed('pikuli.ui_element.TreeItem: item \'%s\' was found, but it is not fully expanded. Try to set force_expand = True.\nSearch arguments:\n\titem_name = %s\n\tforce_expand = %s' % (self.Name, str(item_name), str(force_expand)))
+        p2c('Pikuli.TreeItem.find_item: searching by criteria item_name = \'%s\'' % str(item_name), reprint_last_line=True)
         self.expand()
         elem = self.find(Name=item_name[0], exact_level=1, timeout=timeout, exception_on_find_fail=exception_on_find_fail)
         if elem is None:
@@ -1118,7 +1128,7 @@ class TreeItem(_uielement_Control):
             found_elem = elem
         else:
             found_elem = elem.find_item(item_name[1:], force_expand, timeout=timeout)
-        p2c( 'Pikuli.ui_element.TreeItem.find_item: \'%s\' has been found: %s' % (str(item_name), repr(found_elem)))
+        #p2c('Pikuli.TreeItem.find_item: \'%s\' has been found: %s' % (str(item_name), repr(found_elem)))
         return found_elem
 
 
@@ -1159,6 +1169,7 @@ class ANPropGrid_Table(_uielement_Control):
                 raise FindFailed('pikuli.ANPropGrid_Table: row \'%s\' not found.\nSearch arguments:\n\trow_name = %s\n\tforce_expand = %s' % (str(nested_name), str(row_name), str(force_expand)))
             return rows[0]
 
+        p2c('Pikuli.ANPropGrid_Table.find_row: searching by criteria item_name = \'%s\'' % str(row_name), reprint_last_line=True)
         if isinstance(row_name, list):
             row = _find_row_precisely(self, row_name[0], 1)
             for nested_name in row_name[1:]:
@@ -1169,7 +1180,7 @@ class ANPropGrid_Table(_uielement_Control):
             found_elem = row
         else:
             found_elem = _find_row_precisely(self, row_name, 1)
-        p2c( 'Pikuli.ui_element.ANPropGrid_Table.find_row: \'%s\' has been found: %s' % (str(row_name), repr(found_elem)))
+        # p2c('Pikuli.ANPropGrid_Table.find_row: \'%s\' has been found: %s' % (str(row_name), repr(found_elem)))
         return found_elem
 
 

@@ -28,10 +28,13 @@ CAPTUREBLT = 0x40000000
 DELAY_KBD_KEY_PRESS = 0.020
 
 
-def p2c(*msgs):
+def p2c(*msgs, **kwargs):
+    reprint_last_line = kwargs.get('reprint_last_line', False)
     try:
         addgap = ''
         for m in msgs:
+            if reprint_last_line:
+                sys.__stdout__.write('\033[F' + '\033[2K')
             sys.__stdout__.write('*** ' + addgap + str(m) + '\n')
         sys.__stdout__.flush()
     except Exception as ex:
