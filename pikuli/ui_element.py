@@ -225,47 +225,60 @@ class Pattern(object):
 
 
 def _create_instance_of_suitable_class(winuielem):
-    winuielem_ControlType = UIA.get_property_by_id(winuielem, 'ControlType')
-    winuielem_CurrentRole = UIA.get_pattern_by_id(winuielem, 'LegacyIAccessiblePattern').CurrentRole
-    class_by_controltype = class_by_legacy = None
+    MAX_ERROR_TIMES  = 3
+    EACH_ERROR_DELAY = 1
+    _counter = 0
 
-    for class_ in CONTROLS_CLASSES:
-        # Очередной анализируемый класс имеет следующие поля:
-        class_control_type           = getattr(globals()[class_], 'CONTROL_TYPE', None)
-        class_legacy_accessible_role = getattr(globals()[class_], 'LEGACYACC_ROLE', None)
+    while True:
+        try:
+            winuielem_ControlType = UIA.get_property_by_id(winuielem, 'ControlType')
+            winuielem_CurrentRole = UIA.get_pattern_by_id(winuielem, 'LegacyIAccessiblePattern').CurrentRole
+            class_by_controltype  = class_by_legacy = None
 
-        if class_control_type is None:
-            raise Exception('pikuli.UIElement [INTERNAL]: CONTROL_TYPE is not setted for <class %s>. Processing controll \'%s\'' % (class_, UIElement(winuielem).Name))
+            for class_ in CONTROLS_CLASSES:
+                # Очередной анализируемый класс имеет следующие поля:
+                class_control_type           = getattr(globals()[class_], 'CONTROL_TYPE', None)
+                class_legacy_accessible_role = getattr(globals()[class_], 'LEGACYACC_ROLE', None)
 
-        elif class_control_type != 'Custom' and winuielem_ControlType != UIA.UIA_automation_control_type_identifiers_mapping['Custom']:
-            class_control_type_id = UIA.UIA_automation_control_type_identifiers_mapping.get(class_control_type, None)  # Ищем тип class_control_type среди известных нам.
-            if class_control_type_id is None:
-                raise Exception('pikuli.UIElement [INTERNAL]: CONTROL_TYPE = \'%s\' in <class %s> is unknown.Processing controll \'%s\'' % (class_control_type, class_, UIElement(winuielem).Name))
-            if winuielem_ControlType == class_control_type_id:
-                if class_by_controltype is not None or class_by_legacy is not None:
-                    raise Exception('pikuli.UIElement [INTERNAL]: more than one class are suitable for UI-element \'%s\':' % UIElement(winuielem).Name +
-                                    '\n\tclass_by_controltype = \'%s\'\n\tclass_by_legacy = \'%s\'\n\tclass_ = \'%s\'' % (class_by_controltype, class_by_legacy, class_))
-                class_by_controltype = class_
+                if class_control_type is None:
+                    raise Exception('pikuli.UIElement [INTERNAL]: CONTROL_TYPE is not setted for <class %s>. Processing controll \'%s\'' % (class_, UIElement(winuielem).Name))
 
-        elif class_control_type == 'Custom' and winuielem_ControlType == UIA.UIA_automation_control_type_identifiers_mapping['Custom']:
-            if class_legacy_accessible_role is None:
-                raise Exception('pikuli.UIElement [INTERNAL]: CONTROL_TYPE = \'Custom\', but LEGACYACC_ROLE is not setted for <class %s>. Processing controll \'%s\'' % (class_, UIElement(winuielem).Name))
+                elif class_control_type != 'Custom' and winuielem_ControlType != UIA.UIA_automation_control_type_identifiers_mapping['Custom']:
+                    class_control_type_id = UIA.UIA_automation_control_type_identifiers_mapping.get(class_control_type, None)  # Ищем тип class_control_type среди известных нам.
+                    if class_control_type_id is None:
+                        raise Exception('pikuli.UIElement [INTERNAL]: CONTROL_TYPE = \'%s\' in <class %s> is unknown.Processing controll \'%s\'' % (class_control_type, class_, UIElement(winuielem).Name))
+                    if winuielem_ControlType == class_control_type_id:
+                        if class_by_controltype is not None or class_by_legacy is not None:
+                            raise Exception('pikuli.UIElement [INTERNAL]: more than one class are suitable for UI-element \'%s\':' % UIElement(winuielem).Name +
+                                            '\n\tclass_by_controltype = \'%s\'\n\tclass_by_legacy = \'%s\'\n\tclass_ = \'%s\'' % (class_by_controltype, class_by_legacy, class_))
+                        class_by_controltype = class_
+
+                elif class_control_type == 'Custom' and winuielem_ControlType == UIA.UIA_automation_control_type_identifiers_mapping['Custom']:
+                    if class_legacy_accessible_role is None:
+                        raise Exception('pikuli.UIElement [INTERNAL]: CONTROL_TYPE = \'Custom\', but LEGACYACC_ROLE is not setted for <class %s>. Processing controll \'%s\'' % (class_, UIElement(winuielem).Name))
+                    else:
+                        class_legacy_accessible_role_id = ROLE_SYSTEM.get(class_legacy_accessible_role, None)
+                        if class_legacy_accessible_role_id is None:
+                            raise Exception('pikuli.UIElement [INTERNAL]: \'class_legacy_accessible_role_id\' is None for UIElement Control \'%s\'.' % UIElement(winuielem).Name)
+                        if winuielem_CurrentRole == class_legacy_accessible_role_id:
+                            if class_by_controltype is not None or class_by_legacy is not None:
+                                raise Exception('pikuli.UIElement [INTERNAL]: more than one class are suitable for UI-element \'%s\':' % UIElement(winuielem).Name +
+                                                '\n\tclass_by_controltype = \'%s\'\n\tclass_by_legacy = \'%s\'\n\tclass_ = \'%s\'' % (class_by_controltype, class_by_legacy, class_))
+                            class_by_legacy = class_
+
+            if class_by_controltype is not None:
+                return globals()[class_by_controltype](winuielem)
+            elif class_by_legacy is not None:
+                return globals()[class_by_legacy](winuielem)
             else:
-                class_legacy_accessible_role_id = ROLE_SYSTEM.get(class_legacy_accessible_role, None)
-                if class_legacy_accessible_role_id is None:
-                    raise Exception('pikuli.UIElement [INTERNAL]: \'class_legacy_accessible_role_id\' is None for UIElement Control \'%s\'.' % UIElement(winuielem).Name)
-                if winuielem_CurrentRole == class_legacy_accessible_role_id:
-                    if class_by_controltype is not None or class_by_legacy is not None:
-                        raise Exception('pikuli.UIElement [INTERNAL]: more than one class are suitable for UI-element \'%s\':' % UIElement(winuielem).Name +
-                                        '\n\tclass_by_controltype = \'%s\'\n\tclass_by_legacy = \'%s\'\n\tclass_ = \'%s\'' % (class_by_controltype, class_by_legacy, class_))
-                    class_by_legacy = class_
+                return UIElement(winuielem)
 
-    if class_by_controltype is not None:
-        return globals()[class_by_controltype](winuielem)
-    elif class_by_legacy is not None:
-        return globals()[class_by_legacy](winuielem)
-    else:
-        return UIElement(winuielem)
+            _counter += 1
+
+        except _ctypes.COMError as ex:
+            time.sleep(EACH_ERROR_DELAY)
+            if _counter >= MAX_ERROR_TIMES:
+                raise Exception('pikuli._create_instance_of_suitable_class: COMError too many times (max times %i with delay %i)' % (MAX_ERROR_TIMES, EACH_ERROR_DELAY))
 
 
 
