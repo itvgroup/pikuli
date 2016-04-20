@@ -554,7 +554,7 @@ class UIElement(object):
                     raise ex
                 if isinstance(criteria[key], list):
                     for substr in criteria[key]:
-                        if not (substr in uielem_val):
+                        if uielem_val is None or not (substr in uielem_val):
                             return False
                 elif isinstance(criteria[key], str):
                     if not (uielem_val == criteria[key]):
