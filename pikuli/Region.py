@@ -552,17 +552,17 @@ class Region(object):
         ''' Перемащает регион за его центр. '''
         if self.drag_location is None:
             self.drag_location = self.getCenter()
-        drag_location.dragto(*dest_location)
+        self.drag_location.dragto(*dest_location)
 
         # Изменим у текущего объект координаты, т.к. его передвинули:
         center = self.getCenter()
-        self._x += drag_location.x - center.x
-        self._y += drag_location.y - center.y
+        self._x += self.drag_location.x - center.x
+        self._y += self.drag_location.y - center.y
         (self.x, self.y) = (self._x, self._y)
 
 
     def drop(self):
-        if drag_location is not None:
+        if self.drag_location is not None:
             self.drag_location.drop()
             self.drag_location = None
 
