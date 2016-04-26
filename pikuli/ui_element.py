@@ -26,6 +26,8 @@ NAMES_of_COR_E = {
 }
 
 
+NEXT_SEARCH_ITER_DELAY = 2  # Задержка между итерациями поиска, пока ещё не вышел timeout
+
 
 '''
     Если в функции поиска ниже явно не передатся таймаут, то будет использоваться глобальная для модуля
@@ -39,12 +41,12 @@ if '_default_timeout' not in globals():
 
 def uia_set_default_timeout(timeout):
     global _default_timeout
-    p2c('uia_set_default_timeout(): _default_timeout  %f -> %f' % (_default_timeout, timeout))
+    #p2c('uia_set_default_timeout(): _default_timeout  %f -> %f' % (_default_timeout, timeout))
     _default_timeout = float(timeout)
 
 def uia_set_initial_default_timeout():
     global _default_timeout
-    p2c('uia_set_initial_default_timeout(): _default_timeout  %f -> %f' % (_default_timeout, _DEFAULT_FIND_TIMEOUT))
+    #p2c('uia_set_initial_default_timeout(): _default_timeout  %f -> %f' % (_default_timeout, _DEFAULT_FIND_TIMEOUT))
     _default_timeout = _DEFAULT_FIND_TIMEOUT
 
 
@@ -359,7 +361,15 @@ class UIElement(object):
             return attr
         raise AttributeError("Attribute not exist: %s\n  self: %s\n%s" % (name, repr(self), str(self)))
 
-    def __str__(self):
+    def _short_info(self):
+        name = repr(self.Name)  #.encode('utf-8')
+        if type(self).__name__ in CONTROLS_CLASSES:
+            return u'<%s \'%s\',\'%s\'>' % (type(self).__name__, name, getattr(self, 'AutomationId', ''))
+        control_type_id = self.get_property('ControlType')
+        legacy_role_id  = self.get_pattern('LegacyIAccessiblePattern').CurrentRole
+        return u'<%s %s,%s,\'%s\',\'%s\'>' % (type(self).__name__, UIA.UIA_automation_control_type_identifiers_mapping_rev.get(control_type_id, control_type_id), ROLE_SYSTEM_rev.get(legacy_role_id, legacy_role_id), name, getattr(self, 'AutomationId', ''))
+
+    def _long_info(self):
         docstring = ""
         # generate UIA automation element properties
         docstring += "+ UIA automation element properties: +\n"
@@ -378,13 +388,14 @@ class UIElement(object):
 
         return docstring
 
+    def __str__(self):
+        return self._short_info()
+
     def __repr__(self):
-        name = repr(self.Name)  #.encode('utf-8')
-        if type(self).__name__ in CONTROLS_CLASSES:
-            return u'<%s \'%s\',\'%s\'>' % (type(self).__name__, name, getattr(self, 'AutomationId', ''))
-        control_type_id = self.get_property('ControlType')
-        legacy_role_id  = self.get_pattern('LegacyIAccessiblePattern').CurrentRole
-        return u'<%s %s,%s,\'%s\',\'%s\'>' % (type(self).__name__, UIA.UIA_automation_control_type_identifiers_mapping_rev.get(control_type_id, control_type_id), ROLE_SYSTEM_rev.get(legacy_role_id, legacy_role_id), name, getattr(self, 'AutomationId', ''))
+        return self._short_info()
+
+    def get_details(self):
+        return self._long_info()
 
     def get_property(self, name):
         if not hasattr(self, '_winuiaelem'):
@@ -463,6 +474,7 @@ class UIElement(object):
         exact_level            = kwargs.pop('exact_level', None)
         exception_on_find_fail = kwargs.pop('exception_on_find_fail', None)
         timeout = _timeout     = kwargs.pop('timeout', None)
+        next_serach_iter_delya = kwargs.pop('next_serach_iter_delya', NEXT_SEARCH_ITER_DELAY)
 
         if timeout is None:
             timeout = _default_timeout
@@ -717,6 +729,7 @@ class UIElement(object):
                         p2c(txt_pikuli_search_pattern % 'has been found: None (%s)' % str(timeout), reprint_last_line=True)
                         return None
                     # t0 = datetime.datetime.today()
+                    time.sleep(next_serach_iter_delya)
                 else:
                     found_elem = _create_instance_of_suitable_class(ex.winuiaelem)
                     p2c(txt_pikuli_search_pattern % ('has been found: %s (%s)' % (repr(found_elem), str(timeout))), reprint_last_line=True)
@@ -729,6 +742,7 @@ class UIElement(object):
                     if (datetime.datetime.today()-t0).total_seconds() >= timeout:
                         raise FindFailed('find(...): Timeout while looking for UIA element:\n\tself = %s\n\tkwargs = %s' % (repr(self), str(kwargs)))
                     # t0 = datetime.datetime.today()
+                    time.sleep(next_serach_iter_delya)
                 else:
                     tb_text = ''.join(traceback.format_list(traceback.extract_tb(sys.exc_info()[2])[1:]))
                     full_text = 'Traceback for error point:\n' + tb_text.rstrip() + '\nError message:\n  ' + type(ex).__name__ + ': ' + str(ex)
@@ -740,6 +754,7 @@ class UIElement(object):
                 if not find_first_only or (find_first_only and (datetime.datetime.today()-t0).total_seconds() >= timeout):
                     break
                 # t0 = datetime.datetime.today()
+                time.sleep(next_serach_iter_delya)
 
         # В норме мы тут если ищем все совпадения (если ищем только первое, то должно было произойти и перехватиться исключение FirstFoundEx).
         if find_first_only:
