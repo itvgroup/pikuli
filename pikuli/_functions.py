@@ -27,19 +27,12 @@ CAPTUREBLT = 0x40000000
 
 DELAY_KBD_KEY_PRESS = 0.020
 
-
-def p2c(*msgs, **kwargs):
-    reprint_last_line = kwargs.get('reprint_last_line', False)
-    try:
-        addgap = ''
-        for m in msgs:
-            if reprint_last_line:
-                sys.__stdout__.write('\033[F' + '\033[2K')
-            sys.__stdout__.write('*** ' + addgap + str(m) + '\n')
-        sys.__stdout__.flush()
-    except Exception as ex:
-        print('[warn] error in function \'p2c\': %s' % str(ex))
-        print(' '.join(map(str, msgs)))
+try:
+    from p2c import p2c
+except ImportError:
+    def p2c(*msgs, **kwargs):
+        print(str(msgs))
+        print(str(kwargs))
 
 
 def wait_while(f_logic, timeout):
@@ -339,6 +332,7 @@ class Key(object):
     HOME       = chr(0) + chr(win32con.VK_HOME)
     END        = chr(0) + chr(win32con.VK_END)
     BACKSPACE  = chr(0) + chr(win32con.VK_BACK)
+    DELETE     = chr(0) + chr(win32con.VK_DELETE)
     F1         = chr(0) + chr(win32con.VK_F1)
     F2         = chr(0) + chr(win32con.VK_F2)
     F3         = chr(0) + chr(win32con.VK_F3)
