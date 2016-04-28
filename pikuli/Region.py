@@ -387,7 +387,7 @@ class Region(object):
             raise FailExit('[error] Incorect \'findAll()\' method call:\n\tps = %s\n\tadditional comment: %s' % (str(ps), str(e)))
 
 
-    def _wait_for_appear_or_vanish(self, ps, timeout, aov):
+    def _wait_for_appear_or_vanish(self, ps, timeout, aov, min_similarity = None):
         '''
             ps может быть String или List
             Если isinstance(ps, list), возвращается первый найденный элемент. Это можно использвоать, если требуется найти любое из переданных изображений.
@@ -399,7 +399,7 @@ class Region(object):
 
         for (i, p) in enumerate(ps):
             if isinstance(p, str):
-                ps[i] = Pattern(p)
+                ps[i] = Pattern(p, similarity = min_similarity)
             elif not isinstance(p, Pattern):
                 raise FailExit( failExitText % str(p) )
 
@@ -443,7 +443,7 @@ class Region(object):
                 raise FindFailed('Unable to find \'%s\' in %s' % (failedImages, str(self)) )
 
 
-    def find(self, ps, timeout=None, exception_on_find_fail=True):
+    def find(self, ps, timeout=None, exception_on_find_fail=True, similarity = None):
         '''
         Ждет, пока паттерн не появится.
 
@@ -458,7 +458,7 @@ class Region(object):
         '''
         #p2c('Pikuli.find: try to find %s' % str(ps))
         try:
-            self._last_match = self._wait_for_appear_or_vanish(ps, timeout, 'appear')
+            self._last_match = self._wait_for_appear_or_vanish(ps, timeout, 'appear', min_similarity = similarity)
         except FailExit:
             self._last_match = None
             raise FailExit('\nNew stage of %s\n[error] Incorect \'find()\' method call:\n\tself = %s\n\tps = %s\n\ttimeout = %s' % (traceback.format_exc(), str(self), str(ps), str(timeout)))
