@@ -35,6 +35,18 @@ except ImportError:
         print(str(kwargs))
 
 
+def check_timeout(timeout, allow_None=False, err_msg='pikuli.check_timeout()'):
+    if timeout is None and allow_None:
+        return None
+    try:
+        timeout = float(timeout)
+        if timeout < 0:
+            raise ValueError
+    except (ValueError, TypeError) as ex:
+        raise FailExit('%s: wrong timeout = \'%s\' (%s)' % (str(err_msg), str(timeout), str(ex)))
+    return timeout
+
+
 def wait_while(f_logic, timeout):
     DELAY_BETWEEN_ATTEMTS = 0.5
     elaps_time = 0
