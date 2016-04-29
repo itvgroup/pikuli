@@ -6,8 +6,6 @@ from Location import Location
 class CVElement(object):
 
     def __init__(self, where_it_is):
-        if isinstance(where_it_is, str):
-            where_it_is = mwgdb.wdb.get_reg(where_it_is)
         if isinstance(where_it_is, Region):
             self._reg = where_it_is
             where_it_is = where_it_is.getCenter()

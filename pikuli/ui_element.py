@@ -408,9 +408,9 @@ class UIElement(object):
                                 class_by_legacy = class_
 
                 if class_by_controltype is not None:
-                    return globals()[class_by_controltype](winuielem)
+                    return globals()[class_by_controltype](winuielem, find_timeout=self._find_timeout)
                 elif class_by_legacy is not None:
-                    return globals()[class_by_legacy](winuielem)
+                    return globals()[class_by_legacy](winuielem, find_timeout=self._find_timeout)
                 else:
                     return UIElement(winuielem, find_timeout=self._find_timeout)
 
@@ -490,11 +490,11 @@ class UIElement(object):
         timeout = _timeout     = check_timeout(kwargs.pop('timeout', None), allow_None=True, err_msg='pikuli.UIElement.__init__()')
         next_serach_iter_delya = kwargs.pop('next_serach_iter_delya', NEXT_SEARCH_ITER_DELAY)
 
+        # p2c('find: timeout = %s; self._find_timeout = %s' % (str(timeout), str(self._find_timeout)))
         if timeout is None:
             timeout = self._find_timeout
         if exception_on_find_fail is None:
             exception_on_find_fail = find_first_only
-        #exception_on_find_fail = True  # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! TODO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         if max_descend_level is not None and exact_level is not None:
             raise Exception('pikuli.UIElement.find: max_descend_level is not None and exact_level is not None')
@@ -1105,9 +1105,9 @@ class Tree(_uielement_Control):
             force_expand -- разворачивать ли свернутые элементы на пути поиска искового.
         '''
         # p2c(item_name, force_expand)
-        p2c('Pikuli.Tree.find_item: searching by criteria item_name = \'%s\'' % str(item_name), reprint_last_line=True)
+        p2c('Pikuli.Tree.find_item: searching by criteria item_name = \'%s\', timeout = %s' % (str(item_name), str(timeout)), reprint_last_line=True)
         if not isinstance(item_name, list):
-            raise Exception('pikuli.ui_element.Tree: not isinstance(item_name, list); item_name = %s' % str(item_name))
+            raise Exception('pikuli.ui_element.Tree: not isinstance(item_name, list); item_name = %s, timeout = %s' % (str(item_name), str(timeout)))
         if len(item_name) == 0:
             raise Exception('pikuli.ui_element.Tree: len(item_name) == 0')
         else:
@@ -1119,7 +1119,8 @@ class Tree(_uielement_Control):
                 found_elem = elem
             else:
                 found_elem = elem.find_item(item_name[1:], force_expand, timeout=timeout, exception_on_find_fail=exception_on_find_fail)
-        # p2c('Pikuli.Tree.find_item: %s has been found by criteria \'%s\'' % (str(item_name), repr(found_elem)))
+        #p2c('Pikuli.Tree.find_item: %s has been found by criteria \'%s\', timeout = %s, elem.timeout = %s'
+        #    % (str(item_name), repr(found_elem), str(timeout), str(found_elem._find_timeout)), reprint_last_line=True)
         return found_elem
 
 
@@ -1172,12 +1173,12 @@ class TreeItem(_uielement_Control):
             force_expand -- разворачивать ли свернутые элементы на пути поиска искового.
         '''
         if not isinstance(item_name, list):
-            raise Exception('pikuli.ui_element.TreeItem: not isinstance(item_name, list); item_name = %s' % str(item_name))
+            raise Exception('pikuli.ui_element.TreeItem: not isinstance(item_name, list); item_name = %s, timeout = %s' % (str(item_name), str(timeout)))
         if len(item_name) == 0:
             raise Exception('pikuli.ui_element.TreeItem: len(item_name) == 0')
         if not self.is_expanded() and not force_expand:
             raise FindFailed('pikuli.ui_element.TreeItem: item \'%s\' was found, but it is not fully expanded. Try to set force_expand = True.\nSearch arguments:\n\titem_name = %s\n\tforce_expand = %s' % (self.Name, str(item_name), str(force_expand)))
-        p2c('Pikuli.TreeItem.find_item: searching by criteria item_name = \'%s\'' % str(item_name), reprint_last_line=True)
+        p2c('Pikuli.TreeItem.find_item: searching by criteria item_name = \'%s\', timeout = %s' % (str(item_name), str(timeout)), reprint_last_line=True)
         self.expand()
         elem = self.find(Name=item_name[0], exact_level=1, timeout=timeout, exception_on_find_fail=exception_on_find_fail)
         if elem is None:
@@ -1187,7 +1188,8 @@ class TreeItem(_uielement_Control):
             found_elem = elem
         else:
             found_elem = elem.find_item(item_name[1:], force_expand, timeout=timeout)
-        #p2c('Pikuli.TreeItem.find_item: \'%s\' has been found: %s' % (str(item_name), repr(found_elem)))
+        #p2c('Pikuli.TreeItem.find_item: %s has been found by criteria \'%s\', timeout = %s, elem.timeout = %s'
+        #    % (str(item_name), repr(found_elem), str(timeout), str(found_elem._find_timeout)), reprint_last_line=True)
         return found_elem
 
 
