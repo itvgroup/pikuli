@@ -12,7 +12,7 @@ import win32gui
 
 import UIA
 import Region
-from _functions import p2c, wait_while, Key, type_text
+from _functions import p2c, wait_while, Key, type_text, check_timeout
 from _exceptions import *
 import hwnd_element
 from oleacc_h import *
@@ -27,28 +27,28 @@ NAMES_of_COR_E = {
 
 
 NEXT_SEARCH_ITER_DELAY = 2  # Задержка между итерациями поиска, пока ещё не вышел timeout
+DEFAULT_FIND_TIMEOUT   = 11
 
 
+"""
 '''
     Если в функции поиска ниже явно не передатся таймаут, то будет использоваться глобальная для модуля
 переменная _default_timeout. Её _можно_ менять извне с помощью функций uia_set_default_timeout() и
 uia_set_initial_default_timeout(). Это нужно для организации цеочки поиска с помощью db_class.
 '''
-_DEFAULT_FIND_TIMEOUT = 11
-
 if '_default_timeout' not in globals():
-    _default_timeout = _DEFAULT_FIND_TIMEOUT
+    _default_timeout = DEFAULT_FIND_TIMEOUT
 
 def uia_set_default_timeout(timeout):
     global _default_timeout
-    #p2c('uia_set_default_timeout(): _default_timeout  %f -> %f' % (_default_timeout, timeout))
+    p2c('uia_set_default_timeout(): _default_timeout  %f -> %f' % (_default_timeout, timeout))
     _default_timeout = float(timeout)
 
 def uia_set_initial_default_timeout():
     global _default_timeout
-    #p2c('uia_set_initial_default_timeout(): _default_timeout  %f -> %f' % (_default_timeout, _DEFAULT_FIND_TIMEOUT))
-    _default_timeout = _DEFAULT_FIND_TIMEOUT
-
+    p2c('uia_set_initial_default_timeout(): _default_timeout  %f -> %f' % (_default_timeout, DEFAULT_FIND_TIMEOUT))
+    _default_timeout = DEFAULT_FIND_TIMEOUT
+"""
 
 
 class DriverException(Exception):
@@ -226,63 +226,6 @@ class Pattern(object):
 
 
 
-def _create_instance_of_suitable_class(winuielem):
-    MAX_ERROR_TIMES  = 3
-    EACH_ERROR_DELAY = 1
-    _counter = 0
-
-    while True:
-        try:
-            winuielem_ControlType = UIA.get_property_by_id(winuielem, 'ControlType')
-            winuielem_CurrentRole = UIA.get_pattern_by_id(winuielem, 'LegacyIAccessiblePattern').CurrentRole
-            class_by_controltype  = class_by_legacy = None
-
-            for class_ in CONTROLS_CLASSES:
-                # Очередной анализируемый класс имеет следующие поля:
-                class_control_type           = getattr(globals()[class_], 'CONTROL_TYPE', None)
-                class_legacy_accessible_role = getattr(globals()[class_], 'LEGACYACC_ROLE', None)
-
-                if class_control_type is None:
-                    raise Exception('pikuli.UIElement [INTERNAL]: CONTROL_TYPE is not setted for <class %s>. Processing controll \'%s\'' % (class_, UIElement(winuielem).Name))
-
-                elif class_control_type != 'Custom' and winuielem_ControlType != UIA.UIA_automation_control_type_identifiers_mapping['Custom']:
-                    class_control_type_id = UIA.UIA_automation_control_type_identifiers_mapping.get(class_control_type, None)  # Ищем тип class_control_type среди известных нам.
-                    if class_control_type_id is None:
-                        raise Exception('pikuli.UIElement [INTERNAL]: CONTROL_TYPE = \'%s\' in <class %s> is unknown.Processing controll \'%s\'' % (class_control_type, class_, UIElement(winuielem).Name))
-                    if winuielem_ControlType == class_control_type_id:
-                        if class_by_controltype is not None or class_by_legacy is not None:
-                            raise Exception('pikuli.UIElement [INTERNAL]: more than one class are suitable for UI-element \'%s\':' % UIElement(winuielem).Name +
-                                            '\n\tclass_by_controltype = \'%s\'\n\tclass_by_legacy = \'%s\'\n\tclass_ = \'%s\'' % (class_by_controltype, class_by_legacy, class_))
-                        class_by_controltype = class_
-
-                elif class_control_type == 'Custom' and winuielem_ControlType == UIA.UIA_automation_control_type_identifiers_mapping['Custom']:
-                    if class_legacy_accessible_role is None:
-                        raise Exception('pikuli.UIElement [INTERNAL]: CONTROL_TYPE = \'Custom\', but LEGACYACC_ROLE is not setted for <class %s>. Processing controll \'%s\'' % (class_, UIElement(winuielem).Name))
-                    else:
-                        class_legacy_accessible_role_id = ROLE_SYSTEM.get(class_legacy_accessible_role, None)
-                        if class_legacy_accessible_role_id is None:
-                            raise Exception('pikuli.UIElement [INTERNAL]: \'class_legacy_accessible_role_id\' is None for UIElement Control \'%s\'.' % UIElement(winuielem).Name)
-                        if winuielem_CurrentRole == class_legacy_accessible_role_id:
-                            if class_by_controltype is not None or class_by_legacy is not None:
-                                raise Exception('pikuli.UIElement [INTERNAL]: more than one class are suitable for UI-element \'%s\':' % UIElement(winuielem).Name +
-                                                '\n\tclass_by_controltype = \'%s\'\n\tclass_by_legacy = \'%s\'\n\tclass_ = \'%s\'' % (class_by_controltype, class_by_legacy, class_))
-                            class_by_legacy = class_
-
-            if class_by_controltype is not None:
-                return globals()[class_by_controltype](winuielem)
-            elif class_by_legacy is not None:
-                return globals()[class_by_legacy](winuielem)
-            else:
-                return UIElement(winuielem)
-
-            _counter += 1
-
-        except _ctypes.COMError as ex:
-            time.sleep(EACH_ERROR_DELAY)
-            if _counter >= MAX_ERROR_TIMES:
-                raise Exception('pikuli._create_instance_of_suitable_class: COMError too many times (max times %i with delay %i)' % (MAX_ERROR_TIMES, EACH_ERROR_DELAY))
-
-
 
 class UIElement(object):
     '''
@@ -293,25 +236,29 @@ class UIElement(object):
         proc_name      --  имя процесса (exe-файла), которому принадлежит окно
     '''
 
-    def __init__(self, pointer2elem, derived_self=None, required_patterns=[]):  #, timeout=10):
+    def __init__(self, pointer2elem, derived_self=None, required_patterns=[], find_timeout=DEFAULT_FIND_TIMEOUT):  #, timeout=10):
         '''
         Аргументы:
             pointer2elem       --  Некий указатель на UI-элемент (см. ниже).
             derived_self       --  Если пришли сюда из конструктора дочернего класса, то здесь хранится self создаваемого объета (можно узнать тип дочернего класса)
             required_patterns  --  Список занвание паттернов, которые потьребуются для работы (зависит от выбранного дочернего класса, экземпляр которого создается)
+            find_timeout       --  Значение по умолчанию, которове будет использоваться, если метод find() (и подобные) этого класса вызван без явного указания timeout.
+                                   Если не передается конструктуру, то берется из переменной модуля DEFAULT_FIND_TIMEOUT.
+                                   Будет наслодоваться ко всем объектам, которые возвращаются методами этого класса.
             #timeout            --  Если происходит какая-то ошибка, что пробуем повторить ошибочную процедуру, пока не превысим timeout. Пока ошибка может быть только в происке процесса по PID.
 
         Возможные значения аргумента pointer2elem:
             a) pointer2elem == hwnd искомого элемента GUI. В часности ноль -- это указатель корневой UIA-элемент ("рабочий стол").
             b) pointer2elem -- это уже интерфейс к искомому элементу GUI (указатель на обект типа IUIAutomationElement или экземпляр настоящего класса UIElement)
 
-        Возвращение методами этого класса объектов UI-элементов (реализовано в функции _create_instance_of_suitable_class):
+        Возвращение методами этого класса объектов UI-элементов (реализовано в методе __create_instance_of_suitable_class):
              1. Если self._winuiaelem позволяет получить ControlType, ищется подходящий класс (дочерний для _uielement_Control) с сооветствующим занчением атрибута CONTROL_TYPE.
              2. Если self._winuiaelem = 'Custom', то запрашивается LegacyIAccessible.Role и ищется класс с сответствующим значением LEGACYACC_ROLE.
              3. Если по какой-то причние пункты 1 и 2 выше не позволили подобрать класс, то испульзуется родительский UIElement.
              4. Если нашлось несколько подходящих классов, то генерируется исключение.
         '''
         self._reg = None
+        self._find_timeout = check_timeout(find_timeout, err_msg='pikuli.UIElement.__init__()')
 
         if pointer2elem == 0:
             # Коренвой элемент.
@@ -418,6 +365,73 @@ class UIElement(object):
         return True
 
 
+    def __create_instance_of_suitable_class(self, winuielem):
+        MAX_ERROR_TIMES  = 3
+        EACH_ERROR_DELAY = 1
+        _counter = 0
+
+        while True:
+            try:
+                winuielem_ControlType = UIA.get_property_by_id(winuielem, 'ControlType')
+                winuielem_CurrentRole = UIA.get_pattern_by_id(winuielem, 'LegacyIAccessiblePattern').CurrentRole
+                class_by_controltype  = class_by_legacy = None
+
+                for class_ in CONTROLS_CLASSES:
+                    # Очередной анализируемый класс имеет следующие поля:
+                    class_control_type           = getattr(globals()[class_], 'CONTROL_TYPE', None)
+                    class_legacy_accessible_role = getattr(globals()[class_], 'LEGACYACC_ROLE', None)
+
+                    if class_control_type is None:
+                        raise Exception('pikuli.UIElement [INTERNAL]: CONTROL_TYPE is not setted for <class %s>. Processing controll \'%s\'' % (class_, UIElement(winuielem).Name))
+
+                    elif class_control_type != 'Custom' and winuielem_ControlType != UIA.UIA_automation_control_type_identifiers_mapping['Custom']:
+                        class_control_type_id = UIA.UIA_automation_control_type_identifiers_mapping.get(class_control_type, None)  # Ищем тип class_control_type среди известных нам.
+                        if class_control_type_id is None:
+                            raise Exception('pikuli.UIElement [INTERNAL]: CONTROL_TYPE = \'%s\' in <class %s> is unknown.Processing controll \'%s\'' % (class_control_type, class_, UIElement(winuielem).Name))
+                        if winuielem_ControlType == class_control_type_id:
+                            if class_by_controltype is not None or class_by_legacy is not None:
+                                raise Exception('pikuli.UIElement [INTERNAL]: more than one class are suitable for UI-element \'%s\':' % UIElement(winuielem).Name +
+                                                '\n\tclass_by_controltype = \'%s\'\n\tclass_by_legacy = \'%s\'\n\tclass_ = \'%s\'' % (class_by_controltype, class_by_legacy, class_))
+                            class_by_controltype = class_
+
+                    elif class_control_type == 'Custom' and winuielem_ControlType == UIA.UIA_automation_control_type_identifiers_mapping['Custom']:
+                        if class_legacy_accessible_role is None:
+                            raise Exception('pikuli.UIElement [INTERNAL]: CONTROL_TYPE = \'Custom\', but LEGACYACC_ROLE is not setted for <class %s>. Processing controll \'%s\'' % (class_, UIElement(winuielem).Name))
+                        else:
+                            class_legacy_accessible_role_id = ROLE_SYSTEM.get(class_legacy_accessible_role, None)
+                            if class_legacy_accessible_role_id is None:
+                                raise Exception('pikuli.UIElement [INTERNAL]: \'class_legacy_accessible_role_id\' is None for UIElement Control \'%s\'.' % UIElement(winuielem).Name)
+                            if winuielem_CurrentRole == class_legacy_accessible_role_id:
+                                if class_by_controltype is not None or class_by_legacy is not None:
+                                    raise Exception('pikuli.UIElement [INTERNAL]: more than one class are suitable for UI-element \'%s\':' % UIElement(winuielem).Name +
+                                                    '\n\tclass_by_controltype = \'%s\'\n\tclass_by_legacy = \'%s\'\n\tclass_ = \'%s\'' % (class_by_controltype, class_by_legacy, class_))
+                                class_by_legacy = class_
+
+                if class_by_controltype is not None:
+                    return globals()[class_by_controltype](winuielem, find_timeout=self._find_timeout)
+                elif class_by_legacy is not None:
+                    return globals()[class_by_legacy](winuielem, find_timeout=self._find_timeout)
+                else:
+                    return UIElement(winuielem, find_timeout=self._find_timeout)
+
+                _counter += 1
+
+            except _ctypes.COMError as ex:
+                time.sleep(EACH_ERROR_DELAY)
+                if _counter >= MAX_ERROR_TIMES:
+                    raise Exception('pikuli.UIElement.__create_instance_of_suitable_class: COMError too many times (max times %i with delay %i)' % (MAX_ERROR_TIMES, EACH_ERROR_DELAY))
+
+
+    def set_find_timeout(self, timeout):
+        if timeout is None:
+            self._find_timeout = DEFAULT_FIND_TIMEOUT
+        else:
+            self._find_timeout = check_timeout(timeout, err_msg='pikuli.UIElement.set_find_timeout()')
+
+    def get_find_timeout(self):
+        return self._find_timeout
+
+
     def find_all(self, **kwargs):
         kwargs['find_first_only'] = False
         return self.find(**kwargs)
@@ -473,14 +487,14 @@ class UIElement(object):
         max_descend_level      = kwargs.pop('max_descend_level', None)
         exact_level            = kwargs.pop('exact_level', None)
         exception_on_find_fail = kwargs.pop('exception_on_find_fail', None)
-        timeout = _timeout     = kwargs.pop('timeout', None)
+        timeout = _timeout     = check_timeout(kwargs.pop('timeout', None), allow_None=True, err_msg='pikuli.UIElement.__init__()')
         next_serach_iter_delya = kwargs.pop('next_serach_iter_delya', NEXT_SEARCH_ITER_DELAY)
 
+        # p2c('find: timeout = %s; self._find_timeout = %s' % (str(timeout), str(self._find_timeout)))
         if timeout is None:
-            timeout = _default_timeout
+            timeout = self._find_timeout
         if exception_on_find_fail is None:
             exception_on_find_fail = find_first_only
-        #exception_on_find_fail = True  # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! TODO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         if max_descend_level is not None and exact_level is not None:
             raise Exception('pikuli.UIElement.find: max_descend_level is not None and exact_level is not None')
@@ -672,7 +686,8 @@ class UIElement(object):
                                 tuple(map(str, [exact_level, level])))
         # - subroutines: end -
 
-        txt_search_timeout        = 'searching with timeout = %s (called with %s; default is %s) ...' % (str(timeout), str(_timeout), str(_default_timeout))
+        txt_search_timeout        = 'searching with timeout = %s (call/class/module: %s/%s/%s) ...' \
+                                    % (str(timeout), str(_timeout), str(self._find_timeout), str(DEFAULT_FIND_TIMEOUT))
         txt_pikuli_search_pattern = 'Pikuli.UIElement.find: by criteria %s %%s' % str__not_none_criteria
         p2c(txt_pikuli_search_pattern % txt_search_timeout)
 
@@ -731,7 +746,7 @@ class UIElement(object):
                     # t0 = datetime.datetime.today()
                     time.sleep(next_serach_iter_delya)
                 else:
-                    found_elem = _create_instance_of_suitable_class(ex.winuiaelem)
+                    found_elem = self.__create_instance_of_suitable_class(ex.winuiaelem)
                     p2c(txt_pikuli_search_pattern % ('has been found: %s (%s)' % (repr(found_elem), str(timeout))), reprint_last_line=True)
                     return found_elem
 
@@ -765,7 +780,7 @@ class UIElement(object):
             found_elem = []
             p2c(txt_pikuli_search_pattern % ('there has been found %s: [] (%s)' % (str__not_none_criteria, str(timeout))), reprint_last_line=True)
         else:
-            found_elem = map(_create_instance_of_suitable_class, found_winuiaelem_arr)
+            found_elem = map(self.__create_instance_of_suitable_class, found_winuiaelem_arr)
             p2c(txt_pikuli_search_pattern % ('there has been found %s: %s (%s)' % (str__not_none_criteria, repr(found_elem), str(timeout))), reprint_last_line=True)
         return found_elem
 
@@ -786,14 +801,14 @@ class UIElement(object):
             (_, _, wc, hc) = win32gui.GetClientRect(self.hwnd)
             # получение координат левого верхнего угла клиенской области осносительно угла экрана
             (xc, yc) = win32gui.ClientToScreen(self.hwnd, (0, 0) )
-            self._reg = Region.Region(xc, yc, wc, hc, winctrl=self, title=self.Name)
+            self._reg = Region.Region(xc, yc, wc, hc, winctrl=self, title=self.Name, find_timeout=self._find_timeout)
         else:
             rect = self._winuiaelem.GetCurrentPropertyValue(UIA.UIA_automation_element_property_identifers_mapping['BoundingRectangle'])
             try:
                 rect = map(int, rect)
             except ValueError:
                 raise FailExit('pikuli.UIElemen.reg(...): can not round numbers in rect = %s' % str(rect))
-            self._reg = Region.Region(*rect, winctrl=self, title=self.Name)
+            self._reg = Region.Region(*rect, winctrl=self, title=self.Name, find_timeout=self._find_timeout)
 
         return self._reg
 
@@ -1090,9 +1105,9 @@ class Tree(_uielement_Control):
             force_expand -- разворачивать ли свернутые элементы на пути поиска искового.
         '''
         # p2c(item_name, force_expand)
-        p2c('Pikuli.Tree.find_item: searching by criteria item_name = \'%s\'' % str(item_name), reprint_last_line=True)
+        p2c('Pikuli.Tree.find_item: searching by criteria item_name = \'%s\', timeout = %s' % (str(item_name), str(timeout)), reprint_last_line=True)
         if not isinstance(item_name, list):
-            raise Exception('pikuli.ui_element.Tree: not isinstance(item_name, list); item_name = %s' % str(item_name))
+            raise Exception('pikuli.ui_element.Tree: not isinstance(item_name, list); item_name = %s, timeout = %s' % (str(item_name), str(timeout)))
         if len(item_name) == 0:
             raise Exception('pikuli.ui_element.Tree: len(item_name) == 0')
         else:
@@ -1104,7 +1119,8 @@ class Tree(_uielement_Control):
                 found_elem = elem
             else:
                 found_elem = elem.find_item(item_name[1:], force_expand, timeout=timeout, exception_on_find_fail=exception_on_find_fail)
-        # p2c('Pikuli.Tree.find_item: %s has been found by criteria \'%s\'' % (str(item_name), repr(found_elem)))
+        #p2c('Pikuli.Tree.find_item: %s has been found by criteria \'%s\', timeout = %s, elem.timeout = %s'
+        #    % (str(item_name), repr(found_elem), str(timeout), str(found_elem._find_timeout)), reprint_last_line=True)
         return found_elem
 
 
@@ -1157,12 +1173,12 @@ class TreeItem(_uielement_Control):
             force_expand -- разворачивать ли свернутые элементы на пути поиска искового.
         '''
         if not isinstance(item_name, list):
-            raise Exception('pikuli.ui_element.TreeItem: not isinstance(item_name, list); item_name = %s' % str(item_name))
+            raise Exception('pikuli.ui_element.TreeItem: not isinstance(item_name, list); item_name = %s, timeout = %s' % (str(item_name), str(timeout)))
         if len(item_name) == 0:
             raise Exception('pikuli.ui_element.TreeItem: len(item_name) == 0')
         if not self.is_expanded() and not force_expand:
             raise FindFailed('pikuli.ui_element.TreeItem: item \'%s\' was found, but it is not fully expanded. Try to set force_expand = True.\nSearch arguments:\n\titem_name = %s\n\tforce_expand = %s' % (self.Name, str(item_name), str(force_expand)))
-        p2c('Pikuli.TreeItem.find_item: searching by criteria item_name = \'%s\'' % str(item_name), reprint_last_line=True)
+        p2c('Pikuli.TreeItem.find_item: searching by criteria item_name = \'%s\', timeout = %s' % (str(item_name), str(timeout)), reprint_last_line=True)
         self.expand()
         elem = self.find(Name=item_name[0], exact_level=1, timeout=timeout, exception_on_find_fail=exception_on_find_fail)
         if elem is None:
@@ -1172,7 +1188,8 @@ class TreeItem(_uielement_Control):
             found_elem = elem
         else:
             found_elem = elem.find_item(item_name[1:], force_expand, timeout=timeout)
-        #p2c('Pikuli.TreeItem.find_item: \'%s\' has been found: %s' % (str(item_name), repr(found_elem)))
+        #p2c('Pikuli.TreeItem.find_item: %s has been found by criteria \'%s\', timeout = %s, elem.timeout = %s'
+        #    % (str(item_name), repr(found_elem), str(timeout), str(found_elem._find_timeout)), reprint_last_line=True)
         return found_elem
 
 

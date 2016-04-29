@@ -11,7 +11,7 @@ import time
 import traceback
 import cv2
 import numpy as np
-import _functions
+from _functions import p2c, _take_screenshot, check_timeout
 from _exceptions import *
 from Pattern import *
 from Location import *
@@ -24,6 +24,7 @@ import win32gui
 RELATIONS = ['top-left', 'center']
 
 DELAY_BETWEEN_CV_ATTEMPT = 0.5      # Время в [c] между попытками распознования графического объекта
+DEFAULT_FIND_TIMEOUT     = 3.1
 
 
 class Region(object):
@@ -43,17 +44,19 @@ class Region(object):
                                       Ширина и высота в пикселях. Крайние пиксели принадлежат области прямоуголника.
 
         Для всех вариантов вызова есть kwargs:
-            relation:
-                'top-left' -- x,y являются координатам левого верхнего угла области-прямоуголника; область строится от этой точки (вариант по умолчанию)
-                'center'   -- x,y являются координатам центра области-прямоуголника; область строится от этой точки
-                None       -- выбрать вариант по умолчанию, что равносильно отстуствию параметра 'relation' в kwargs
-            title:
-                строка     -- Идентификатор для человека (просто строка)
-            id             -- Идентификатор для использования в коде
-            winctrl        -- None или указатель на экземпляр класса HWNDElement
+            relation          -- Как интепретировать смысл точки (x,y):
+                'top-left'        - x,y являются координатам левого верхнего угла области-прямоуголника; область строится от этой точки (вариант по умолчанию)
+                'center'          - x,y являются координатам центра области-прямоуголника; область строится от этой точки
+                None              - выбрать вариант по умолчанию, что равносильно отстуствию параметра 'relation' в kwargs
+            title             -- Идентификатор для человека (просто строка)
+            id                -- Идентификатор для использования в коде
+            winctrl           -- None или указатель на экземпляр класса HWNDElement
             main_window_hwnd  --  Если не указан, но этот регион наследуется от другого региона, то пробуем взять оттуда. Если нет ничего, то
                                   определям hwnd главного окна (сразу после рабочего стола в деревер окон) под цетром прямоуголника. Если прямоугольник
                                   поверх рабочего стола, то будет hwnd = 0.
+            find_timeout      --  Значение по умолчанию, которове будет использоваться, если метод find() (и подобные) этого класса вызван без явного указания timeout.
+                                  Если не передается конструктуру, то берется из переменной модуля DEFAULT_FIND_TIMEOUT.
+                                  Будет наслодоваться ко всем объектам, которые возвращаются методами этого класса.
 
         Дополнительная справка:
             Внутренние поля класса:
@@ -71,7 +74,6 @@ class Region(object):
                 толщиной в 1 пиксель.
 
         '''
-        self.auto_wait_timeout = 3.0
         self.drag_location = None
 
         # "Объявляем" переменные, которые будут заданы ниже через self.setRect(...):
@@ -85,8 +87,8 @@ class Region(object):
                 self._title = str(kwargs['title'])
             except:
                 self._title = repr(kwargs['title'])
-        self._id = kwargs.get('id', None)  # Идентификатор для использования в коде.
-        self._winctrl = kwargs.get('winctrl', None)
+        self._id           = kwargs.get('id', None)  # Идентификатор для использования в коде.
+        self._winctrl      = kwargs.get('winctrl', None)
 
         # # Здесь будет храниться экземпляр класса winforms, если Region найдем с помощью win32api:
         # self.winctrl = winforms.HWNDElement()
@@ -95,6 +97,7 @@ class Region(object):
             self.setRect(*args, **kwargs)
         except FailExit:
             raise FailExit('\nNew stage of %s\n[error] Incorect \'Region\' class constructor call:\n\targs = %s\n\tkwargs = %s' % (traceback.format_exc(), str(args), str(kwargs)))
+        self._find_timeout = check_timeout(kwargs.get('find_timeout', DEFAULT_FIND_TIMEOUT), err_msg='pikuli.Region.__init__()')  # Перезапишет, если создавали объект на основе существующего Region
 
         self._main_window_hwnd = kwargs.get('main_window_hwnd', None)
         if self._main_window_hwnd is None and len(args) == 1:
@@ -196,6 +199,7 @@ class Region(object):
         self._y = self.y = reg.y
         self._w = self.w = reg.w
         self._h = self.h = reg.h
+        self._find_timeout = reg._find_timeout
 
 
     def getX(self):
@@ -228,9 +232,9 @@ class Region(object):
             raise FailExit('[error] Unknown keys in kwargs = %s' % str(kwargs))
 
         if len(args) == 2 and (isinstance(args[0], int) or isinstance(args[0], float)) and (isinstance(args[1], int) or isinstance(args[1], float)):
-            return Region(self._x + int(args[0]), self._y + int(args[1]), self._w, self._h)
+            return Region(self._x + int(args[0]), self._y + int(args[1]), self._w, self._h, find_timeout=self._find_timeout)
         elif len(args) == 1 and isinstance(args[0], Location):
-            return Region(self._x + args[0]._x, self._y + args[0]._y, self._w, self._h)
+            return Region(self._x + args[0]._x, self._y + args[0]._y, self._w, self._h, find_timeout=self._find_timeout)
         else:
             raise FailExit('[error] Incorect \'offset()\' method call:\n\targs = %s' % str(args))
 
@@ -239,9 +243,9 @@ class Region(object):
         try:
             if l is None:
                 scr = Screen('virt')
-                reg = Region(self._x + self._w, self._y, (scr.x + scr.w - 1) - (self._x + self._w) + 1, self._h)
+                reg = Region(self._x + self._w, self._y, (scr.x + scr.w - 1) - (self._x + self._w) + 1, self._h, find_timeout=self._find_timeout)
             elif isinstance(l, int) and l > 0:
-                reg = Region(self._x + self._w, self._y, l, self._h)
+                reg = Region(self._x + self._w, self._y, l, self._h, find_timeout=self._find_timeout)
             # elif isinstance(l, Region):  --  TODO: до пересечения с ... Если внутри или снаружи.
             else:
                 raise FailExit('type of \'l\' is %s; l = %s', (str(type(l)), str(l)))
@@ -254,9 +258,9 @@ class Region(object):
         try:
             if l is None:
                 scr = Screen('virt')
-                reg = Region(scr.x, self._y, (self._x - 1) - scr.x + 1, self._h)
+                reg = Region(scr.x, self._y, (self._x - 1) - scr.x + 1, self._h, find_timeout=self._find_timeout)
             elif isinstance(l, int) and l > 0:
-                reg = Region(self._x - l, self._y, l, self._h)
+                reg = Region(self._x - l, self._y, l, self._h, find_timeout=self._find_timeout)
             # elif isinstance(l, Region):  --  TODO: до пересечения с ... Если внутри или снаружи.
             else:
                 raise FailExit()
@@ -269,9 +273,9 @@ class Region(object):
         try:
             if l is None:
                 scr = Screen('virt')
-                reg = Region(self._x, scr.y, self._w, (self._y - 1) - scr.y + 1)
+                reg = Region(self._x, scr.y, self._w, (self._y - 1) - scr.y + 1, find_timeout=self._find_timeout)
             elif isinstance(l, int) and l > 0:
-                reg = Region(self._x, self._y - l, self._w, l)
+                reg = Region(self._x, self._y - l, self._w, l, find_timeout=self._find_timeout)
             # elif isinstance(l, Region):  --  TODO: до пересечения с ... Если внутри или снаружи.
             else:
                 raise FailExit()
@@ -284,9 +288,9 @@ class Region(object):
         try:
             if l is None:
                 scr = Screen('virt')
-                reg = Region(self._x, self._y + self._h, self._w, (scr.y + scr.h - 1) - (self._y + self._h) + 1)
+                reg = Region(self._x, self._y + self._h, self._w, (scr.y + scr.h - 1) - (self._y + self._h) + 1, find_timeout=self._find_timeout)
             elif isinstance(l, int) and l > 0:
-                reg = Region(self._x, self._y + self._h, self._w, l)
+                reg = Region(self._x, self._y + self._h, self._w, l, find_timeout=self._find_timeout)
             # elif isinstance(l, Region):  --  TODO: до пересечения с ... Если внутри или снаружи.
             else:
                 raise FailExit()
@@ -299,7 +303,7 @@ class Region(object):
         try:
             if isinstance(l, int):
                 if (l >= 0) or (l < 0 and (-2*l) < self._w and (-2*l) < self._h):
-                    reg = Region(self._x - l, self._y - l, self._w + 2*l, self._h + 2*l)
+                    reg = Region(self._x - l, self._y - l, self._w + 2*l, self._h + 2*l, find_timeout=self._find_timeout)
                 else:
                     raise FailExit()
             else:
@@ -326,16 +330,21 @@ class Region(object):
 
 
     def __get_field_for_find(self):
-        return _functions._take_screenshot(self._x, self._y, self._w, self._h, self._main_window_hwnd)
+        return _take_screenshot(self._x, self._y, self._w, self._h, self._main_window_hwnd)
 
     def save_as_jpg(self, full_filename):
-        cv2.imwrite(full_filename, _functions._take_screenshot(self._x, self._y, self._w, self._h, self._main_window_hwnd), [cv2.IMWRITE_JPEG_QUALITY, 70])
+        cv2.imwrite(full_filename, _take_screenshot(self._x, self._y, self._w, self._h, self._main_window_hwnd), [cv2.IMWRITE_JPEG_QUALITY, 70])
 
     def save_as_png(self, full_filename):
-        cv2.imwrite(full_filename, _functions._take_screenshot(self._x, self._y, self._w, self._h, self._main_window_hwnd))
+        cv2.imwrite(full_filename, _take_screenshot(self._x, self._y, self._w, self._h, self._main_window_hwnd))
 
 
     def __find(self, ps, field):
+        # cv2.imshow('field', field)
+        # cv2.imshow('pattern', ps._cv2_pattern)
+        # cv2.waitKey(0)
+        # cv2.destroyAllWindows()
+
         CF = 0
         if CF == 0:
             res = cv2.matchTemplate(field, ps._cv2_pattern, cv2.TM_CCORR_NORMED)
@@ -404,9 +413,14 @@ class Region(object):
                 raise FailExit( failExitText % str(p) )
 
         if timeout is None:
-            timeout = self.auto_wait_timeout
-        if not ( (isinstance(timeout, float) or isinstance(timeout, int)) and timeout >= 0 ):
-            raise FailExit('bad \'timeout\' argument')
+            timeout = self._find_timeout
+        else:
+            try:
+                timeout = float(timeout)
+                if timeout < 0:
+                    raise ValueError
+            except ValueError:
+                raise FailExit('bad argument: timeout = \'%s\'' % str(timeout))
 
         prev_field = None
         elaps_time = 0
@@ -521,11 +535,15 @@ class Region(object):
         return self._last_match
 
 
-    def setAutoWaitTimeout(self, timeout):
-        if (isinstance(timeout, float) or isinstance(timeout, int)) and timeout >= 0:
-            self.auto_wait_timeout = timeout
+    def set_find_timeout(self, timeout):
+        if timeout is None:
+            self._find_timeout = DEFAULT_FIND_TIMEOUT
         else:
-            raise FailExit('[error] Incorect \'setAutoWaitTimeout()\' method call:\n\ttimeout = %s' % str(timeout))
+            self._find_timeout = check_timeout(timeout, err_msg='[error] Incorect Region.set_find_timeout() method call')
+
+    def get_find_timeout(self):
+        return self._find_timeout
+
 
     def click(self, after_cleck_delay=DEALY_AFTER_CLICK):
         self.getCenter().click(after_cleck_delay=DEALY_AFTER_CLICK)

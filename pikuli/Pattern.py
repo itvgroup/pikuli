@@ -15,6 +15,7 @@ from _exceptions import *
 class Pattern(object):
     def __init__(self, img_path, similarity=None):
         (self.__similarity, self.__img_path) = (None, None)
+        img_path = str(img_path)
 
         try:
             path = os.path.abspath(img_path)
