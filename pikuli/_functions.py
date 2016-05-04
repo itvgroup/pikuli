@@ -28,7 +28,7 @@ CAPTUREBLT = 0x40000000
 DELAY_KBD_KEY_PRESS = 0.020
 
 try:
-    from p2c import p2c
+    from p2c_module import p2c
 except ImportError:
     def p2c(*msgs, **kwargs):
         print(str(msgs))
