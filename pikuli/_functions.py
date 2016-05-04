@@ -27,12 +27,12 @@ CAPTUREBLT = 0x40000000
 
 DELAY_KBD_KEY_PRESS = 0.020
 
-try:
-    from p2c import p2c
-except ImportError:
-    def p2c(*msgs, **kwargs):
-        print(str(msgs))
-        print(str(kwargs))
+from p2c_module import p2c
+#try:
+#except ImportError:
+#    def p2c(*msgs, **kwargs):
+#        print(str(msgs))
+#        print(str(kwargs))
 
 
 def check_timeout(timeout, allow_None=False, err_msg='pikuli.check_timeout()'):
