@@ -23,7 +23,7 @@ import win32gui
 
 RELATIONS = ['top-left', 'center']
 
-DELAY_BETWEEN_CV_ATTEMPT = 0.5      # Время в [c] между попытками распознования графического объекта
+DELAY_BETWEEN_CV_ATTEMPT = 1.0      # Время в [c] между попытками распознования графического объекта
 DEFAULT_FIND_TIMEOUT     = 3.1
 
 
@@ -342,7 +342,7 @@ class Region(object):
     def __find(self, ps, field):
         # cv2.imshow('field', field)
         # cv2.imshow('pattern', ps._cv2_pattern)
-        # cv2.waitKey(0)
+        # cv2.waitKey(3*1000)
         # cv2.destroyAllWindows()
 
         CF = 0
@@ -371,9 +371,9 @@ class Region(object):
         s_arr = map(lambda s: float(s), res[loc[0], loc[1]])
         return zip(x_arr, y_arr, s_arr)'''
 
-        # t = time.time()
-        # cv2.imwrite('d:\\tmp\\%i-%06i-field.png' % (int(t), (t-int(t))*10**6), field)
-        # cv2.imwrite('d:\\tmp\\%i-%06i-pattern.png' % (int(t), (t-int(t))*10**6), ps._cv2_pattern)
+        t = time.time()
+        cv2.imwrite('c:\\tmp\\%i-%06i-field.png' % (int(t), (t-int(t))*10**6), field)
+        cv2.imwrite('c:\\tmp\\%i-%06i-pattern.png' % (int(t), (t-int(t))*10**6), ps._cv2_pattern)
 
         return map(lambda x, y, s: (int(x) + self._x, int(y) + self._y, float(s)), loc[1], loc[0], res[loc[0], loc[1]])
 
@@ -449,9 +449,11 @@ class Region(object):
                 if not os.path.exists(os.environ['TEMP'] + '\\find_failed'):
                     os.mkdir(os.environ['TEMP'] + '\\find_failed')
 
-                # t = time.time()
-                # cv2.imwrite('d:\\tmp\\%i-%06i-pattern.png' % (int(t), (t-int(t))*10**6), ps[0]._cv2_pattern)
-                # cv2.imwrite('d:\\tmp\\%i-%06i-field.png' % (int(t), (t-int(t))*10**6), field)
+                #t = time.time()
+                #cv2.imwrite('d:\\tmp\\%i-%06i-pattern.png' % (int(t), (t-int(t))*10**6), ps[0]._cv2_pattern)
+                #cv2.imwrite('d:\\tmp\\%i-%06i-field.png' % (int(t), (t-int(t))*10**6), field)
+                cv2.imwrite('c:\\tmp\\FindFailed-pattern.png', ps[0]._cv2_pattern)
+                cv2.imwrite('c:\\tmp\\FindFailed-field.png', field)
 
                 raise FindFailed('Unable to find \'%s\' in %s' % (failedImages, str(self)) )
 

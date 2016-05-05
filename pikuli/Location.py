@@ -174,13 +174,17 @@ class Location(object):
         self.x = self._x = dest_x
         self.y = self._y = dest_y
 
+        return self
+
     def drop(self):
         if self._is_mouse_down:
             self.mouseUp()
             self._is_mouse_down = False
+            return self
         else:
             raise FailExit('You try drop <%s>, but it is not bragged before!' % str(self))
 
     def dragndrop(self, *dest_location):
         self.dragto(*dest_location)
         self.drop()
+        return self
