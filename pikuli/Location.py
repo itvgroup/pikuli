@@ -141,11 +141,20 @@ class Location(object):
     def dragto(self, *dest_location):
         if len(dest_location) == 1 and isinstance(dest_location[0], Location):
             (dest_x, dest_y) = (dest_location[0].x, dest_location[0].y)
+            delay = DRAGnDROP_MOVE_DELAY
         elif len(dest_location) == 2:
             try:
                 (dest_x, dest_y) = (int(dest_location[0]), int(dest_location[1]))
             except:
                 raise FailExit('')
+            delay = DRAGnDROP_MOVE_DELAY
+        elif len(dest_location) == 3:
+            try:
+                (dest_x, dest_y) = (int(dest_location[0]), int(dest_location[1]))
+            except:
+                raise FailExit('')
+            delay = float(dest_location[2])
+
         else:
             raise FailExit('')
 
@@ -157,10 +166,10 @@ class Location(object):
         # https://ru.wikipedia.org/wiki/%D0%90%D0%BB%D0%B3%D0%BE%D1%80%D0%B8%D1%82%D0%BC_%D0%91%D1%80%D0%B5%D0%B7%D0%B5%D0%BD%D1%85%D1%8D%D0%BC%D0%B0
         if abs(dest_x - self.x) >= abs(dest_y - self.y):
             (a1, b1, a2, b2) = (self.x, self.y, dest_x, dest_y)
-            f = lambda x, y: Location(x, y).mouseMove(DRAGnDROP_MOVE_DELAY)
+            f = lambda x, y: Location(x, y).mouseMove(delay)
         else:
             (a1, b1, a2, b2) = (self.y, self.x, dest_y, dest_x)
-            f = lambda x, y: Location(y, x).mouseMove(DRAGnDROP_MOVE_DELAY)
+            f = lambda x, y: Location(y, x).mouseMove(delay)
 
         k = float(b2 - b1) / (a2 - a1)
         a_sgn = (a2 - a1) / abs(a2 - a1)
