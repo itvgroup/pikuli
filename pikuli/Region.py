@@ -452,8 +452,8 @@ class Region(object):
                 #t = time.time()
                 #cv2.imwrite('d:\\tmp\\%i-%06i-pattern.png' % (int(t), (t-int(t))*10**6), ps[0]._cv2_pattern)
                 #cv2.imwrite('d:\\tmp\\%i-%06i-field.png' % (int(t), (t-int(t))*10**6), field)
-                cv2.imwrite('c:\\tmp\\FindFailed-pattern.png', ps[0]._cv2_pattern)
-                cv2.imwrite('c:\\tmp\\FindFailed-field.png', field)
+                #cv2.imwrite('c:\\tmp\\FindFailed-pattern.png', ps[0]._cv2_pattern)
+                #cv2.imwrite('c:\\tmp\\FindFailed-field.png', field)
 
                 raise FindFailed('Unable to find \'%s\' in %s' % (failedImages, str(self)) )
 
