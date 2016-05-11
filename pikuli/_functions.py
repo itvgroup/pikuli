@@ -72,6 +72,9 @@ def wait_while_not(f_logic, timeout):
 def addImagePath(path):
     pikuli.Settings.addImagePath(path)
 
+def setFindFailedDir(path):
+    pikuli.Settings.setFindFailedDir(path)
+
 
 def _monitor_hndl_to_screen_n(m_hndl):
     ''' Экраны-мониторы нуменруются от 1. Нулевой экран -- это полный вирутальный. '''

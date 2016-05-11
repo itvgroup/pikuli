@@ -9,17 +9,19 @@
 
 import time
 import traceback
+import datetime
+import os
+
 import cv2
 import numpy as np
+import win32gui
+
 from _functions import p2c, _take_screenshot, check_timeout
 from _exceptions import *
 from Pattern import *
 from Location import *
 import hwnd_element
-
-import datetime
-import os
-import win32gui
+import pikuli
 
 RELATIONS = ['top-left', 'center']
 
@@ -371,29 +373,33 @@ class Region(object):
         s_arr = map(lambda s: float(s), res[loc[0], loc[1]])
         return zip(x_arr, y_arr, s_arr)'''
 
-        t = time.time()
-        cv2.imwrite('c:\\tmp\\%i-%06i-field.png' % (int(t), (t-int(t))*10**6), field)
-        cv2.imwrite('c:\\tmp\\%i-%06i-pattern.png' % (int(t), (t-int(t))*10**6), ps._cv2_pattern)
+        #t = time.time()
+        #cv2.imwrite('c:\\tmp\\%i-%06i-field.png' % (int(t), (t-int(t))*10**6), field)
+        #cv2.imwrite('c:\\tmp\\%i-%06i-pattern.png' % (int(t), (t-int(t))*10**6), ps._cv2_pattern)
 
         return map(lambda x, y, s: (int(x) + self._x, int(y) + self._y, float(s)), loc[1], loc[0], res[loc[0], loc[1]])
 
 
-    def findAll(self, ps):
+    def findAll(self, ps, delay_before=0):
         ''' Если ничего не найдено, то вернется пустой list, и исключения FindFailed не возникнет. '''
+        err_msg_template = '[error] Incorect \'findAll()\' method call:\n\tps = %s\n\tdelay_before = %s\n\tadditional comment: %%s' % (str(ps), str(delay_before))
+
         try:
-            if isinstance(ps, str):
-                ps = Pattern(ps)
-            if not isinstance(ps, Pattern):
-                raise FailExit('bad \'ps\' argument; it should be a string (path to image file) or \'Pattern\' object')
+            delay_before = float(delay_before)
+        except ValueError:
+            raise FailExit(err_msg_template % 'delay_before is not float')
 
-            pts = self.__find(ps, self.__get_field_for_find())
-            #p2c('Pikuli.findAll: try to find %s' % str(ps))
-            self._last_match = map(lambda pt: Match(pt[0], pt[1], ps._w, ps._h, pt[2], ps), pts)
-            p2c('Pikuli.findAll: total found %i matches of <%s>' % (len(self._last_match), str(ps)) )
-            return self._last_match
+        if isinstance(ps, str):
+            ps = Pattern(ps)
+        if not isinstance(ps, Pattern):
+            raise FailExit(err_msg_template % 'bad \'ps\' argument; it should be a string (path to image file) or \'Pattern\' object')
 
-        except FailExit as e:
-            raise FailExit('[error] Incorect \'findAll()\' method call:\n\tps = %s\n\tadditional comment: %s' % (str(ps), str(e)))
+        time.sleep(delay_before)
+        pts = self.__find(ps, self.__get_field_for_find())
+        #p2c('Pikuli.findAll: try to find %s' % str(ps))
+        self._last_match = map(lambda pt: Match(pt[0], pt[1], ps._w, ps._h, pt[2], ps), pts)
+        p2c('Pikuli.findAll: total found %i matches of <%s>' % (len(self._last_match), str(ps)) )
+        return self._last_match
 
 
     def _wait_for_appear_or_vanish(self, ps, timeout, aov):
@@ -445,9 +451,10 @@ class Region(object):
             time.sleep(DELAY_BETWEEN_CV_ATTEMPT)
             elaps_time += DELAY_BETWEEN_CV_ATTEMPT
             if elaps_time >= timeout:
-                failedImages = ', '.join(map(lambda p: p.getFilename().split('\\')[-1], ps))
-                if not os.path.exists(os.environ['TEMP'] + '\\find_failed'):
-                    os.mkdir(os.environ['TEMP'] + '\\find_failed')
+                pikuli.Settings.getFindFailedDir
+                t = time.time()
+                cv2.imwrite(os.path.join(pikuli.Settings.getFindFailedDir, '%i-%06i-pattern.png' % (int(t), (t-int(t))*10**6)), ps[0]._cv2_pattern)
+                cv2.imwrite(os.path.join(pikuli.Settings.getFindFailedDir, '%i-%06i-field.png' % (int(t), (t-int(t))*10**6)), field)
 
                 #t = time.time()
                 #cv2.imwrite('d:\\tmp\\%i-%06i-pattern.png' % (int(t), (t-int(t))*10**6), ps[0]._cv2_pattern)
@@ -455,6 +462,7 @@ class Region(object):
                 #cv2.imwrite('c:\\tmp\\FindFailed-pattern.png', ps[0]._cv2_pattern)
                 #cv2.imwrite('c:\\tmp\\FindFailed-field.png', field)
 
+                failedImages = ', '.join(map(lambda p: p.getFilename().split('\\')[-1], ps))
                 raise FindFailed('Unable to find \'%s\' in %s' % (failedImages, str(self)) )
 
 
