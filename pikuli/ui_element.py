@@ -452,6 +452,8 @@ class UIElement(object):
                                  (см. также "Control Type Identifiers", https://msdn.microsoft.com/en-us/library/windows/desktop/ee671198(v=vs.85).aspx)
             ProcessId        --  Для UAI это число (PID). Дополним возможность указания строки -- имени исполняемого файла, по которому предварительно будем определять PID.
 
+            AutomationId, ClassName, Name --  Строка или "скомпилированное" регулярное выржение (объект от re.compile()).
+
         Наличие нескольких критериев подразумевает логические AND между ними.
 
         При поиске [AutomationId, Name, ClassName] парметр может быть:
@@ -585,9 +587,11 @@ class UIElement(object):
                 elif isinstance(criteria[key], str):
                     if not (uielem_val == criteria[key]):
                         return False
-                else:  # re.complile
+                elif hasattr(criteria[key], 'match'):  # re.complile
                     if not (criteria[key].match(uielem_val) is not None):
                         return False
+                else:
+                    raise Exception('pikuli.UIElement.find: unsupported value \"%s\" of key \'%s\'' % (str(criteria[key]), str(key)))
 
             return True
 

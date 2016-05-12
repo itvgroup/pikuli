@@ -451,10 +451,10 @@ class Region(object):
             time.sleep(DELAY_BETWEEN_CV_ATTEMPT)
             elaps_time += DELAY_BETWEEN_CV_ATTEMPT
             if elaps_time >= timeout:
-                pikuli.Settings.getFindFailedDir
-                t = time.time()
-                cv2.imwrite(os.path.join(pikuli.Settings.getFindFailedDir, '%i-%06i-pattern.png' % (int(t), (t-int(t))*10**6)), ps[0]._cv2_pattern)
-                cv2.imwrite(os.path.join(pikuli.Settings.getFindFailedDir, '%i-%06i-field.png' % (int(t), (t-int(t))*10**6)), field)
+                #TODO: Какие-то ту ошибки. Да и следует передавать, наверно, картинки в FindFailed(), а где-то из модулей робота сохранять, если надо.
+                #t = time.time()
+                #cv2.imwrite(os.path.join(pikuli.Settings.getFindFailedDir, '%i-%06i-pattern.png' % (int(t), (t-int(t))*10**6)), ps[0]._cv2_pattern)
+                #cv2.imwrite(os.path.join(pikuli.Settings.getFindFailedDir, '%i-%06i-field.png' % (int(t), (t-int(t))*10**6)), field)
 
                 #t = time.time()
                 #cv2.imwrite('d:\\tmp\\%i-%06i-pattern.png' % (int(t), (t-int(t))*10**6), ps[0]._cv2_pattern)
@@ -463,7 +463,7 @@ class Region(object):
                 #cv2.imwrite('c:\\tmp\\FindFailed-field.png', field)
 
                 failedImages = ', '.join(map(lambda p: p.getFilename().split('\\')[-1], ps))
-                raise FindFailed('Unable to find \'%s\' in %s' % (failedImages, str(self)) )
+                raise FindFailed('Unable to find \'%s\' in %s' % (failedImages, str(self)))
 
 
     def find(self, ps, timeout=None, exception_on_find_fail=True):
