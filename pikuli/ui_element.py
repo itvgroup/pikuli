@@ -6,13 +6,14 @@ import time
 import datetime
 import traceback
 import sys
+import re
 
 import _ctypes
 import win32gui
 
 import UIA
 import Region
-from _functions import p2c, wait_while, Key, type_text, check_timeout
+from _functions import p2c, wait_while, wait_while_not, Key, type_text, check_timeout
 from _exceptions import *
 import hwnd_element
 from oleacc_h import *
@@ -28,7 +29,14 @@ NAMES_of_COR_E = {
 
 NEXT_SEARCH_ITER_DELAY = 2  # Задержка между итерациями поиска, пока ещё не вышел timeout
 DEFAULT_FIND_TIMEOUT   = 11
+CONTROL_CHECK_AFTER_CLICK_DELAY = 3
 
+'''
+TODO:
+
+    def check(self, method='click'):
+        click или invoke потенциально можут быть
+'''
 
 """
 '''
@@ -512,7 +520,7 @@ class UIElement(object):
                 if isinstance(val, unicode):
                     val = str(val)
                 if isinstance(val, list) and not reduce(lambda r, t: r and isinstance(t, str), val, True) or \
-                   not isinstance(val, list) and not (hasattr(val, 'match') or isinstance(val, str)):
+                   not isinstance(val, list) and not (isinstance(val, re._pattern_type) or isinstance(val, str)):
                         raise Exception('pikuli.UIElement.find: wrong kwargs[\'%s\'] = \'%s\'' % (str(key), str(val)))
             criteria[key] = val
 
@@ -587,7 +595,7 @@ class UIElement(object):
                 elif isinstance(criteria[key], str):
                     if not (uielem_val == criteria[key]):
                         return False
-                elif hasattr(criteria[key], 'match'):  # re.complile
+                elif isinstance(val, re._pattern_type):  # re.complile
                     if not (criteria[key].match(uielem_val) is not None):
                         return False
                 else:
@@ -1007,6 +1015,24 @@ class CheckBox(_uielement_Control):
 
     def is_unchecked(self):
         return not bool(self.get_pattern('LegacyIAccessiblePattern').CurrentState & STATE_SYSTEM['CHECKED'])
+
+    def check(self, method='click', check_timeout=CONTROL_CHECK_AFTER_CLICK_DELAY):
+        ''' click или invoke потенциально можут быть '''
+        if method not in ['click']:
+            raise Exception('CheckBox.check(...): unsupported method = \'%s\'' % str(method))
+        if not self.is_checked():
+            self.reg().click()
+        if not wait_while_not(self.is_checked, check_timeout):
+            raise Exception('CheckBox.uncheck(...): checkbos is still checked after %s seconds' % str(check_timeout))
+
+    def uncheck(self, method='click', check_timeout=CONTROL_CHECK_AFTER_CLICK_DELAY):
+        ''' click или invoke потенциально можут быть '''
+        if method not in ['click']:
+            raise Exception('CheckBox.uncheck(...): unsupported method = \'%s\'' % str(method))
+        if not self.is_unchecked():
+            self.reg().click()
+        if not wait_while_not(self.is_unchecked, check_timeout):
+            raise Exception('CheckBox.uncheck(...): checkbos is still checked after %s seconds' % str(check_timeout))
 
 
 class Edit(_uielement_Control, _ValuePattern_methods):
