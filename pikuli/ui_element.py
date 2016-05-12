@@ -442,6 +442,7 @@ class UIElement(object):
 
     def find_all(self, **kwargs):
         kwargs['find_first_only'] = False
+        kwargs['_find_all'] = True
         return self.find(**kwargs)
 
 
@@ -486,6 +487,8 @@ class UIElement(object):
                                         timeout = None  --  использование дефолтного значения (по умолчанию)
                                         timeout = <число секунд>
 
+            _find_all  --  служебный (если True, то find() знает, что ее вызвали из find_all())
+
         Возвращает:
             объект типа Region.
         '''
@@ -499,17 +502,22 @@ class UIElement(object):
         exception_on_find_fail = kwargs.pop('exception_on_find_fail', None)
         timeout = _timeout     = check_timeout(kwargs.pop('timeout', None), allow_None=True, err_msg='pikuli.UIElement.__init__()')
         next_serach_iter_delya = kwargs.pop('next_serach_iter_delya', NEXT_SEARCH_ITER_DELAY)
+        _find_all              = kwargs.pop('_find_all', False)
 
         # p2c('find: timeout = %s; self._find_timeout = %s' % (str(timeout), str(self._find_timeout)))
         if timeout is None:
             timeout = self._find_timeout
         if exception_on_find_fail is None:
             exception_on_find_fail = find_first_only
+        if _find_all:
+            _func_name = 'pikuli.UIElement.find_all'
+        else:
+            _func_name = 'pikuli.UIElement.find'
 
         if max_descend_level is not None and exact_level is not None:
-            raise Exception('pikuli.UIElement.find: max_descend_level is not None and exact_level is not None')
+            raise Exception('%s: max_descend_level is not None and exact_level is not None' % _func_name)
         if max_descend_level is not None and max_descend_level < 1:
-            raise Exception('pikuli.UIElement.find: max_descend_level is not None and max_descend_level < 1')
+            raise Exception('%s: max_descend_level is not None and max_descend_level < 1' % _func_name)
 
         criteria = {}
         not_none_criteria = {}
@@ -521,14 +529,14 @@ class UIElement(object):
                     val = str(val)
                 if isinstance(val, list) and not reduce(lambda r, t: r and isinstance(t, str), val, True) or \
                    not isinstance(val, list) and not (isinstance(val, re._pattern_type) or isinstance(val, str)):
-                        raise Exception('pikuli.UIElement.find: wrong kwargs[\'%s\'] = \'%s\'' % (str(key), str(val)))
+                        raise Exception('%s: wrong kwargs[\'%s\'] = \'%s\'' % (_func_name, str(key), str(val)))
             criteria[key] = val
 
         val = kwargs.pop('ControlType', None)
         if val is not None:
             not_none_criteria['ControlType'] = val
             if val not in UIA.UIA_automation_control_type_identifiers_mapping:
-                raise Exception('pikuli.UIElement.find: ControlType is not None (\'%s\'), but not from UIA.UIA_automation_control_type_identifiers_mapping' % val)
+                raise Exception('%s: ControlType is not None (\'%s\'), but not from UIA.UIA_automation_control_type_identifiers_mapping' % (_func_name, val))
             val = UIA.UIA_automation_control_type_identifiers_mapping[val]
         criteria['ControlType'] = val
 
@@ -544,7 +552,7 @@ class UIElement(object):
                     except psutil.NoSuchProcess:
                         pass
             if isinstance(val, str):
-                raise Exception('pikuli.ui_element.UIElement.find(): can not find process by its name; ProcessId = \'%s\'' % str(val))
+                raise Exception('%s(): can not find process by its name; ProcessId = \'%s\'' % (_func_name, str(val)))
         criteria['ProcessId'] = val
 
         # Сделаем not_none_criteria и criteria, которые выводится на экран, крсивее:
@@ -561,7 +569,7 @@ class UIElement(object):
         str__criteria          = _criteria_pretty_print(criteria)
 
         if len(kwargs) != 0:
-            raise Exception('pikuli.UIElement.find: kwargs has unknown fields %s\n\tkwargs = %s' % (kwargs.keys(), str(kwargs)))
+            raise Exception('%s: kwargs has unknown fields %s\n\tkwargs = %s' % (_func_name, kwargs.keys(), str(kwargs)))
 
         #  Начинаем поиск по очереди по всем критериям. Поиск элементов с помощью рекурсивного
         # вызова нашей функции. Будем искать через TreeWalker с условием CreateTrueCondition(), так
@@ -599,7 +607,7 @@ class UIElement(object):
                     if not (criteria[key].match(uielem_val) is not None):
                         return False
                 else:
-                    raise Exception('pikuli.UIElement.find: unsupported value \"%s\" of key \'%s\'' % (str(criteria[key]), str(key)))
+                    raise Exception('%s: unsupported value \"%s\" of key \'%s\'' % (_func_name, str(criteria[key]), str(key)))
 
             return True
 
@@ -694,13 +702,12 @@ class UIElement(object):
                 return []
 
             else:  # exact_level > 0 && level > exact_level
-                raise Exception('pikuli.UIElement.find: exact_level > 0 && level > exact_level\n\texact_level = %s\n\tlevel = %s' %
-                                tuple(map(str, [exact_level, level])))
+                raise Exception('%s: exact_level > 0 && level > exact_level\n\texact_level = %s\n\tlevel = %s' %
+                                tuple(map(str, [_func_name, exact_level, level])))
         # - subroutines: end -
 
-        txt_search_timeout        = 'searching with timeout = %s (call/class/module: %s/%s/%s) ...' \
-                                    % (str(timeout), str(_timeout), str(self._find_timeout), str(DEFAULT_FIND_TIMEOUT))
-        txt_pikuli_search_pattern = 'Pikuli.UIElement.find: by criteria %s %%s' % str__not_none_criteria
+        txt_search_timeout        = 'searching with timeout = %s (call/class/module: %s/%s/%s) ...' % (str(timeout), str(_timeout), str(self._find_timeout), str(DEFAULT_FIND_TIMEOUT))
+        txt_pikuli_search_pattern = '%s: by criteria %s %%s' % (_func_name, str__not_none_criteria)
         p2c(txt_pikuli_search_pattern % txt_search_timeout)
 
         walker = UIA.IUIAutomation_object.CreateTreeWalker(UIA.IUIAutomation_object.CreateTrueCondition())
@@ -751,8 +758,8 @@ class UIElement(object):
                 if ex.winuiaelem is None:
                     if (datetime.datetime.today()-t0).total_seconds() >= timeout:
                         if exception_on_find_fail:
-                            raise FindFailed('pikuli.UIElement.find: no one elements was found\n\tself     = %s\n\tkwargs   = %s\n\tcriteria = %s\n\ttimeout  = %s'
-                                             % (repr(self), str(kwargs), str__criteria, str(timeout)))
+                            raise FindFailed('%s: no one elements was found\n\tself     = %s\n\tkwargs   = %s\n\tcriteria = %s\n\ttimeout  = %s'
+                                             % (_func_name, repr(self), str(kwargs), str__criteria, str(timeout)))
                         p2c(txt_pikuli_search_pattern % 'has been found: None (%s)' % str(timeout), reprint_last_line=True)
                         return None
                     # t0 = datetime.datetime.today()
@@ -767,7 +774,7 @@ class UIElement(object):
                     p2c('Cath %s exception: \"%s\". Checking timeout...' % (NAMES_of_COR_E[ex.args[0] ], str(ex)))
                     p2c(txt_pikuli_search_pattern % txt_search_timeout)
                     if (datetime.datetime.today()-t0).total_seconds() >= timeout:
-                        raise FindFailed('find(...): Timeout while looking for UIA element:\n\tself = %s\n\tkwargs = %s' % (repr(self), str(kwargs)))
+                        raise FindFailed('%s: Timeout while looking for UIA element:\n\tself = %s\n\tkwargs = %s' % (_func_name, repr(self), str(kwargs)))
                     # t0 = datetime.datetime.today()
                     time.sleep(next_serach_iter_delya)
                 else:
@@ -785,15 +792,29 @@ class UIElement(object):
 
         # В норме мы тут если ищем все совпадения (если ищем только первое, то должно было произойти и перехватиться исключение FirstFoundEx).
         if find_first_only:
-            raise('pikuli.UIElement.find [INTERNAL]: Strange! We should not be here: ' + str(getframeinfo(currentframe())))
+            raise('%s [INTERNAL]: Strange! We should not be here: ' % _func_name + str(getframeinfo(currentframe())))
         if len(found_winuiaelem_arr) == 0:
             if exception_on_find_fail:
-                raise FindFailed('pikuli.UIElement.find: no one elements was found\n\tself = %s\n\tkwargs = %s\n\tcriteria = %s' % (repr(self), str(kwargs), str__criteria))
+                raise FindFailed(': no one elements was found\n\tself = %s\n\tkwargs = %s\n\tcriteria = %s' % (_func_name, repr(self), str(kwargs), str__criteria))
             found_elem = []
-            p2c(txt_pikuli_search_pattern % ('there has been found %s: [] (%s)' % (str__not_none_criteria, str(timeout))), reprint_last_line=True)
+            p2c(txt_pikuli_search_pattern % ('there has been found no one UI-elem (%s)' % (str(timeout))), reprint_last_line=True)
         else:
             found_elem = map(self.__create_instance_of_suitable_class, found_winuiaelem_arr)
-            p2c(txt_pikuli_search_pattern % ('there has been found %s: %s (%s)' % (str__not_none_criteria, repr(found_elem), str(timeout))), reprint_last_line=True)
+
+            # Сормируем строку для вывода на эуран из найденных элементов. Длина строки не более 70 символом.
+            if len(found_elem) <= 2:
+                s = repr(found_elem)
+            else:
+                s = repr(found_elem[:2])
+                for i in range(3, len(found_elem)):
+                    ss = repr(found_elem[:i])
+                    if len(ss) > 70:
+                        break
+                    s = ss
+                if len(s) != len(ss):
+                    s = s[:-1] + ', ...]'
+
+            p2c(txt_pikuli_search_pattern % ('there has been found %i UI-elems: %s (%s)' % (len(found_elem), s, str(timeout))), reprint_last_line=True)
         return found_elem
 
 
