@@ -31,8 +31,7 @@ try:
     from p2c_module import p2c
 except ImportError:
     def p2c(*msgs, **kwargs):
-        print(str(msgs))
-        print(str(kwargs))
+        print('pikuli._functions.p2c: %s, %s' % (str(msgs), str(kwargs)))
 
 
 def check_timeout(timeout, allow_None=False, err_msg='pikuli.check_timeout()'):

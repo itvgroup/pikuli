@@ -34,8 +34,10 @@ CONTROL_CHECK_AFTER_CLICK_DELAY = 3
 '''
 TODO:
 
-    def check(self, method='click'):
+    --- def check(self, method='click'):
         click или invoke потенциально можут быть
+
+    --- обработка доступности LegacyIAccessiblePattern в основнмо классе UIAElement
 '''
 
 """
@@ -244,12 +246,11 @@ class UIElement(object):
         proc_name      --  имя процесса (exe-файла), которому принадлежит окно
     '''
 
-    def __init__(self, pointer2elem, derived_self=None, required_patterns=[], find_timeout=DEFAULT_FIND_TIMEOUT):  #, timeout=10):
+    def __init__(self, pointer2elem, derived_self=None, find_timeout=DEFAULT_FIND_TIMEOUT):  #, timeout=10):
         '''
         Аргументы:
             pointer2elem       --  Некий указатель на UI-элемент (см. ниже).
             derived_self       --  Если пришли сюда из конструктора дочернего класса, то здесь хранится self создаваемого объета (можно узнать тип дочернего класса)
-            required_patterns  --  Список занвание паттернов, которые потьребуются для работы (зависит от выбранного дочернего класса, экземпляр которого создается)
             find_timeout       --  Значение по умолчанию, которове будет использоваться, если метод find() (и подобные) этого класса вызван без явного указания timeout.
                                    Если не передается конструктуру, то берется из переменной модуля DEFAULT_FIND_TIMEOUT.
                                    Будет наслодоваться ко всем объектам, которые возвращаются методами этого класса.
@@ -705,7 +706,6 @@ class UIElement(object):
                 raise Exception('%s: exact_level > 0 && level > exact_level\n\texact_level = %s\n\tlevel = %s' %
                                 tuple(map(str, [_func_name, exact_level, level])))
         # - subroutines: end -
-
         txt_search_timeout        = 'searching with timeout = %s (call/class/module: %s/%s/%s) ...' % (str(timeout), str(_timeout), str(self._find_timeout), str(DEFAULT_FIND_TIMEOUT))
         txt_pikuli_search_pattern = '%s: by criteria %s %%s' % (_func_name, str__not_none_criteria)
         p2c(txt_pikuli_search_pattern % txt_search_timeout)
@@ -912,15 +912,31 @@ class UIElement(object):
 
 class _uielement_Control(UIElement):
 
+    REQUIRED_PATTERNS = {'LegacyIAccessiblePattern': None}  # То есть, всегда, для всех функций.
+
     def __init__(self, *args, **kwargs):
-        if hasattr(self, 'REQUIRED_PATTERNS'):
-            required_patterns = self.REQUIRED_PATTERNS
-        else:
-            required_patterns = []
         super(_uielement_Control, self).__init__(*args, **kwargs)
-        for pattern in ['LegacyIAccessiblePattern'] + required_patterns:
-            if self.get_property('Is'+pattern+'Available') is None:
-                raise Exception('pikuli.UIElement: UIElement Control \'%s\' does not support \'%s\'' % (self.Name, pattern))
+
+        critical_error = False
+        for c in type(self).mro():
+            if hasattr(c, 'REQUIRED_PATTERNS'):
+                for (pattern, methods) in c.REQUIRED_PATTERNS.items():
+                    if self.get_property('Is'+pattern+'Available') is None:
+                        p2c('[WARNING] pikuli.ui_element: %s should support \'%s\', but it does not. The following methods will be unavalibale: %s' % (str(self), pattern, ' -- ALL --' if methods is None else str(methods)))
+                        if methods is None:
+                            critical_error = True
+                        else:
+                            for m in methods:
+                                if not hasattr(self, m):
+                                    p2c('[WARNING] pikuli.ui_element: you try to block method \'%s\' by means of unsupported \'%s\' in %s. But this method does not defined in class \'%s\'. Do you have a mistake in definition of \'%s\'?' % (m, pattern, str(self), type(self).__name__, type(self).__name__))
+                                else:
+                                    setattr(self, m, self.__unavaulable_method_dummy)
+        if critical_error:
+            raise Exception('pikuli.UIElement: UIElement Control %s does not support some vital UIA-patterns. See WARNINGs above.' % str(self))
+
+    def __unavaulable_method_dummy(*args):
+        raise Exception('__unavaulable_method_dummy: ' + str(args))
+
 
     def is_unavailable(self):
         return bool(self.get_pattern('LegacyIAccessiblePattern').CurrentState & STATE_SYSTEM['UNAVAILABLE'])
@@ -938,6 +954,8 @@ class _uielement_Control(UIElement):
 
 class _ValuePattern_methods(UIElement):
 
+    REQUIRED_PATTERNS = {'ValuePattern': ['get_value', 'set_value', 'is_readoly']}
+
     def get_value(self):
         return self.get_pattern('ValuePattern').CurrentValue
 
@@ -946,64 +964,6 @@ class _ValuePattern_methods(UIElement):
 
     def is_readoly(self):
         return bool(self.get_pattern('ValuePattern').CurrentIsReadOnly)
-
-
-
-"""class MainWindow(_uielement_Control):
-
-    def __init__(self, *args, **kwargs):
-        '''
-            kwargs:
-                proc_img_name  --  Имя исполняемого файла.
-                in_title       --  Список строк, каждая их которых должна быть подстрокой заголовка искомого окна.
-                title_regexp   --  Использовать ли регулярные выражения (True|False). Если in_title -- список, то применяется к каждому его эелементу.
-
-            Если задано несколько коритерием поиска, то применяется условие AND.
-        '''
-        proc_img_name = kwargs.get('proc_img_name', None)
-        in_title      = kwargs.get('in_title', None)
-        title_regexp  = kwargs.get('title_regexp', False)
-
-        if (in_title is not None) and (not isinstance(in_title, list)):
-            in_title = [in_title]
-        if title_regexp:
-            raise Exception('pikuli.uielements.MainWindow: TODO -- title_regexp is unsupported yet!')
-
-        # Поиск всех дочерних для корня (рабочего стола) элементов первогоуровня, иными словами -- главных окон:
-        root      = UIA.IUIAutomation_object.GetRootElement()
-        scope     = UIA.UIA_wrapper.TreeScope_Children
-        condition = UIA.IUIAutomation_object.CreateTrueCondition()
-        winuiaelem_arr = root.FindAll(scope, condition)  # Вернет объект типа "IUIAutomationElementArray"
-
-        is_ = []
-        # Проверка на имя процесса:
-        if proc_img_name is not None:
-            for i in range(winuiaelem_arr.Length):
-                for proc in psutil.process_iter():
-                    if (proc.pid == winuiaelem_arr.GetElement(i).CurrentProcessId) and (proc_img_name == proc.name()):
-                        is_.append(i)
-
-        # Проверка на заголовок окна:
-        if in_title is not None:
-            for i in range(winuiaelem_arr.Length):
-                name = winuiaelem_arr.GetElement(i).CurrentName
-                do_add = True
-                for substr in in_title:
-                    if substr not in name:
-                        do_add = False
-                if do_add:
-                    is_.append(i)
-
-        # Оценка результатов поиска:
-        if len(is_) == 0:
-            raise FindFailed('pikuli.uielements.MainWindow: no one window was found: proc_img_name = %s, in_title = %s' % tuple(map(str, [proc_img_name, in_title])))
-        if len(is_) != 1:
-            raise FindFailed('pikuli.uielements.MainWindow: multiple windows was found: proc_img_name = %s, in_title = %s' % tuple(map(str, [proc_img_name, in_title])))
-
-        # Нашли, что хотели => вызываем конструктор класса-предка:
-        super(MainWindow, self).__init__(winuiaelem_arr.GetElement(i))
-        if self.get_property('ControlType') != UIA.UIA_automation_control_type_identifiers_mapping['Window']:
-            raise Exception('pikuli.ui_element: UIElement Control \'%s\' is not a \'Window\' as desired.' % self.Name)"""
 
 
 class Window(_uielement_Control):
@@ -1059,19 +1019,19 @@ class CheckBox(_uielement_Control):
 class Edit(_uielement_Control, _ValuePattern_methods):
 
     CONTROL_TYPE = 'Edit'
-    REQUIRED_PATTERNS = ['ValuePattern']
+    REQUIRED_PATTERNS = {}
 
 
 class Text(_uielement_Control, _ValuePattern_methods):
 
     CONTROL_TYPE = 'Text'
-    REQUIRED_PATTERNS = ['ValuePattern']
+    REQUIRED_PATTERNS = {}
 
 
 class ComboBox(_uielement_Control, _ValuePattern_methods):
 
     CONTROL_TYPE = 'ComboBox'
-    REQUIRED_PATTERNS = ['ValuePattern']
+    REQUIRED_PATTERNS = {}
 
     def list_items(self):
         '''
@@ -1103,7 +1063,7 @@ class ComboBox(_uielement_Control, _ValuePattern_methods):
 class Tree(_uielement_Control):
 
     CONTROL_TYPE = 'Tree'
-    REQUIRED_PATTERNS = ['SelectionPattern']
+    REQUIRED_PATTERNS = {} # {'SelectionPattern': []}
 
     def __init__(self, *args, **kwargs):
         super(Tree, self).__init__(*args, **kwargs)
@@ -1178,7 +1138,11 @@ class Tree(_uielement_Control):
 class TreeItem(_uielement_Control):
 
     CONTROL_TYPE = 'TreeItem'
-    REQUIRED_PATTERNS = ['SelectionItemPattern', 'ExpandCollapsePattern']
+    REQUIRED_PATTERNS = {
+        'SelectionItemPattern': ['is_selected'],
+        'ExpandCollapsePattern': ['has_subitems', 'is_expanded', 'is_collapsed', 'expand', 'collapse'],
+        'ScrollItemPattern': ['scroll_into_view']
+        }
 
     def is_selected(self):
         return bool(self.get_pattern('SelectionItemPattern').CurrentIsSelected)
@@ -1209,6 +1173,9 @@ class TreeItem(_uielement_Control):
             self.get_pattern('ExpandCollapsePattern').Collapse()
         if not self.is_collapsed():
             raise Exception('pikuli.ui_element: can not collapse TreeItem \'%s\'' % self.Name)
+
+    def scroll_into_view(self):
+        self.get_pattern('ScrollItemPattern').ScrollIntoView()
 
     def list_current_subitems(self):
         ''' Вернут список дочерних узелков (1 уровень вложенности), если текущий узел развернут. Вернет [], если узел свернут полностью или частично. Вернет None, если нет дочерних узелков. '''
