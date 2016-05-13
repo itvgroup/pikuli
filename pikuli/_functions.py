@@ -428,14 +428,3 @@ def type_text(s, modifiers=None):
 
 
 
-def cmbbox_select(cmbbox, item_name):
-    '''
-    Выбрать пункт в ComboBox через UIA API.
-        cmbbox     --  экземпляр класса UIElement
-        item_name  --  строка
-    '''
-    if cmbbox.get_value() != item_name:
-        cmbbox.reg().click()
-        cmbbox.get_item_by_name(item_name).reg().click()
-        if cmbbox.get_value() != item_name:
-            raise Exception('cmbbox_select(...): cmbbox.get_value() != item_name\n\tcmbbox.get_value() = \'%s\'\n\titem_name = \'%s\'' % (str(cmbbox.get_value()), str(item_name)))

@@ -35,6 +35,7 @@ CONTROL_CHECK_AFTER_CLICK_DELAY = 3
 TODO:
 
     --- def check(self, method='click'):
+        def click(self, method='click')
         click или invoke потенциально можут быть
 
     --- обработка доступности LegacyIAccessiblePattern в основнмо классе UIAElement
@@ -951,6 +952,19 @@ class _uielement_Control(UIElement):
         self._test4readiness()
         return hwnd_element.HWNDElement(self).bring_to_front()
 
+    def click(self, method='click'):
+        '''
+            Эмулирует клин мыши на контролле (method='invoke') или действительно подводит курсор и кликает (method='click'). Реальный клик
+            будет просто в цетр области, получаемый из метода reg().
+            TODO: !!! invoke пока не реализован !!!
+        '''
+        if method == 'click':
+            if hasattr(self, 'scroll_into_view'):
+                self.scroll_into_view()
+            self.reg().click()
+        else:
+            raise Exception('CheckBox.check(...): unsupported method = \'%s\'' % str(method))
+
 
 class _ValuePattern_methods(UIElement):
 
@@ -1004,7 +1018,7 @@ class CheckBox(_uielement_Control):
         if not self.is_checked():
             self.reg().click()
         if not wait_while_not(self.is_checked, check_timeout):
-            raise Exception('CheckBox.uncheck(...): checkbos is still checked after %s seconds' % str(check_timeout))
+            raise Exception('CheckBox.uncheck(...): checkbox is still checked after %s seconds' % str(check_timeout))
 
     def uncheck(self, method='click', check_timeout=CONTROL_CHECK_AFTER_CLICK_DELAY):
         ''' click или invoke потенциально можут быть '''
@@ -1013,7 +1027,13 @@ class CheckBox(_uielement_Control):
         if not self.is_unchecked():
             self.reg().click()
         if not wait_while_not(self.is_unchecked, check_timeout):
-            raise Exception('CheckBox.uncheck(...): checkbos is still checked after %s seconds' % str(check_timeout))
+            raise Exception('CheckBox.uncheck(...): checkbox is still checked after %s seconds' % str(check_timeout))
+
+    def check_or_uncheck(self, bool_, method='click', check_timeout=CONTROL_CHECK_AFTER_CLICK_DELAY):
+        if bool_:
+            sefl.check(method=method, check_timeout=check_timeout)
+        else:
+            sefl.uncheck(method=method, check_timeout=check_timeout)
 
 
 class Edit(_uielement_Control, _ValuePattern_methods):
@@ -1038,7 +1058,7 @@ class ComboBox(_uielement_Control, _ValuePattern_methods):
             Если меню открыто, то вренут списко объектов, описывающих каждый пункт меню (теоретически, это может быть пустой список).
             Если меню закрыто, то вернет None.
         '''
-        l = self.find(ControlType='List', exact_level=1, exception_on_find_fail=False)
+        l = self.find(ControlType='List', exact_level=1, exception_on_find_fail=False, timeout=1)
         if l is None:
             return None
         return l.list_items()
@@ -1050,14 +1070,29 @@ class ComboBox(_uielement_Control, _ValuePattern_methods):
     def get_item_by_name(self, item_name):
         ''' Если список ракрыт, то вернут подходящий объект ListItem. Если объекта не нашлось в списке или список свернут, то будет исключение FindFailed. '''
         item_name = str(item_name)
-        l = self.find(ControlType='List', exact_level=1, exception_on_find_fail=False)
-        if l is None:
+        list_ = self.find(ControlType='List', exact_level=1, exception_on_find_fail=False)
+        if list_ is None:
             raise FindFailed('List of ComboBox %s was not found. Is this list collapsed?' % repr(self))
-        for i in l.find_all(ControlType='ListItem', exact_level=1):
+        items = list_.find_all(ControlType='ListItem', exact_level=1)
+        if len(items) == 0:
+            raise FindFailed('CheckBox.get_item_by_name(...): Item \'%s\' was not found in list of ComboBox %s. No one item exists in this list.' % (item_name, repr(self)))
+        for i in items:
             if i.Name == item_name:
                 return i
-        raise FindFailed('Item \'%s\' was not found in list of ComboBox %s.' % (item_name, repr(self)))
+        raise FindFailed('CheckBox.get_item_by_name(...): Item \'%s\' was not found in list of ComboBox %s. Existing items:\n\t%s' % (item_name, repr(self), '\n\t'.join(map(str,items))))
 
+    def select_item(self, item_name, check_timeout=CONTROL_CHECK_AFTER_CLICK_DELAY):
+        '''
+        Выбрать пункт.
+            item_name  --  строка, содержащая текст делаемого пункта выпалдающего меню.
+        '''
+        item_name = str(item_name)
+        if self.get_value() != item_name:
+            if self.list_items() is None:
+                self.click()
+            self.get_item_by_name(item_name).click()
+            if not wait_while_not(lambda: self.get_value() == item_name, check_timeout):
+                raise Exception('CheckBox.uncheck(...): Combobox does not take desired value \'%s\' after %s seconds -- it has \'%s\' till now' % (item_name, str(check_timeout), self.get_value()))
 
 
 class Tree(_uielement_Control):

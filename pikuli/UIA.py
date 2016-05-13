@@ -24,7 +24,8 @@ import sys
 
 class class_LOGGER():
     def debug(self, *args):
-        sys.__stdout__.write(str(args) + '\n')
+        #sys.__stdout__.write(str(args) + '\n')
+        pass
 LOGGER = class_LOGGER()
 
 

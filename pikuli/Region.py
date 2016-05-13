@@ -440,10 +440,11 @@ class Region(object):
                         if len(pts) != 0:
                             # Что-то нашли. Выберем один вариант с лучшим 'score'. Из несольких с одинаковыми 'score' будет первый при построчном проходе по экрану.
                             pt = max(pts, key=lambda pt: pt[2])
-                            p2c( 'Pikuli.find: %s has been found' % str( _ps_.getFilename() ).split("\\")[-1] )
+                            p2c( 'pikuli.Region.<find...>: %s has been found' % str( _ps_.getFilename() ).split("\\")[-1] )
                             return Match(pt[0], pt[1], _ps_._w, _ps_._h, pt[2], _ps_)
                     elif aov == 'vanish':
                         if len(pts) == 0:
+                            p2c( 'pikuli.Region.<find...>: %s has vanished' % str( _ps_.getFilename() ).split("\\")[-1] )
                             return
                     else:
                         raise FailExit('unknown \'aov\' = \'%s\'' % str(aov))
@@ -451,6 +452,7 @@ class Region(object):
             time.sleep(DELAY_BETWEEN_CV_ATTEMPT)
             elaps_time += DELAY_BETWEEN_CV_ATTEMPT
             if elaps_time >= timeout:
+                p2c( 'pikuli.Region.<find...>: %s hasn\'t been found' % str( _ps_.getFilename() ).split("\\")[-1] )
                 #TODO: Какие-то ту ошибки. Да и следует передавать, наверно, картинки в FindFailed(), а где-то из модулей робота сохранять, если надо.
                 #t = time.time()
                 #cv2.imwrite(os.path.join(pikuli.Settings.getFindFailedDir, '%i-%06i-pattern.png' % (int(t), (t-int(t))*10**6)), ps[0]._cv2_pattern)
