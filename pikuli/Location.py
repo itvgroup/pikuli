@@ -135,6 +135,7 @@ class Location(object):
         if click:
             self.click(after_cleck_delay=click_type_delay)
         type_text('a', KeyModifier.CTRL)
+        time.sleep(0.5)
         type_text(str(text) + Key.ENTER, modifiers)
 
 

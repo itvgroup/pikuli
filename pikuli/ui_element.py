@@ -603,7 +603,7 @@ class UIElement(object):
                 elif isinstance(criteria[key], str):
                     if not (uielem_val == criteria[key]):
                         return False
-                elif isinstance(val, re._pattern_type):  # re.complile
+                elif isinstance(criteria[key], re._pattern_type):  # re.complile
                     if not (criteria[key].match(uielem_val) is not None):
                         return False
                 else:
@@ -801,7 +801,7 @@ class UIElement(object):
         else:
             found_elem = map(self.__create_instance_of_suitable_class, found_winuiaelem_arr)
 
-            # Сормируем строку для вывода на эуран из найденных элементов. Длина строки не более 70 символом.
+            # Сормируем строку для вывода на экран из найденных элементов. Длина строки не более 70 символов.
             if len(found_elem) <= 2:
                 s = repr(found_elem)
             else:
@@ -811,7 +811,7 @@ class UIElement(object):
                     if len(ss) > 70:
                         break
                     s = ss
-                if len(s) != len(ss):
+                if 'ss' in locals() and len(s) != len(ss):
                     s = s[:-1] + ', ...]'
 
             p2c(txt_pikuli_search_pattern % ('there has been found %i UI-elems: %s (%s)' % (len(found_elem), s, str(timeout))), reprint_last_line=True)
