@@ -801,7 +801,7 @@ class UIElement(object):
         else:
             found_elem = map(self.__create_instance_of_suitable_class, found_winuiaelem_arr)
 
-            # Сормируем строку для вывода на эуран из найденных элементов. Длина строки не более 70 символом.
+            # Сормируем строку для вывода на экран из найденных элементов. Длина строки не более 70 символов.
             if len(found_elem) <= 2:
                 s = repr(found_elem)
             else:
