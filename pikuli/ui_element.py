@@ -952,7 +952,7 @@ class _uielement_Control(UIElement):
         self._test4readiness()
         return hwnd_element.HWNDElement(self).bring_to_front()
 
-    def click(self, method='click'):
+    def click(self, method='click', p2c_notif=True):
         '''
             Эмулирует клин мыши на контролле (method='invoke') или действительно подводит курсор и кликает (method='click'). Реальный клик
             будет просто в цетр области, получаемый из метода reg().
@@ -961,7 +961,9 @@ class _uielement_Control(UIElement):
         if method == 'click':
             if hasattr(self, 'scroll_into_view'):
                 self.scroll_into_view()
-            self.reg().click()
+            self.reg().click(p2c_notif=False)
+            if p2c_notif:
+                p2c('pikuli.%s.click(): click in center of %s' % (type(self).__name__, str(self)))
         else:
             raise Exception('CheckBox.check(...): unsupported method = \'%s\'' % str(method))
 

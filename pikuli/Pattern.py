@@ -54,8 +54,11 @@ class Pattern(object):
     def exact(self):
         return Pattern(self.__img_path, 1.0)
 
-    def getFilename(self):
-        return self.__img_path
+    def getFilename(self, full_path=True):
+        if full_path:
+            return self.__img_path
+        else:
+            return os.path.basename(self.__img_path)
 
     def getSimilarity(self):
         return self.__similarity
