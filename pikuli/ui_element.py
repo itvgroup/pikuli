@@ -1056,9 +1056,9 @@ class CheckBox(_uielement_Control):
             -- None можнооставить на перспективу возникновения исключения и exception_on_find_fail=False
         '''
         if check_bool:
-            return sefl.check(method=method, check_timeout=check_timeout)
+            return self.check(method=method, check_timeout=check_timeout)
         else:
-            return sefl.uncheck(method=method, check_timeout=check_timeout)
+            return self.uncheck(method=method, check_timeout=check_timeout)
 
 
 class Edit(_uielement_Control, _ValuePattern_methods):
