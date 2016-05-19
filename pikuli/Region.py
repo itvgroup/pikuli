@@ -16,7 +16,7 @@ import cv2
 import numpy as np
 import win32gui
 
-from _functions import p2c, _take_screenshot, check_timeout
+from _functions import p2c, _take_screenshot, verify_timeout_argument
 from _exceptions import *
 from Pattern import *
 from Location import *
@@ -99,7 +99,7 @@ class Region(object):
             self.setRect(*args, **kwargs)
         except FailExit:
             raise FailExit('\nNew stage of %s\n[error] Incorect \'Region\' class constructor call:\n\targs = %s\n\tkwargs = %s' % (traceback.format_exc(), str(args), str(kwargs)))
-        self._find_timeout = check_timeout(kwargs.get('find_timeout', DEFAULT_FIND_TIMEOUT), err_msg='pikuli.%s.__init__()' % type(self).__name__)  # Перезапишет, если создавали объект на основе существующего Region
+        self._find_timeout = verify_timeout_argument(kwargs.get('find_timeout', DEFAULT_FIND_TIMEOUT), err_msg='pikuli.%s.__init__()' % type(self).__name__)  # Перезапишет, если создавали объект на основе существующего Region
 
         self._main_window_hwnd = kwargs.get('main_window_hwnd', None)
         if self._main_window_hwnd is None and len(args) == 1:
@@ -551,14 +551,14 @@ class Region(object):
         if timeout is None:
             self._find_timeout = DEFAULT_FIND_TIMEOUT
         else:
-            self._find_timeout = check_timeout(timeout, err_msg='[error] Incorect Region.set_find_timeout() method call')
+            self._find_timeout = verify_timeout_argument(timeout, err_msg='[error] Incorect Region.set_find_timeout() method call')
 
     def get_find_timeout(self):
         return self._find_timeout
 
 
     def click(self, after_cleck_delay=DEALY_AFTER_CLICK, p2c_notif=True):
-        self.getCenter().click(after_cleck_delay=DEALY_AFTER_CLICK)
+        self.getCenter().click(after_cleck_delay=DEALY_AFTER_CLICK, p2c_notif=False)
         if p2c_notif:
             p2c('pikuli.%s.click(): click in center of %s' % (type(self).__name__, str(self)))
 
@@ -577,13 +577,13 @@ class Region(object):
         ''' Не как в Sikuli '''
         self.getCenter().type(text, modifiers=modifiers, click=click)
         if p2c_notif:
-            p2c('pikuli.%s.type(): \'%s\' was typed in center of %s; click=%s, modifiers=%s' % (type(self).__name__, str(text), str(self), str(click), str(modifiers)))
+            p2c('pikuli.%s.type(): \'%s\' was typed in center of %s; click=%s, modifiers=%s' % (type(self).__name__, repr(text), str(self), str(click), str(modifiers)))
 
     def enter_text(self, text, modifiers=None, click=True, click_type_delay=DELAY_BETWEEN_CLICK_AND_TYPE, p2c_notif=True):
         ''' Не как в Sikuli '''
         self.getCenter().enter_text(text, modifiers=modifiers, click=click)
         if p2c_notif:
-            p2c('pikuli.%s.enter_text(): \'%s\' was entred in center of %s; click=%s, modifiers=%s' % (type(self).__name__, str(text), str(self), str(click), str(modifiers)))
+            p2c('pikuli.%s.enter_text(): \'%s\' was entred in center of %s; click=%s, modifiers=%s' % (type(self).__name__, repr(text), str(self), str(click), str(modifiers)))
 
     def scroll(self, direction=1, count=1, click=True, p2c_notif=True):
         self.getCenter().scroll(direction, count, click)
@@ -603,11 +603,11 @@ class Region(object):
 
         # Изменим у текущего объект координаты, т.к. его передвинули:
         center = self.getCenter()
+        if p2c_notif:
+            p2c('pikuli.%s.dragto(): drag center of %s to (%i,%i)' % (type(self).__name__, str(self), self.x, self.y))
         self._x += self.drag_location.x - center.x
         self._y += self.drag_location.y - center.y
         (self.x, self.y) = (self._x, self._y)
-        if p2c_notif:
-            p2c('pikuli.%s.dragto(): drag center of %s to (%i,%i)' % (type(self).__name__, str(self), self.x, self.y))
 
 
     def drop(self, p2c_notif=True):
@@ -621,7 +621,7 @@ class Region(object):
         ''' Перемащает регион за его центр. '''
         p2c_notif = kwargs.pop('p2c_notif', True)
         if len(kwargs) != 0:
-            raise Exception('Illegal arguments of pikuli.Region.dragto(): %s' % str(kwargs))
+            raise Exception('Illegal arguments of pikuli.Region.dragndrop(): %s' % str(kwargs))
 
         if self.drag_location is None:
             self.drag_location = self.getCenter()

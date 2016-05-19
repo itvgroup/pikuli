@@ -34,7 +34,7 @@ except ImportError:
         print('pikuli._functions.p2c: %s, %s' % (str(msgs), str(kwargs)))
 
 
-def check_timeout(timeout, allow_None=False, err_msg='pikuli.check_timeout()'):
+def verify_timeout_argument(timeout, allow_None=False, err_msg='pikuli.verify_timeout_argument()'):
     if timeout is None and allow_None:
         return None
     try:
