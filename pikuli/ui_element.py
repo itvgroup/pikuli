@@ -1031,9 +1031,9 @@ class CheckBox(_uielement_Control):
 
     def check_or_uncheck(self, bool_, method='click', check_timeout=CONTROL_CHECK_AFTER_CLICK_DELAY):
         if bool_:
-            sefl.check(method=method, check_timeout=check_timeout)
+            self.check(method=method, check_timeout=check_timeout)
         else:
-            sefl.uncheck(method=method, check_timeout=check_timeout)
+            self.uncheck(method=method, check_timeout=check_timeout)
 
 
 class Edit(_uielement_Control, _ValuePattern_methods):
