@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 
 import psutil
 from inspect import currentframe, getframeinfo, isclass
@@ -36,7 +36,7 @@ TODO:
 
     --- def check(self, method='click'):
         def click(self, method='click')
-        click или invoke потенциально можут быть
+        Потенциально в качестве значения method могут быть click (подвести курсов мыши и кликнуть) или invoke (через UIA).
 
     --- обработка доступности LegacyIAccessiblePattern в основнмо классе UIAElement
 '''
@@ -952,7 +952,7 @@ class _uielement_Control(UIElement):
         self._test4readiness()
         return hwnd_element.HWNDElement(self).bring_to_front()
 
-    def click(self, method='click'):
+    def click(self, method='click', p2c_notif=True):
         '''
             Эмулирует клин мыши на контролле (method='invoke') или действительно подводит курсор и кликает (method='click'). Реальный клик
             будет просто в цетр области, получаемый из метода reg().
@@ -961,7 +961,9 @@ class _uielement_Control(UIElement):
         if method == 'click':
             if hasattr(self, 'scroll_into_view'):
                 self.scroll_into_view()
-            self.reg().click()
+            self.reg().click(p2c_notif=False)
+            if p2c_notif:
+                p2c('pikuli.%s.click(): click in center of %s' % (type(self).__name__, str(self)))
         else:
             raise Exception('CheckBox.check(...): unsupported method = \'%s\'' % str(method))
 
@@ -1012,28 +1014,53 @@ class CheckBox(_uielement_Control):
         return not bool(self.get_pattern('LegacyIAccessiblePattern').CurrentState & STATE_SYSTEM['CHECKED'])
 
     def check(self, method='click', check_timeout=CONTROL_CHECK_AFTER_CLICK_DELAY):
-        ''' click или invoke потенциально можут быть '''
+        '''
+        Потенциально в качестве значения method могут быть click (подвести курсов мыши и кликнуть) или invoke (через UIA).
+        Возвращает:
+            -- True, если состяние контрола изменилось.
+            -- False, если не пришлось менять состояние контрола.
+            -- None можнооставить на перспективу возникновения исключения и exception_on_find_fail=False
+        '''
         if method not in ['click']:
             raise Exception('CheckBox.check(...): unsupported method = \'%s\'' % str(method))
         if not self.is_checked():
             self.reg().click()
-        if not wait_while_not(self.is_checked, check_timeout):
-            raise Exception('CheckBox.uncheck(...): checkbox is still checked after %s seconds' % str(check_timeout))
+            if not wait_while_not(self.is_checked, check_timeout):
+                raise Exception('CheckBox.uncheck(...): checkbox is still checked after %s seconds' % str(check_timeout))
+            return True
+        else:
+            return False
 
     def uncheck(self, method='click', check_timeout=CONTROL_CHECK_AFTER_CLICK_DELAY):
-        ''' click или invoke потенциально можут быть '''
+        '''
+        Потенциально в качестве значения method могут быть click (подвести курсов мыши и кликнуть) или invoke (через UIA).
+        Возвращает:
+            -- True, если состяние контрола изменилось.
+            -- False, если не пришлось менять состояние контрола.
+            -- None можнооставить на перспективу возникновения исключения и exception_on_find_fail=False
+        '''
         if method not in ['click']:
             raise Exception('CheckBox.uncheck(...): unsupported method = \'%s\'' % str(method))
         if not self.is_unchecked():
             self.reg().click()
-        if not wait_while_not(self.is_unchecked, check_timeout):
-            raise Exception('CheckBox.uncheck(...): checkbox is still checked after %s seconds' % str(check_timeout))
-
-    def check_or_uncheck(self, bool_, method='click', check_timeout=CONTROL_CHECK_AFTER_CLICK_DELAY):
-        if bool_:
-            self.check(method=method, check_timeout=check_timeout)
+            if not wait_while_not(self.is_unchecked, check_timeout):
+                raise Exception('CheckBox.uncheck(...): checkbox is still checked after %s seconds' % str(check_timeout))
+            return True
         else:
-            self.uncheck(method=method, check_timeout=check_timeout)
+            return False
+
+    def check_or_uncheck(self, check_bool, method='click', check_timeout=CONTROL_CHECK_AFTER_CLICK_DELAY):
+        '''
+        Потенциально в качестве значения method могут быть click (подвести курсов мыши и кликнуть) или invoke (через UIA).
+        Возвращает:
+            -- True, если состяние контрола изменилось.
+            -- False, если не пришлось менять состояние контрола.
+            -- None можнооставить на перспективу возникновения исключения и exception_on_find_fail=False
+        '''
+        if check_bool:
+            return self.check(method=method, check_timeout=check_timeout)
+        else:
+            return self.uncheck(method=method, check_timeout=check_timeout)
 
 
 class Edit(_uielement_Control, _ValuePattern_methods):

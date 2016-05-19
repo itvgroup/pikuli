@@ -99,7 +99,7 @@ class Region(object):
             self.setRect(*args, **kwargs)
         except FailExit:
             raise FailExit('\nNew stage of %s\n[error] Incorect \'Region\' class constructor call:\n\targs = %s\n\tkwargs = %s' % (traceback.format_exc(), str(args), str(kwargs)))
-        self._find_timeout = check_timeout(kwargs.get('find_timeout', DEFAULT_FIND_TIMEOUT), err_msg='pikuli.Region.__init__()')  # Перезапишет, если создавали объект на основе существующего Region
+        self._find_timeout = check_timeout(kwargs.get('find_timeout', DEFAULT_FIND_TIMEOUT), err_msg='pikuli.%s.__init__()' % type(self).__name__)  # Перезапишет, если создавали объект на основе существующего Region
 
         self._main_window_hwnd = kwargs.get('main_window_hwnd', None)
         if self._main_window_hwnd is None and len(args) == 1:
@@ -440,11 +440,11 @@ class Region(object):
                         if len(pts) != 0:
                             # Что-то нашли. Выберем один вариант с лучшим 'score'. Из несольких с одинаковыми 'score' будет первый при построчном проходе по экрану.
                             pt = max(pts, key=lambda pt: pt[2])
-                            p2c( 'pikuli.Region.<find...>: %s has been found' % str( _ps_.getFilename() ).split("\\")[-1] )
+                            p2c( 'pikuli.%s.<find...>: %s has been found' % (type(self).__name__, _ps_.getFilename(full_path=False)))
                             return Match(pt[0], pt[1], _ps_._w, _ps_._h, pt[2], _ps_)
                     elif aov == 'vanish':
                         if len(pts) == 0:
-                            p2c( 'pikuli.Region.<find...>: %s has vanished' % str( _ps_.getFilename() ).split("\\")[-1] )
+                            p2c( 'pikuli.%s.<find...>: %s has vanished' % (type(self).__name__, _ps_.getFilename(full_path=False)))
                             return
                     else:
                         raise FailExit('unknown \'aov\' = \'%s\'' % str(aov))
@@ -452,7 +452,7 @@ class Region(object):
             time.sleep(DELAY_BETWEEN_CV_ATTEMPT)
             elaps_time += DELAY_BETWEEN_CV_ATTEMPT
             if elaps_time >= timeout:
-                p2c( 'pikuli.Region.<find...>: %s hasn\'t been found' % str( _ps_.getFilename() ).split("\\")[-1] )
+                p2c( 'pikuli.%s.<find...>: %s hasn\'t been found' % (type(self).__name__, _ps_.getFilename(full_path=False)))
                 #TODO: Какие-то ту ошибки. Да и следует передавать, наверно, картинки в FindFailed(), а где-то из модулей робота сохранять, если надо.
                 #t = time.time()
                 #cv2.imwrite(os.path.join(pikuli.Settings.getFindFailedDir, '%i-%06i-pattern.png' % (int(t), (t-int(t))*10**6)), ps[0]._cv2_pattern)
@@ -464,7 +464,7 @@ class Region(object):
                 #cv2.imwrite('c:\\tmp\\FindFailed-pattern.png', ps[0]._cv2_pattern)
                 #cv2.imwrite('c:\\tmp\\FindFailed-field.png', field)
 
-                failedImages = ', '.join(map(lambda p: p.getFilename().split('\\')[-1], ps))
+                failedImages = ', '.join(map(lambda p: p.getFilename(full_path=False)))
                 raise FindFailed('Unable to find \'%s\' in %s' % (failedImages, str(self)))
 
 
@@ -557,29 +557,46 @@ class Region(object):
         return self._find_timeout
 
 
-    def click(self, after_cleck_delay=DEALY_AFTER_CLICK):
+    def click(self, after_cleck_delay=DEALY_AFTER_CLICK, p2c_notif=True):
         self.getCenter().click(after_cleck_delay=DEALY_AFTER_CLICK)
+        if p2c_notif:
+            p2c('pikuli.%s.click(): click in center of %s' % (type(self).__name__, str(self)))
 
-    def rightClick(self, after_cleck_delay=DEALY_AFTER_CLICK):
+
+    def rightClick(self, after_cleck_delay=DEALY_AFTER_CLICK, p2c_notif=True):
         self.getCenter().rightClick(after_cleck_delay=DEALY_AFTER_CLICK)
+        if p2c_notif:
+            p2c('pikuli.%s.rightClick(): right click in center of %s' % (type(self).__name__, str(self)))
 
-    def doubleClick(self, after_cleck_delay=DEALY_AFTER_CLICK):
+    def doubleClick(self, after_cleck_delay=DEALY_AFTER_CLICK, p2c_notif=True):
         self.getCenter().doubleClick(after_cleck_delay=DEALY_AFTER_CLICK)
+        if p2c_notif:
+            p2c('pikuli.%s.doubleClick(): double click in center of %s' % (type(self).__name__, str(self)))
 
-    def type(self, text, modifiers=None, click=True, click_type_delay=DELAY_BETWEEN_CLICK_AND_TYPE):
+    def type(self, text, modifiers=None, click=True, click_type_delay=DELAY_BETWEEN_CLICK_AND_TYPE, p2c_notif=True):
         ''' Не как в Sikuli '''
         self.getCenter().type(text, modifiers=modifiers, click=click)
+        if p2c_notif:
+            p2c('pikuli.%s.type(): \'%s\' was typed in center of %s; click=%s, modifiers=%s' % (type(self).__name__, str(text), str(self), str(click), str(modifiers)))
 
-    def enter_text(self, text, modifiers=None, click=True, click_type_delay=DELAY_BETWEEN_CLICK_AND_TYPE):
+    def enter_text(self, text, modifiers=None, click=True, click_type_delay=DELAY_BETWEEN_CLICK_AND_TYPE, p2c_notif=True):
         ''' Не как в Sikuli '''
         self.getCenter().enter_text(text, modifiers=modifiers, click=click)
+        if p2c_notif:
+            p2c('pikuli.%s.enter_text(): \'%s\' was entred in center of %s; click=%s, modifiers=%s' % (type(self).__name__, str(text), str(self), str(click), str(modifiers)))
 
-    def scroll(self, direction = 1, count = 1, click = True):
+    def scroll(self, direction=1, count=1, click=True, p2c_notif=True):
         self.getCenter().scroll(direction, count, click)
+        if p2c_notif:
+            p2c('pikuli.%s.scroll(): scroll in center of %s; direction=%s, count=%s, click=%s' % (type(self).__name__, str(self), str(direction), str(count), str(click)))
 
 
-    def dragto(self, *dest_location):
+    def dragto(self, *dest_location, **kwargs):
         ''' Перемащает регион за его центр. '''
+        p2c_notif = kwargs.pop('p2c_notif', True)
+        if len(kwargs) != 0:
+            raise Exception('Illegal arguments of pikuli.Region.dragto(): %s' % str(kwargs))
+
         if self.drag_location is None:
             self.drag_location = self.getCenter()
         self.drag_location.dragto(*dest_location)
@@ -589,19 +606,29 @@ class Region(object):
         self._x += self.drag_location.x - center.x
         self._y += self.drag_location.y - center.y
         (self.x, self.y) = (self._x, self._y)
+        if p2c_notif:
+            p2c('pikuli.%s.dragto(): drag center of %s to (%i,%i)' % (type(self).__name__, str(self), self.x, self.y))
 
 
-    def drop(self):
+    def drop(self, p2c_notif=True):
         if self.drag_location is not None:
             self.drag_location.drop()
             self.drag_location = None
+            if p2c_notif:
+                p2c('pikuli.%s.drop(): drop %s' % (type(self).__name__, str(self)))
 
-    def dragndrop(self, *dest_location):
+    def dragndrop(self, *dest_location, **kwargs):
         ''' Перемащает регион за его центр. '''
+        p2c_notif = kwargs.pop('p2c_notif', True)
+        if len(kwargs) != 0:
+            raise Exception('Illegal arguments of pikuli.Region.dragto(): %s' % str(kwargs))
+
         if self.drag_location is None:
             self.drag_location = self.getCenter()
         self.dragto(*dest_location)
         self.drop()
+        if p2c_notif:
+            p2c('pikuli.%s.dragto(): drag center of %s to (%i,%i) and drop' % (type(self).__name__, str(self), self.x, self.y))
 
     """
     '''def dragto(self, *args):
