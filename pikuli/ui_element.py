@@ -1178,7 +1178,7 @@ class Tree(_uielement_Control):
             force_expand -- разворачивать ли свернутые элементы на пути поиска искового.
         '''
         # p2c(item_name, force_expand)
-        p2c('Pikuli.Tree.find_item: searching by criteria item_name = \'%s\', timeout = %s' % (str(item_name), str(timeout)), reprint_last_line=True)
+        p2c('pikuli.Tree.find_item: searching by criteria item_name = \'%s\', timeout = %s' % (str(item_name), str(timeout)), reprint_last_line=True)
         if not isinstance(item_name, list):
             raise Exception('pikuli.ui_element.Tree: not isinstance(item_name, list); item_name = %s, timeout = %s' % (str(item_name), str(timeout)))
         if len(item_name) == 0:
@@ -1186,13 +1186,13 @@ class Tree(_uielement_Control):
         else:
             elem = self.find(Name=item_name[0], exact_level=1, timeout=timeout, exception_on_find_fail=exception_on_find_fail)
             if elem is None:
-                p2c('Pikuli.ui_element.Tree.find_item: %s has not been found. No exception -- returning None' % str(item_name))
+                p2c('pikuli.ui_element.Tree.find_item: %s has not been found. No exception -- returning None' % str(item_name))
                 return None
             if len(item_name) == 1:
                 found_elem = elem
             else:
                 found_elem = elem.find_item(item_name[1:], force_expand, timeout=timeout, exception_on_find_fail=exception_on_find_fail)
-        #p2c('Pikuli.Tree.find_item: %s has been found by criteria \'%s\', timeout = %s, elem.timeout = %s'
+        #p2c('pikuli.Tree.find_item: %s has been found by criteria \'%s\', timeout = %s, elem.timeout = %s'
         #    % (str(item_name), repr(found_elem), str(timeout), str(found_elem._find_timeout)), reprint_last_line=True)
         return found_elem
 
@@ -1258,17 +1258,17 @@ class TreeItem(_uielement_Control):
             raise Exception('pikuli.ui_element.TreeItem: len(item_name) == 0')
         if not self.is_expanded() and not force_expand:
             raise FindFailed('pikuli.ui_element.TreeItem: item \'%s\' was found, but it is not fully expanded. Try to set force_expand = True.\nSearch arguments:\n\titem_name = %s\n\tforce_expand = %s' % (self.Name, str(item_name), str(force_expand)))
-        p2c('Pikuli.TreeItem.find_item: searching by criteria item_name = \'%s\', timeout = %s' % (str(item_name), str(timeout)), reprint_last_line=True)
+        p2c('pikuli.TreeItem.find_item: searching by criteria item_name = \'%s\', timeout = %s' % (str(item_name), str(timeout)), reprint_last_line=True)
         self.expand()
         elem = self.find(Name=item_name[0], exact_level=1, timeout=timeout, exception_on_find_fail=exception_on_find_fail)
         if elem is None:
-            p2c('Pikuli.ui_element.TreeItem.find_item: %s has not been found. No exception -- returning None' % str(item_name))
+            p2c('pikuli.ui_element.TreeItem.find_item: %s has not been found. No exception -- returning None' % str(item_name))
             return None
         if len(item_name) == 1:
             found_elem = elem
         else:
             found_elem = elem.find_item(item_name[1:], force_expand, timeout=timeout)
-        #p2c('Pikuli.TreeItem.find_item: %s has been found by criteria \'%s\', timeout = %s, elem.timeout = %s'
+        #p2c('pikuli.TreeItem.find_item: %s has been found by criteria \'%s\', timeout = %s, elem.timeout = %s'
         #    % (str(item_name), repr(found_elem), str(timeout), str(found_elem._find_timeout)), reprint_last_line=True)
         return found_elem
 
@@ -1310,7 +1310,7 @@ class ANPropGrid_Table(_uielement_Control):
                 raise FindFailed('pikuli.ANPropGrid_Table: row \'%s\' not found.\nSearch arguments:\n\trow_name = %s\n\tforce_expand = %s' % (str(nested_name), str(row_name), str(force_expand)))
             return rows[0]
 
-        p2c('Pikuli.ANPropGrid_Table.find_row: searching by criteria item_name = \'%s\'' % str(row_name), reprint_last_line=True)
+        p2c('pikuli.ANPropGrid_Table.find_row: searching by criteria item_name = \'%s\'' % str(row_name), reprint_last_line=True)
         if isinstance(row_name, list):
             row = _find_row_precisely(self, row_name[0], 1)
             for nested_name in row_name[1:]:
@@ -1321,7 +1321,7 @@ class ANPropGrid_Table(_uielement_Control):
             found_elem = row
         else:
             found_elem = _find_row_precisely(self, row_name, 1)
-        # p2c('Pikuli.ANPropGrid_Table.find_row: \'%s\' has been found: %s' % (str(row_name), repr(found_elem)))
+        # p2c('pikuli.ANPropGrid_Table.find_row: \'%s\' has been found: %s' % (str(row_name), repr(found_elem)))
         return found_elem
 
 

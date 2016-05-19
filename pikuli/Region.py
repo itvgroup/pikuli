@@ -396,9 +396,9 @@ class Region(object):
 
         time.sleep(delay_before)
         pts = self.__find(ps, self.__get_field_for_find())
-        #p2c('Pikuli.findAll: try to find %s' % str(ps))
+        #p2c('pikuli.findAll: try to find %s' % str(ps))
         self._last_match = map(lambda pt: Match(pt[0], pt[1], ps._w, ps._h, pt[2], ps), pts)
-        p2c('Pikuli.findAll: total found %i matches of <%s>' % (len(self._last_match), str(ps)) )
+        p2c('pikuli.findAll: total found %i matches of <%s>' % (len(self._last_match), str(ps)) )
         return self._last_match
 
 
@@ -481,7 +481,7 @@ class Region(object):
             a. исключение FindFailed при exception_on_find_fail = True
             b. возвращает None при exception_on_find_fail = False.
         '''
-        #p2c('Pikuli.find: try to find %s' % str(ps))
+        #p2c('pikuli.find: try to find %s' % str(ps))
         try:
             self._last_match = self._wait_for_appear_or_vanish(ps, timeout, 'appear')
         except FailExit:
