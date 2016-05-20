@@ -13,7 +13,7 @@ import win32gui
 
 import UIA
 import Region
-from _functions import p2c, wait_while, wait_while_not, Key, type_text, check_timeout
+from _functions import p2c, wait_while, wait_while_not, Key, KeyModifier, type_text, verify_timeout_argument
 from _exceptions import *
 import hwnd_element
 from oleacc_h import *
@@ -268,7 +268,7 @@ class UIElement(object):
              4. Если нашлось несколько подходящих классов, то генерируется исключение.
         '''
         self._reg = None
-        self._find_timeout = check_timeout(find_timeout, err_msg='pikuli.UIElement.__init__()')
+        self._find_timeout = verify_timeout_argument(find_timeout, err_msg='pikuli.UIElement.__init__()')
 
         if pointer2elem == 0:
             # Коренвой элемент.
@@ -436,7 +436,7 @@ class UIElement(object):
         if timeout is None:
             self._find_timeout = DEFAULT_FIND_TIMEOUT
         else:
-            self._find_timeout = check_timeout(timeout, err_msg='pikuli.UIElement.set_find_timeout()')
+            self._find_timeout = verify_timeout_argument(timeout, err_msg='pikuli.UIElement.set_find_timeout()')
 
     def get_find_timeout(self):
         return self._find_timeout
@@ -502,7 +502,7 @@ class UIElement(object):
         max_descend_level      = kwargs.pop('max_descend_level', None)
         exact_level            = kwargs.pop('exact_level', None)
         exception_on_find_fail = kwargs.pop('exception_on_find_fail', None)
-        timeout = _timeout     = check_timeout(kwargs.pop('timeout', None), allow_None=True, err_msg='pikuli.UIElement.__init__()')
+        timeout = _timeout     = verify_timeout_argument(kwargs.pop('timeout', None), allow_None=True, err_msg='pikuli.UIElement.__init__()')
         next_serach_iter_delya = kwargs.pop('next_serach_iter_delya', NEXT_SEARCH_ITER_DELAY)
         _find_all              = kwargs.pop('_find_all', False)
 
@@ -911,6 +911,11 @@ class UIElement(object):
         return wait_while(lambda: self.find(**dict(kwargs, exception_on_find_fail=False)), timeout)
 
 
+    def _unavaulable_method_dummy(*args, **kwargs):
+        raise Exception('_unavaulable_method_dummy: ' + str(args))
+
+
+
 class _uielement_Control(UIElement):
 
     REQUIRED_PATTERNS = {'LegacyIAccessiblePattern': None}  # То есть, всегда, для всех функций.
@@ -919,6 +924,7 @@ class _uielement_Control(UIElement):
         super(_uielement_Control, self).__init__(*args, **kwargs)
 
         critical_error = False
+        methods_to_block = []
         for c in type(self).mro():
             if hasattr(c, 'REQUIRED_PATTERNS'):
                 for (pattern, methods) in c.REQUIRED_PATTERNS.items():
@@ -927,17 +933,22 @@ class _uielement_Control(UIElement):
                         if methods is None:
                             critical_error = True
                         else:
-                            for m in methods:
-                                if not hasattr(self, m):
-                                    p2c('[WARNING] pikuli.ui_element: you try to block method \'%s\' by means of unsupported \'%s\' in %s. But this method does not defined in class \'%s\'. Do you have a mistake in definition of \'%s\'?' % (m, pattern, str(self), type(self).__name__, type(self).__name__))
-                                else:
-                                    setattr(self, m, self.__unavaulable_method_dummy)
+                            methods_to_block += methods
+
+            if hasattr(c, 'REQUIRED_METHODS'):
+                for (req_method, dep_methods) in c.REQUIRED_METHODS.items():
+                    if not hasattr(self, req_method):
+                        p2c('[WARNING] pikuli.ui_element: %s should have %s() method, but it does not. The following dependent methods will be unavalibale: %s' % (str(self), str(req_method), str(dep_methods)))
+                        methods_to_block += methods
+
         if critical_error:
             raise Exception('pikuli.UIElement: UIElement Control %s does not support some vital UIA-patterns. See WARNINGs above.' % str(self))
 
-    def __unavaulable_method_dummy(*args):
-        raise Exception('__unavaulable_method_dummy: ' + str(args))
-
+        for m in methods_to_block:
+            if not hasattr(self, m):
+                p2c('[WARNING] pikuli.ui_element: you try to block method \'%s\' by means of unsupported \'%s\' in %s. But this method does not defined in class \'%s\'. Do you have a mistake in definition of \'%s\'?' % (m, pattern, str(self), type(self).__name__, type(self).__name__))
+            else:
+                setattr(self, m, self._unavaulable_method_dummy)
 
     def is_unavailable(self):
         return bool(self.get_pattern('LegacyIAccessiblePattern').CurrentState & STATE_SYSTEM['UNAVAILABLE'])
@@ -968,6 +979,7 @@ class _uielement_Control(UIElement):
             raise Exception('CheckBox.check(...): unsupported method = \'%s\'' % str(method))
 
 
+
 class _ValuePattern_methods(UIElement):
 
     REQUIRED_PATTERNS = {'ValuePattern': ['get_value', 'set_value', 'is_readoly']}
@@ -975,11 +987,139 @@ class _ValuePattern_methods(UIElement):
     def get_value(self):
         return self.get_pattern('ValuePattern').CurrentValue
 
-    def set_value(self, text):
-        self.get_pattern('ValuePattern').SetValue(str(text))
+    def set_value(self, text, check_timeout=CONTROL_CHECK_AFTER_CLICK_DELAY, p2c_notif=True):
+        '''
+        Возвращает:
+            -- True, если состяние контрола изменилось.
+            -- False, если не пришлось менять состояние контрола.
+            -- None можнооставить на перспективу возникновения исключения и exception_on_find_fail=False
+        '''
+        text = str(text)
+        if self.get_pattern('ValuePattern').CurrentValue != text:
+            self.get_pattern('ValuePattern').SetValue(text)
+            if not wait_while_not(lambda: self.get_pattern('ValuePattern').CurrentValue == text, check_timeout):
+                raise Exception('_ValuePattern_methods.set_value(...): valur is still %s, not %s after %s seconds' % (str(self.get_pattern('ValuePattern').CurrentValue), text, str(check_timeout)))
+            changed = True
+        else:
+            changed = False
+        if p2c_notif:
+            if changed:
+                p2c('pikuli.%s.set_value(): set \'%s\' to %s (via ValuePattern)' % (type(self).__name__, repr(text), str(self)))
+            else:
+                p2c('pikuli.%s.set_value(): \'%s\' is alredy in %s (via ValuePattern)' % (type(self).__name__, repr(text), str(self)))
+        return changed
 
     def is_readoly(self):
         return bool(self.get_pattern('ValuePattern').CurrentIsReadOnly)
+
+
+
+class _LegacyIAccessiblePattern_value_methods(UIElement):
+
+    def get_value(self):
+        return self.get_pattern('LegacyIAccessiblePattern').CurrentValue
+
+    def set_value(self, text, check_timeout=CONTROL_CHECK_AFTER_CLICK_DELAY, p2c_notif=True):
+        '''
+        Возвращает:
+            -- True, если состяние контрола изменилось.
+            -- False, если не пришлось менять состояние контрола.
+            -- None можнооставить на перспективу возникновения исключения и exception_on_find_fail=False
+        '''
+        text = str(text)
+        if self.get_pattern('LegacyIAccessiblePattern').CurrentValue != text:
+            self.get_pattern('LegacyIAccessiblePattern').SetValue(text)
+            if not wait_while_not(lambda: self.get_pattern('LegacyIAccessiblePattern').CurrentValue == text, check_timeout):
+                raise Exception('_LegacyIAccessiblePattern_value_methods.set_value(...): value is still %s, not %s after %s seconds' % (str(self.get_pattern('LegacyIAccessiblePattern').CurrentValue), text, str(check_timeout)))
+            changed = True
+        else:
+            changed = False
+        if p2c_notif:
+            if changed:
+                p2c('pikuli.%s.set_value(): set \'%s\' to %s (via LegacyIAccessiblePattern)' % (type(self).__name__, repr(text), str(self)))
+            else:
+                p2c('pikuli.%s.set_value(): \'%s\' is alredy in %s (via LegacyIAccessiblePattern)' % (type(self).__name__, repr(text), str(self)))
+        return changed
+
+
+
+class _Enter_Text_method(UIElement):
+
+    REQUIRED_METHODS = {'get_value': ['type_text', 'enter_text'], 'set_value': ['type_text', 'enter_text']}
+    _type_text_click_location = ('getCenter', None, None)
+
+    def type_text(self, text, modifiers=None, chck_text=None, click=True, check_timeout=CONTROL_CHECK_AFTER_CLICK_DELAY, p2c_notif=True):
+        '''
+        Кликнем мышкой в _type_text_click_location, если click=True, и наберем новый текст без автоматического нажания ENTER'a.
+        Результат набора текста по умолчанию проверяется -- за это ответчает агрумент chck_text:
+            - chck_text = None     - ожидаем, что туда, куда ввели текст, будет text
+            - chck_text = False    - не проверяем, какой текст ввелся
+            - chck_text = <строка> - сверяем оставшийся текст со <строка>
+
+        При необходимости надо переопределять _type_text_click_location в дочерних класах, т.к. кликать, возможно, нужно будет не в центр.
+        Структура _type_text_click_location:
+            - имя методоа у объекта, возвращаемого self.reg()
+            - args как список (list) для этой функции или None
+            - kwargs как словарь (dict) для этой функции или None
+        '''
+        text = str(text)
+
+        if click:
+            f = getattr(self.reg(), self._type_text_click_location[0])
+            if self._type_text_click_location[1] is None:
+                loc = f()
+            elif self._type_text_click_location[2] is None:
+                loc = f(*self._type_text_click_location[1])
+            else:
+                loc = f(*self._type_text_click_location[1], **self._type_text_click_location[2])
+            loc.click(p2c_notif=False)
+
+        type_text(text, modifiers=modifiers)
+
+        if not (chck_text == False):
+            if chck_text is None:
+                chck_text = text
+            if not wait_while_not(lambda: self.get_value() == str(chck_text), check_timeout):
+                raise Exception('_Enter_Text_method.type_text(...): text is still %s, not %s after %s seconds' % (self.get_value(), repr(chck_text), str(check_timeout)))
+
+        if p2c_notif:
+            p2c('pikuli.%s.type_text(): type \'%s\' in %s' % (type(self).__name__, repr(text), str(self)))
+
+
+    def enter_text(self, text, method='click', check_timeout=CONTROL_CHECK_AFTER_CLICK_DELAY, p2c_notif=True):
+        '''
+        Перезапишет текст в контроле.
+        В качестве значения method могут быть:
+            -- click  - Кликнем мышкой по строке и введем новый текст c автоматическим нажания ENTER'a. Используется type_text().
+            -- invoke - Через UIA. Используется set_value().
+        Возвращает:
+            -- True, если состяние контрола изменилось.
+            -- False, если не пришлось менять состояние контрола.
+            -- None можнооставить на перспективу возникновения исключения и exception_on_find_fail=False
+        '''
+        if method == 'click':
+            if text != self.get_value():
+                #self.type_text('a', modifiers=KeyModifier.CTRL, chck_text=False, click=True) -- не на всех контролах корректно работает
+                self.type_text(Key.BACKSPACE*len(self.get_value()), chck_text=False, click=True, p2c_notif=False)
+                if len(self.get_value()) != 0:
+                    raise Exception('_Enter_Text_method.enter_text(...): can not clear the text field. It still contains the following: %s' % self.get_value())
+                self.type_text(text + Key.ENTER, chck_text=text, click=False, p2c_notif=False)
+                changed = True
+            else:
+                changed = False
+        elif method == 'invoke':
+            changed = self.set_value(text, p2c_notif=False)
+        else:
+            raise Exception('_Enter_Text_method.enter_text(...): unsupported method = \'%s\'' % str(method))
+
+        if p2c_notif:
+            if changed:
+                p2c('pikuli.%s.enter_text(): enter \'%s\' in %s' % (type(self).__name__, repr(text), str(self)))
+            else:
+                p2c('pikuli.%s.enter_text(): \'%s\' is alredy in %s' % (type(self).__name__, repr(text), str(self)))
+        return changed
+
+
 
 
 class Window(_uielement_Control):
@@ -987,9 +1127,11 @@ class Window(_uielement_Control):
     CONTROL_TYPE = 'Window'
 
 
+
 class Pane(_uielement_Control):
 
     CONTROL_TYPE = 'Pane'
+
 
 
 class Button(_uielement_Control):
@@ -1001,6 +1143,7 @@ class Button(_uielement_Control):
 
     def is_unavaliable(self):
         return bool(self.get_pattern('LegacyIAccessiblePattern').CurrentState & STATE_SYSTEM['UNAVAILABLE'])
+
 
 
 class CheckBox(_uielement_Control):
@@ -1063,10 +1206,12 @@ class CheckBox(_uielement_Control):
             return self.uncheck(method=method, check_timeout=check_timeout)
 
 
-class Edit(_uielement_Control, _ValuePattern_methods):
+
+class Edit(_uielement_Control, _ValuePattern_methods, _Enter_Text_method):
 
     CONTROL_TYPE = 'Edit'
     REQUIRED_PATTERNS = {}
+
 
 
 class Text(_uielement_Control, _ValuePattern_methods):
@@ -1075,7 +1220,8 @@ class Text(_uielement_Control, _ValuePattern_methods):
     REQUIRED_PATTERNS = {}
 
 
-class ComboBox(_uielement_Control, _ValuePattern_methods):
+
+class ComboBox(_uielement_Control, _ValuePattern_methods, _Enter_Text_method):
 
     CONTROL_TYPE = 'ComboBox'
     REQUIRED_PATTERNS = {}
@@ -1120,6 +1266,7 @@ class ComboBox(_uielement_Control, _ValuePattern_methods):
             self.get_item_by_name(item_name).click()
             if not wait_while_not(lambda: self.get_value() == item_name, check_timeout):
                 raise Exception('CheckBox.uncheck(...): Combobox does not take desired value \'%s\' after %s seconds -- it has \'%s\' till now' % (item_name, str(check_timeout), self.get_value()))
+
 
 
 class Tree(_uielement_Control):
@@ -1178,7 +1325,7 @@ class Tree(_uielement_Control):
             force_expand -- разворачивать ли свернутые элементы на пути поиска искового.
         '''
         # p2c(item_name, force_expand)
-        p2c('Pikuli.Tree.find_item: searching by criteria item_name = \'%s\', timeout = %s' % (str(item_name), str(timeout)), reprint_last_line=True)
+        p2c('pikuli.Tree.find_item: searching by criteria item_name = \'%s\', timeout = %s' % (str(item_name), str(timeout)), reprint_last_line=True)
         if not isinstance(item_name, list):
             raise Exception('pikuli.ui_element.Tree: not isinstance(item_name, list); item_name = %s, timeout = %s' % (str(item_name), str(timeout)))
         if len(item_name) == 0:
@@ -1186,15 +1333,16 @@ class Tree(_uielement_Control):
         else:
             elem = self.find(Name=item_name[0], exact_level=1, timeout=timeout, exception_on_find_fail=exception_on_find_fail)
             if elem is None:
-                p2c('Pikuli.ui_element.Tree.find_item: %s has not been found. No exception -- returning None' % str(item_name))
+                p2c('pikuli.ui_element.Tree.find_item: %s has not been found. No exception -- returning None' % str(item_name))
                 return None
             if len(item_name) == 1:
                 found_elem = elem
             else:
                 found_elem = elem.find_item(item_name[1:], force_expand, timeout=timeout, exception_on_find_fail=exception_on_find_fail)
-        #p2c('Pikuli.Tree.find_item: %s has been found by criteria \'%s\', timeout = %s, elem.timeout = %s'
+        #p2c('pikuli.Tree.find_item: %s has been found by criteria \'%s\', timeout = %s, elem.timeout = %s'
         #    % (str(item_name), repr(found_elem), str(timeout), str(found_elem._find_timeout)), reprint_last_line=True)
         return found_elem
+
 
 
 class TreeItem(_uielement_Control):
@@ -1258,17 +1406,17 @@ class TreeItem(_uielement_Control):
             raise Exception('pikuli.ui_element.TreeItem: len(item_name) == 0')
         if not self.is_expanded() and not force_expand:
             raise FindFailed('pikuli.ui_element.TreeItem: item \'%s\' was found, but it is not fully expanded. Try to set force_expand = True.\nSearch arguments:\n\titem_name = %s\n\tforce_expand = %s' % (self.Name, str(item_name), str(force_expand)))
-        p2c('Pikuli.TreeItem.find_item: searching by criteria item_name = \'%s\', timeout = %s' % (str(item_name), str(timeout)), reprint_last_line=True)
+        p2c('pikuli.TreeItem.find_item: searching by criteria item_name = \'%s\', timeout = %s' % (str(item_name), str(timeout)), reprint_last_line=True)
         self.expand()
         elem = self.find(Name=item_name[0], exact_level=1, timeout=timeout, exception_on_find_fail=exception_on_find_fail)
         if elem is None:
-            p2c('Pikuli.ui_element.TreeItem.find_item: %s has not been found. No exception -- returning None' % str(item_name))
+            p2c('pikuli.ui_element.TreeItem.find_item: %s has not been found. No exception -- returning None' % str(item_name))
             return None
         if len(item_name) == 1:
             found_elem = elem
         else:
             found_elem = elem.find_item(item_name[1:], force_expand, timeout=timeout)
-        #p2c('Pikuli.TreeItem.find_item: %s has been found by criteria \'%s\', timeout = %s, elem.timeout = %s'
+        #p2c('pikuli.TreeItem.find_item: %s has been found by criteria \'%s\', timeout = %s, elem.timeout = %s'
         #    % (str(item_name), repr(found_elem), str(timeout), str(found_elem._find_timeout)), reprint_last_line=True)
         return found_elem
 
@@ -1310,7 +1458,7 @@ class ANPropGrid_Table(_uielement_Control):
                 raise FindFailed('pikuli.ANPropGrid_Table: row \'%s\' not found.\nSearch arguments:\n\trow_name = %s\n\tforce_expand = %s' % (str(nested_name), str(row_name), str(force_expand)))
             return rows[0]
 
-        p2c('Pikuli.ANPropGrid_Table.find_row: searching by criteria item_name = \'%s\'' % str(row_name), reprint_last_line=True)
+        p2c('pikuli.ANPropGrid_Table.find_row: searching by criteria item_name = \'%s\'' % str(row_name), reprint_last_line=True)
         if isinstance(row_name, list):
             row = _find_row_precisely(self, row_name[0], 1)
             for nested_name in row_name[1:]:
@@ -1321,16 +1469,18 @@ class ANPropGrid_Table(_uielement_Control):
             found_elem = row
         else:
             found_elem = _find_row_precisely(self, row_name, 1)
-        # p2c('Pikuli.ANPropGrid_Table.find_row: \'%s\' has been found: %s' % (str(row_name), repr(found_elem)))
+        # p2c('pikuli.ANPropGrid_Table.find_row: \'%s\' has been found: %s' % (str(row_name), repr(found_elem)))
         return found_elem
 
 
-class ANPropGrid_Row(_uielement_Control):
+
+class ANPropGrid_Row(_uielement_Control, _LegacyIAccessiblePattern_value_methods, _Enter_Text_method):
     ''' Таблица настроек в AxxonNext ничего не поддерживает, кроме Legacy-паттерна.
     Каждая строка может группировать нижеидущие строки, но в UIA они "сестры", а не "родитель-потомки". Каждая строка можеть иметь или не иметь значения. '''
 
     CONTROL_TYPE = 'Custom'
     LEGACYACC_ROLE = 'ROW'  # Идентификатор из ROLE_SYSTEM
+    _type_text_click_location = ('getTopLeft', (30,1), None)
 
     def has_subrows(self):
         current_state = self.get_pattern('LegacyIAccessiblePattern').CurrentState
@@ -1363,21 +1513,11 @@ class ANPropGrid_Row(_uielement_Control):
         if not self.is_collapsed():
             raise Exception('pikuli.ANPropGrid_Row.expand: string \'%s\' was not collapsed.' % self.Name)
 
-    def get_value(self):
-        return self.get_pattern('LegacyIAccessiblePattern').CurrentValue
-
-    def set_value(self, text):
-        self.get_pattern('LegacyIAccessiblePattern').SetValue(text)
-
-    def type_text(self, text):
+    """def type_text(self, text):
         ''' Кликнем мышкой по строке и введем новый текст без автоматического нажания ENTER'a.
         Клик мышкой в область с захардкоженным смещением, к сожалению -- иначе можно попасть в вертикальный разделитель колонок. '''
         self.reg().getTopLeft(30,1).click()
-        type_text(text)
-
-    def enter_text(self, text):
-        ''' Кликнем мышкой по строке и введем новый текст c автоматическим нажания ENTER'a. Используется type_text(). '''
-        self.type_text(str(text) + Key.ENTER)
+        type_text(text)"""
 
 
 
@@ -1397,7 +1537,6 @@ class ListItem(_uielement_Control):
 
 
 
-
 class Menu(_uielement_Control):
     ''' Контекстное меню, к примеру. Состоит из MenuItem. '''
 
@@ -1408,6 +1547,7 @@ class Menu(_uielement_Control):
 
     def find_item(self, item_name, exception_on_find_fail=True):
         return self.find(Name=item_name, ControlType='MenuItem', exact_level=1, exception_on_find_fail=exception_on_find_fail)
+
 
 
 class MenuItem(_uielement_Control):
