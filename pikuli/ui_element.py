@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 
 import psutil
 from inspect import currentframe, getframeinfo, isclass
