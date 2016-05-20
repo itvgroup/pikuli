@@ -1048,7 +1048,7 @@ class _Enter_Text_method(UIElement):
     REQUIRED_METHODS = {'get_value': ['type_text', 'enter_text'], 'set_value': ['type_text', 'enter_text']}
     _type_text_click_location = ('getCenter', None, None)
 
-    def type_text(self, text, modifiers=None, chck_text=None, click=True, check_timeout=CONTROL_CHECK_AFTER_CLICK_DELAY, p2c_notif=True):
+    def type_text(self, text, modifiers=None, chck_text=False, click=True, check_timeout=CONTROL_CHECK_AFTER_CLICK_DELAY, p2c_notif=True):
         '''
         Кликнем мышкой в _type_text_click_location, если click=True, и наберем новый текст без автоматического нажания ENTER'a.
         Результат набора текста по умолчанию проверяется -- за это ответчает агрумент chck_text:
@@ -1097,13 +1097,14 @@ class _Enter_Text_method(UIElement):
             -- False, если не пришлось менять состояние контрола.
             -- None можнооставить на перспективу возникновения исключения и exception_on_find_fail=False
         '''
+        text = str(text)
         if method == 'click':
             if text != self.get_value():
                 #self.type_text('a', modifiers=KeyModifier.CTRL, chck_text=False, click=True) -- не на всех контролах корректно работает
                 self.type_text(Key.BACKSPACE*len(self.get_value()), chck_text=False, click=True, p2c_notif=False)
-                if len(self.get_value()) != 0:
-                    raise Exception('_Enter_Text_method.enter_text(...): can not clear the text field. It still contains the following: %s' % self.get_value())
-                self.type_text(text + Key.ENTER, chck_text=text, click=False, p2c_notif=False)
+                #if len(self.get_value()) != 0:  --  а если поле не поддается очищению, а сосдение -- очищается (пример: "гриды")? Лучше првоерку убрать -- важен еонечный результа.
+                #    raise Exception('_Enter_Text_method.enter_text(...): can not clear the text field. It still contains the following: %s' % self.get_value())
+                self.type_text(text + Key.ENTER, chck_text=False, click=False, p2c_notif=False)
                 changed = True
             else:
                 changed = False
