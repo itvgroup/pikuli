@@ -575,13 +575,13 @@ class Region(object):
 
     def type(self, text, modifiers=None, click=True, click_type_delay=DELAY_BETWEEN_CLICK_AND_TYPE, p2c_notif=True):
         ''' Не как в Sikuli '''
-        self.getCenter().type(text, modifiers=modifiers, click=click)
+        self.getCenter().type(text, modifiers=modifiers, click=click, p2c_notif=False)
         if p2c_notif:
             p2c('pikuli.%s.type(): \'%s\' was typed in center of %s; click=%s, modifiers=%s' % (type(self).__name__, repr(text), str(self), str(click), str(modifiers)))
 
     def enter_text(self, text, modifiers=None, click=True, click_type_delay=DELAY_BETWEEN_CLICK_AND_TYPE, p2c_notif=True):
         ''' Не как в Sikuli '''
-        self.getCenter().enter_text(text, modifiers=modifiers, click=click)
+        self.getCenter().enter_text(text, modifiers=modifiers, click=click, p2c_notif=False)
         if p2c_notif:
             p2c('pikuli.%s.enter_text(): \'%s\' was entred in center of %s; click=%s, modifiers=%s' % (type(self).__name__, repr(text), str(self), str(click), str(modifiers)))
 
