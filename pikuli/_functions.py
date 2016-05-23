@@ -361,7 +361,7 @@ class Key(object):
     F12        = chr(0) + chr(win32con.VK_F12)
 
 
-def type_text(s, modifiers=None):
+def type_text(s, modifiers=None, p2c_notif=True):
     '''
     Особенности:
         -- Если установлены modifiers, то не будет различия между строчными и загалавными буквами.
@@ -423,6 +423,9 @@ def type_text(s, modifiers=None):
         for k in KeyModifier._rev:
             if modifiers & k != 0:
                 release_key(_KeyCodes[KeyModifier._rev[k]][0], _KeyCodes[KeyModifier._rev[k]][1])
+
+    if p2c_notif:
+        p2c('pikuli._functions.type_text(): \'%s\' was typed; modifiers=%s' % (repr(s), str(modifiers)))
 
 
 
