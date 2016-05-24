@@ -244,10 +244,12 @@ def _take_screenshot(x, y, w, h, hwnd=None):
     return _monitor_hndl_to_screen_n(m_tl)"""
 
 
-def get_text_from_clipboard():
+def get_text_from_clipboard(p2c_notif=True):
     win32clipboard.OpenClipboard()
     try:
         data = win32clipboard.GetClipboardData()
+        if p2c_notif:
+            p2c('pikuli._functions.get_text_from_clipboard(): data = \'%s\'' % str(data))
     except Exception as ex:
         p2c(str(ex.message))
         data = ''
