@@ -1043,21 +1043,23 @@ class _LegacyIAccessiblePattern_value_methods(UIElement):
 
 
 
+ENTER_TEXT_CLEAN_METHODS = ['end&backspaces', 'single_backspace']
+
 class _Enter_Text_method(UIElement):
 
     REQUIRED_METHODS = {'get_value': ['type_text', 'enter_text'], 'set_value': ['type_text', 'enter_text']}
-    _type_text_click_location = ('getCenter', None, None)
+    _type_text_click = {'click_method': 'click', 'click_location': ('getCenter', None, None), 'enter_text_clean_method': 'end&backspaces'}
 
     def type_text(self, text, modifiers=None, chck_text=False, click=True, check_timeout=CONTROL_CHECK_AFTER_CLICK_DELAY, p2c_notif=True):
         '''
-        Кликнем мышкой в _type_text_click_location, если click=True, и наберем новый текст без автоматического нажания ENTER'a.
+        Кликнем мышкой в _type_text_click, если click=True, и наберем новый текст без автоматического нажания ENTER'a.
         Результат набора текста по умолчанию проверяется -- за это ответчает агрумент chck_text:
             - chck_text = None     - ожидаем, что туда, куда ввели текст, будет text
             - chck_text = False    - не проверяем, какой текст ввелся
             - chck_text = <строка> - сверяем оставшийся текст со <строка>
 
-        При необходимости надо переопределять _type_text_click_location в дочерних класах, т.к. кликать, возможно, нужно будет не в центр.
-        Структура _type_text_click_location:
+        При необходимости надо переопределять _type_text_click в дочерних класах, т.к. кликать, возможно, нужно будет не в центр.
+        Структура _type_text_click:
             - имя методоа у объекта, возвращаемого self.reg()
             - args как список (list) для этой функции или None
             - kwargs как словарь (dict) для этой функции или None
@@ -1065,14 +1067,21 @@ class _Enter_Text_method(UIElement):
         text = str(text)
 
         if click:
-            f = getattr(self.reg(), self._type_text_click_location[0])
-            if self._type_text_click_location[1] is None:
+            click_location = self._type_text_click['click_location']
+            f = getattr(self.reg(), click_location[0], None)
+            if f is None:
+                raise Exception('_Enter_Text_method.type_text(...): [INTERNAL] wrong \'click_location\':\n\t_type_text_click = %s' % str(_type_text_click))
+            if click_location[1] is None:
                 loc = f()
-            elif self._type_text_click_location[2] is None:
-                loc = f(*self._type_text_click_location[1])
+            elif click_location[2] is None:
+                loc = f(*click_location[1])
             else:
-                loc = f(*self._type_text_click_location[1], **self._type_text_click_location[2])
-            loc.click(p2c_notif=False)
+                loc = f(*click_location[1], **click_location[2])
+
+            click_method = getattr(loc, self._type_text_click['click_method'], None)
+            if click_method is None:
+                raise Exception('_Enter_Text_method.type_text(...): [INTERNAL] wrong \'click_method\':\n\t_type_text_click = %s' % str(_type_text_click))
+            click_method(p2c_notif=False)
 
         type_text(text, modifiers=modifiers)
 
@@ -1086,12 +1095,16 @@ class _Enter_Text_method(UIElement):
             p2c('pikuli.%s.type_text(): type \'%s\' in %s' % (type(self).__name__, repr(text), str(self)))
 
 
-    def enter_text(self, text, method='click', check_timeout=CONTROL_CHECK_AFTER_CLICK_DELAY, p2c_notif=True):
+    def enter_text(self, text, method='click', clean_method=None, check_timeout=CONTROL_CHECK_AFTER_CLICK_DELAY, p2c_notif=True):
         '''
         Перезапишет текст в контроле.
         В качестве значения method могут быть:
             -- click  - Кликнем мышкой по строке и введем новый текст c автоматическим нажания ENTER'a. Используется type_text().
             -- invoke - Через UIA. Используется set_value().
+        clean_method:
+            -- None - использовать из структуры self._type_text_click
+            -- Одно из значений ENTER_TEXT_CLEAN_METHODS = ['end&backspaces', 'single_backspace']
+
         Возвращает:
             -- True, если состяние контрола изменилось.
             -- False, если не пришлось менять состояние контрола.
@@ -1101,7 +1114,20 @@ class _Enter_Text_method(UIElement):
         if method == 'click':
             if text != self.get_value():
                 #self.type_text('a', modifiers=KeyModifier.CTRL, chck_text=False, click=True) -- не на всех контролах корректно работает
-                self.type_text(Key.END + Key.BACKSPACE*(len(self.get_value()) + 1), chck_text=False, click=True, p2c_notif=False)
+                if clean_method is None:
+                    clean_method = self._type_text_click.get('enter_text_clean_method', None)
+                if clean_method is None:
+                    raise Exception('_Enter_Text_method.enter_text(...): clean_method = None, but self._type_text_click does not contain \'enter_text_clean_method\' field\n\tself._type_text_click = %s' % str(self._type_text_click))
+                if clean_method not in ENTER_TEXT_CLEAN_METHODS:
+                    raise Exception('_Enter_Text_method.enter_text(...): unsupported clean_method = \'%s\'.' % str(clean_method))
+
+                if clean_method == 'end&backspaces':
+                    self.type_text(Key.END + Key.BACKSPACE*(len(self.get_value())+1), chck_text=False, click=True, p2c_notif=False)
+                elif clean_method == 'single_backspace':
+                    self.type_text(Key.BACKSPACE, chck_text=False, click=True, p2c_notif=False)
+                elif clean_method in ENTER_TEXT_CLEAN_METHODS:
+                    raise Exception('_Enter_Text_method.enter_text(...): [ITERNAL] [TODO] clean_method = \'%s\' is valid, but has not been realised yet.' % str(clean_method))
+
                 #if len(self.get_value()) != 0:  --  а если поле не поддается очищению, а сосдение -- очищается (пример: "гриды")? Лучше првоерку убрать -- важен еонечный результа.
                 #    raise Exception('_Enter_Text_method.enter_text(...): can not clear the text field. It still contains the following: %s' % self.get_value())
                 self.type_text(text + Key.ENTER, chck_text=False, click=False, p2c_notif=False)
@@ -1508,7 +1534,7 @@ class ANPropGrid_Row(_uielement_Control, _LegacyIAccessiblePattern_value_methods
 
     CONTROL_TYPE = 'Custom'
     LEGACYACC_ROLE = 'ROW'  # Идентификатор из ROLE_SYSTEM
-    _type_text_click_location = ('getTopLeft', (30,1), None)
+    _type_text_click = {'click_method': 'click', 'click_location': ('getTopLeft', (30,1), None), 'enter_text_clean_method': 'single_backspace'}
 
     def has_subrows(self):
         current_state = self.get_pattern('LegacyIAccessiblePattern').CurrentState
