@@ -1101,7 +1101,7 @@ class _Enter_Text_method(UIElement):
         if method == 'click':
             if text != self.get_value():
                 #self.type_text('a', modifiers=KeyModifier.CTRL, chck_text=False, click=True) -- не на всех контролах корректно работает
-                self.type_text(Key.END + Key.BACKSPACE*len(self.get_value()), chck_text=False, click=True, p2c_notif=False)
+                self.type_text(Key.END + Key.BACKSPACE*(len(self.get_value()) + 1), chck_text=False, click=True, p2c_notif=False)
                 #if len(self.get_value()) != 0:  --  а если поле не поддается очищению, а сосдение -- очищается (пример: "гриды")? Лучше првоерку убрать -- важен еонечный результа.
                 #    raise Exception('_Enter_Text_method.enter_text(...): can not clear the text field. It still contains the following: %s' % self.get_value())
                 self.type_text(text + Key.ENTER, chck_text=False, click=False, p2c_notif=False)
