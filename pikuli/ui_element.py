@@ -985,7 +985,7 @@ class _ValuePattern_methods(UIElement):
     REQUIRED_PATTERNS = {'ValuePattern': ['get_value', 'set_value', 'is_readoly']}
 
     def get_value(self):
-        return self.get_pattern('ValuePattern').CurrentValue
+        return str(self.get_pattern('ValuePattern').CurrentValue)
 
     def set_value(self, text, check_timeout=CONTROL_CHECK_AFTER_CLICK_DELAY, p2c_notif=True):
         '''
@@ -1101,7 +1101,7 @@ class _Enter_Text_method(UIElement):
         if method == 'click':
             if text != self.get_value():
                 #self.type_text('a', modifiers=KeyModifier.CTRL, chck_text=False, click=True) -- не на всех контролах корректно работает
-                self.type_text(Key.BACKSPACE*len(self.get_value()), chck_text=False, click=True, p2c_notif=False)
+                self.type_text(Key.END + Key.BACKSPACE*len(self.get_value()), chck_text=False, click=True, p2c_notif=False)
                 #if len(self.get_value()) != 0:  --  а если поле не поддается очищению, а сосдение -- очищается (пример: "гриды")? Лучше првоерку убрать -- важен еонечный результа.
                 #    raise Exception('_Enter_Text_method.enter_text(...): can not clear the text field. It still contains the following: %s' % self.get_value())
                 self.type_text(text + Key.ENTER, chck_text=False, click=False, p2c_notif=False)
@@ -1267,6 +1267,33 @@ class ComboBox(_uielement_Control, _ValuePattern_methods, _Enter_Text_method):
             self.get_item_by_name(item_name).click()
             if not wait_while_not(lambda: self.get_value() == item_name, check_timeout):
                 raise Exception('CheckBox.uncheck(...): Combobox does not take desired value \'%s\' after %s seconds -- it has \'%s\' till now' % (item_name, str(check_timeout), self.get_value()))
+
+    def get_value(self):
+        '''
+        У нас комбобоксы бывают следующих типов:
+            <text> + <Open button>
+            <edit> + <Open button>
+            <edit> + <spiner>
+        Может сложиться ситуация, когда Value всего комбобокса пустое, а Value у <edit> -- нет. И как раз этот дочерний объект и содержит искомые данные.
+
+        Переопределяем функцию из _ValuePattern_methods. Делаем так:
+            -- если value_cmbbox == '', то возвращаем value_child
+            -- если value_cmbbox == value_child, то возвращаем это
+            -- если value_cmbbox != value_child и value_cmbbox != '', то генерируем исключение
+        '''
+        value_cmbbox = str(self.get_pattern('ValuePattern').CurrentValue)
+
+        childs = self.find_all(ControlType='Text', exact_level=1) + self.find_all(ControlType='Edit', exact_level=1)
+        if len(childs) > 1:
+            raise Exception('CheckBox.get_value(...): there are more than one \'Text\' or/and \'Edit\' child controls:\n\tchilds = %s' % str(childs))
+        value_child = childs[0].get_value()
+
+        if value_cmbbox == '':
+            return value_child
+        elif value_cmbbox != value_child:
+            raise Exception('CheckBox.get_value(...): values of ComboBox-self and its child Text or Edit object differ:\n\tvalue_cmbbox = %s\n\tvalue_child = %s' % (value_cmbbox, value_child))
+        else:
+            return value_cmbbox
 
 
 
