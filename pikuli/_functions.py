@@ -148,7 +148,7 @@ def highlight_region(x, y, w, h, delay=0.5):
 
         # TODO: send redraw signal
 
-    threading.Thread(target=_thread_function, args=(x, y, w, h, delay), name='highlight_region %s' % str((x, y, w, h, delay))).start()
+    #threading.Thread(target=_thread_function, args=(x, y, w, h, delay), name='highlight_region %s' % str((x, y, w, h, delay))).start()
     return
 
 
