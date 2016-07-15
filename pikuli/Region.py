@@ -412,10 +412,12 @@ class Region(object):
         return self._last_match
 
 
-    def _wait_for_appear_or_vanish(self, ps, timeout, aov):
+    def _wait_for_appear_or_vanish(self, ps, timeout, aov, exception_on_find_fail=None):
         '''
             ps может быть String или List
             Если isinstance(ps, list), возвращается первый найденный элемент. Это можно использвоать, если требуется найти любое из переданных изображений.
+
+            exception_on_find_fail -- необязательный аргумент True|False. Здесь нужен только для кастопизации p2c() в случае ненахождения паттерна.
         '''
         ps = _get_list_of_patterns(ps, 'bad \'ps\' argument; it should be a string (path to image file) or \'Pattern\' object: %s' % str(ps))
 
@@ -453,7 +455,8 @@ class Region(object):
             time.sleep(DELAY_BETWEEN_CV_ATTEMPT)
             elaps_time += DELAY_BETWEEN_CV_ATTEMPT
             if elaps_time >= timeout:
-                p2c( 'pikuli.%s.<find...>: %s hasn\'t been found' % (type(self).__name__, _ps_.getFilename(full_path=False)))
+                p2c( 'pikuli.%s.<find...>: %s hasn\'t been found' % (type(self).__name__, _ps_.getFilename(full_path=False)) +
+                     ', but exception was disabled.' if exception_on_find_fail is not None and not exception_on_find_fail else '' )
                 #TODO: Какие-то ту ошибки. Да и следует передавать, наверно, картинки в FindFailed(), а где-то из модулей робота сохранять, если надо.
                 #t = time.time()
                 #cv2.imwrite(os.path.join(pikuli.Settings.getFindFailedDir, '%i-%06i-pattern.png' % (int(t), (t-int(t))*10**6)), ps[0]._cv2_pattern)
@@ -484,7 +487,7 @@ class Region(object):
         '''
         #p2c('pikuli.find: try to find %s' % str(ps))
         try:
-            self._last_match = self._wait_for_appear_or_vanish(ps, timeout, 'appear')
+            self._last_match = self._wait_for_appear_or_vanish(ps, timeout, 'appear', exception_on_find_fail=exception_on_find_fail)
         except FailExit:
             self._last_match = None
             raise FailExit('\nNew stage of %s\n[error] Incorect \'find()\' method call:\n\tself = %s\n\tps = %s\n\ttimeout = %s' % (traceback.format_exc(), str(self), str(ps), str(timeout)))
