@@ -29,6 +29,17 @@ DELAY_BETWEEN_CV_ATTEMPT = 1.0      # Время в [c] между попытк�
 DEFAULT_FIND_TIMEOUT     = 3.1
 
 
+def _get_list_of_patterns(ps, failExitText):
+    if not isinstance(ps, list):
+        ps = [ps]
+    for (i, p) in enumerate(ps):
+        if isinstance(p, str):
+            ps[i] = Pattern(p)
+        elif not isinstance(p, Pattern):
+            raise FailExit(failExitText)
+    return ps
+
+
 class Region(object):
 
     def __init__(self, *args, **kwargs):  # relation='top-left', title=None):
@@ -389,15 +400,14 @@ class Region(object):
         except ValueError:
             raise FailExit(err_msg_template % 'delay_before is not float')
 
-        if isinstance(ps, str):
-            ps = Pattern(ps)
-        if not isinstance(ps, Pattern):
-            raise FailExit(err_msg_template % 'bad \'ps\' argument; it should be a string (path to image file) or \'Pattern\' object')
+        ps = _get_list_of_patterns(ps, err_msg_template % 'bad \'ps\' argument; it should be a string (path to image file) or \'Pattern\' object')
 
-        time.sleep(delay_before)
-        pts = self.__find(ps, self.__get_field_for_find())
         #p2c('pikuli.findAll: try to find %s' % str(ps))
-        self._last_match = map(lambda pt: Match(pt[0], pt[1], ps._w, ps._h, pt[2], ps), pts)
+        time.sleep(delay_before)
+        (pts, self._last_match) = ([], [])
+        for p in ps:
+            pts.extend( self.__find(p, self.__get_field_for_find()) )
+            self._last_match.extend( map(lambda pt: Match(pt[0], pt[1], p._w, p._h, pt[2], p), pts) )
         p2c('pikuli.findAll: total found %i matches of <%s>' % (len(self._last_match), str(ps)) )
         return self._last_match
 
@@ -407,16 +417,7 @@ class Region(object):
             ps может быть String или List
             Если isinstance(ps, list), возвращается первый найденный элемент. Это можно использвоать, если требуется найти любое из переданных изображений.
         '''
-        failExitText = 'bad \'ps\' argument; it should be a string (path to image file) or \'Pattern\' object: %s'
-
-        if not isinstance(ps, list):
-            ps = [ps]
-
-        for (i, p) in enumerate(ps):
-            if isinstance(p, str):
-                ps[i] = Pattern(p)
-            elif not isinstance(p, Pattern):
-                raise FailExit( failExitText % str(p) )
+        ps = _get_list_of_patterns(ps, 'bad \'ps\' argument; it should be a string (path to image file) or \'Pattern\' object: %s' % str(ps))
 
         if timeout is None:
             timeout = self._find_timeout
