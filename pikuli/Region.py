@@ -21,7 +21,7 @@ from _exceptions import *
 from Pattern import *
 from Location import *
 import hwnd_element
-import pikuli
+# import pikuli
 
 RELATIONS = ['top-left', 'center']
 

@@ -12,6 +12,9 @@ class SettingsClass(object):
     __def_MinSimilarity = 0.995  # Почти устойчиво с 0.995, но однажны не нашел узелок для контура. 0.700 -- будет найдено в каждом пикселе (порог надо поднимать выше).
     __def_FindFailedDir = os.path.join(os.environ['TEMP'], 'find_failed')
 
+    # Logger:
+    __def_PatternURLTemplate = None  # Где искать картинки-шаблрны. Строка-шаблон с %s, куда подставляется имя файла с картинкой-шаблоном. К примеру: http://192.168.116.1/pikuli/pattern/ok_button.png
+
     def __init__(self):
         defvals = self.__get_default_values()
         for k in defvals:
@@ -32,6 +35,7 @@ class SettingsClass(object):
         for path in self.IMG_ADDITION_PATH:
             yield path
 
+
     def setFindFailedDir(self, path):
         if not os.path.exists(path):
             try:
@@ -42,3 +46,10 @@ class SettingsClass(object):
 
     def getFindFailedDir(self):
         return self.FindFailedDir
+
+
+    def setPatternURLTemplate(self, GetPattern_URLTemplate):
+        self.GetPattern_URLTemplate = GetPattern_URLTemplate
+
+    def getPatternURLTemplate(self):
+        return self.GetPattern_URLTemplate

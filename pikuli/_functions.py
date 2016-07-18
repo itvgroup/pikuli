@@ -12,7 +12,7 @@ import win32api
 import win32gui
 import win32ui
 import win32clipboard
-import win32print
+# import win32print
 # from ctypes import windll
 
 import numpy as np
