@@ -61,6 +61,12 @@ def uia_set_initial_default_timeout():
     _default_timeout = DEFAULT_FIND_TIMEOUT
 """
 
+def _None_of_str(arg):
+    if arg is None:
+        return None
+    else:
+        return str(arg)
+
 
 class DriverException(Exception):
     pass
@@ -985,7 +991,7 @@ class _ValuePattern_methods(UIElement):
     REQUIRED_PATTERNS = {'ValuePattern': ['get_value', 'set_value', 'is_readoly']}
 
     def get_value(self):
-        return str(self.get_pattern('ValuePattern').CurrentValue)
+        return _None_of_str(self.get_pattern('ValuePattern').CurrentValue)
 
     def set_value(self, text, check_timeout=CONTROL_CHECK_AFTER_CLICK_DELAY, p2c_notif=True):
         '''
@@ -1275,11 +1281,11 @@ class ComboBox(_uielement_Control, _ValuePattern_methods, _Enter_Text_method):
             raise FindFailed('List of ComboBox %s was not found. Is this list collapsed?' % repr(self))
         items = list_.find_all(ControlType='ListItem', exact_level=1)
         if len(items) == 0:
-            raise FindFailed('CheckBox.get_item_by_name(...): Item \'%s\' was not found in list of ComboBox %s. No one item exists in this list.' % (item_name, repr(self)))
+            raise FindFailed('ComboBox.get_item_by_name(...): Item \'%s\' was not found in list of ComboBox %s. No one item exists in this list.' % (item_name, repr(self)))
         for i in items:
             if i.Name == item_name:
                 return i
-        raise FindFailed('CheckBox.get_item_by_name(...): Item \'%s\' was not found in list of ComboBox %s. Existing items:\n\t%s' % (item_name, repr(self), '\n\t'.join(map(str,items))))
+        raise FindFailed('ComboBox.get_item_by_name(...): Item \'%s\' was not found in list of ComboBox %s. Existing items:\n\t%s' % (item_name, repr(self), '\n\t'.join(map(str,items))))
 
     def select_item(self, item_name, check_timeout=CONTROL_CHECK_AFTER_CLICK_DELAY):
         '''
@@ -1292,7 +1298,7 @@ class ComboBox(_uielement_Control, _ValuePattern_methods, _Enter_Text_method):
                 self.click()
             self.get_item_by_name(item_name).click()
             if not wait_while_not(lambda: self.get_value() == item_name, check_timeout):
-                raise Exception('CheckBox.uncheck(...): Combobox does not take desired value \'%s\' after %s seconds -- it has \'%s\' till now' % (item_name, str(check_timeout), self.get_value()))
+                raise Exception('ComboBox.uncheck(...): Combobox does not take desired value \'%s\' after %s seconds -- it has \'%s\' till now' % (item_name, str(check_timeout), self.get_value()))
 
     def get_value(self):
         '''
@@ -1307,17 +1313,19 @@ class ComboBox(_uielement_Control, _ValuePattern_methods, _Enter_Text_method):
             -- если value_cmbbox == value_child, то возвращаем это
             -- если value_cmbbox != value_child и value_cmbbox != '', то генерируем исключение
         '''
-        value_cmbbox = str(self.get_pattern('ValuePattern').CurrentValue)
+        value_cmbbox = _None_of_str(self.get_pattern('ValuePattern').CurrentValue)
 
         childs = self.find_all(ControlType='Text', exact_level=1) + self.find_all(ControlType='Edit', exact_level=1)
         if len(childs) > 1:
-            raise Exception('CheckBox.get_value(...): there are more than one \'Text\' or/and \'Edit\' child controls:\n\tchilds = %s' % str(childs))
+            raise Exception('ComboBox.get_value(...): there are more than one \'Text\' or/and \'Edit\' child controls:\n\tchilds = %s' % str(childs))
         value_child = childs[0].get_value()
 
-        if value_cmbbox == '':
+        # Есть сам комбо-бокс, а есть его дочерний объект. Бывает, что комбо-бокс возрвращает путоту -- тогда данные надо брыть у дочернего объекта.
+        # Комбобокс, теоретически, может и пустую строку возвращать.
+        if value_cmbbox is None:  # or value_cmbbox == ''
             return value_child
         elif value_cmbbox != value_child:
-            raise Exception('CheckBox.get_value(...): values of ComboBox-self and its child Text or Edit object differ:\n\tvalue_cmbbox = %s\n\tvalue_child = %s' % (value_cmbbox, value_child))
+            raise Exception('ComboBox.get_value(...): values of ComboBox-self and its child Text or Edit object differ:\n\tvalue_cmbbox = %s\n\tvalue_child = %s' % (value_cmbbox, value_child))
         else:
             return value_cmbbox
 
