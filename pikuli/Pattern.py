@@ -14,7 +14,16 @@ from _exceptions import *
 
 class Pattern(object):
     def __init__(self, img_path, similarity=None):
+        '''
+        img_path  --  имя файла или объект Pattern
+        '''
         (self.__similarity, self.__img_path) = (None, None)
+
+        if isinstance(img_path, Pattern):
+            if similarity is None:
+                similarity = img_path.getSimilarity()
+            img_path   = img_path.getFilename(full_path=False)
+
         img_path = str(img_path)
 
         try:
@@ -47,6 +56,9 @@ class Pattern(object):
 
     def __str__(self):
         return 'Pattern of \'%s\' with similarity = %f' % (self.__img_path, self.__similarity)
+
+    def __repr__(self):
+        return '<pikuli.Pattern.Pattern of %s' % os.path.basename(self.__img_path)
 
     def similar(self, similarity):
         return Pattern(self.__img_path, similarity)

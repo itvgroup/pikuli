@@ -1322,7 +1322,7 @@ class ComboBox(_uielement_Control, _ValuePattern_methods, _Enter_Text_method):
 
         # Есть сам комбо-бокс, а есть его дочерний объект. Бывает, что комбо-бокс возрвращает путоту -- тогда данные надо брыть у дочернего объекта.
         # Комбобокс, теоретически, может и пустую строку возвращать.
-        if value_cmbbox is None:  # or value_cmbbox == ''
+        if value_cmbbox is None  or  value_cmbbox == '' and value_child != '':
             return value_child
         elif value_cmbbox != value_child:
             raise Exception('ComboBox.get_value(...): values of ComboBox-self and its child Text or Edit object differ:\n\tvalue_cmbbox = %s\n\tvalue_child = %s' % (value_cmbbox, value_child))

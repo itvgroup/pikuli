@@ -14,8 +14,8 @@ class Match(Region):
     def __init__(self, x, y, w, h, score, pattern):
         try:
             super(Match, self).__init__(x, y, w, h)
-            if not isinstance(score, float) or score <= 0.0 or score > 1.0:
-                raise FailExit('not isinstance(score, float) or score <= 0.0 or score > 1.0:')
+            if not( score is None  or  (isinstance(score, float) and score > 0.0 and score <= 1.0) ):
+                raise FailExit('not( score is None  or  (isinstance(score, float) and score > 0.0 and score <= 1.0) ):')
             self._score   = score
             self._pattern = pattern
         except FailExit:
@@ -36,3 +36,6 @@ class Match(Region):
         Typically, when no offset was specified by Pattern.targetOffset(), the click point is the center of the matched region.
         If an offset was given, the click point is the offset relative to the center. '''
         raise Exception('TODO here')
+
+    def getPattern(self):
+        return self._pattern

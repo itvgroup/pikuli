@@ -182,10 +182,15 @@ class Region(object):
             if len(args) == 1 and (isinstance(args[0], Region) or isinstance(args[0], Screen)):
                 self.__set_from_Region(args[0])
 
-            elif len(args) == 4 and isinstance(args[0], int) and isinstance(args[1], int) and isinstance(args[2], int) and isinstance(args[3], int) and args[2] > 0 and args[3] > 0:
-                for a in args:
-                    if not isinstance(a, int):
-                        raise FailExit('#1')
+            elif len(args) == 4:
+                args = list(args)
+                for i in range(4):
+                    try:
+                        args[i] = int(args[i])
+                    except ValueError as ex:
+                        raise FailExit('Region.setRect(...): can not tranform to integer args[%i] = %s' %(i, repr(args[i])))
+                if args[2] < 0 or args[3] < 0:
+                    raise FailExit('Region.setRect(...): args[2] < 0 or args[3] < 0:')
 
                 relation = kwargs.get('relation', 'top-left')
                 if relation is None:
@@ -346,6 +351,7 @@ class Region(object):
         return _take_screenshot(self._x, self._y, self._w, self._h, self._main_window_hwnd)
 
     def save_as_jpg(self, full_filename):
+        p2c('Region: full_filename: ', full_filename)
         cv2.imwrite(full_filename, _take_screenshot(self._x, self._y, self._w, self._h, self._main_window_hwnd), [cv2.IMWRITE_JPEG_QUALITY, 70])
 
     def save_as_png(self, full_filename):
@@ -493,7 +499,9 @@ class Region(object):
             raise FailExit('\nNew stage of %s\n[error] Incorect \'find()\' method call:\n\tself = %s\n\tps = %s\n\ttimeout = %s' % (traceback.format_exc(), str(self), str(ps), str(timeout)))
         except FindFailed as ex:
             if exception_on_find_fail:
-                self.save_as_jpg(os.environ['TEMP'] + '\\find_failed\\' + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + '_' + str(ps) + '.jpg')
+                if not isinstance(ps, list):
+                    ps = [ps]
+                self.save_as_jpg(os.path.join(os.environ['TEMP'], 'find_failed', 'Region-find-' + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + '_' + '+'.join([Pattern(p).getFilename(full_path=False) for p in ps]) + '.jpg'))
                 raise ex
             else:
                 return None
