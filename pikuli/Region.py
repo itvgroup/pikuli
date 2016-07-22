@@ -351,10 +351,19 @@ class Region(object):
         return _take_screenshot(self._x, self._y, self._w, self._h, self._main_window_hwnd)
 
     def save_as_jpg(self, full_filename):
-        p2c('Region: full_filename: ', full_filename)
+        path = os.path.abspath(full_filename)
+        p2c('pikuli.Region.save_as_jpg:\n\tinput:     %s\n\tfull path: %s' % (full_filename, path))
+        dir_path = os.path.dirname(full_filename)
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path)
         cv2.imwrite(full_filename, _take_screenshot(self._x, self._y, self._w, self._h, self._main_window_hwnd), [cv2.IMWRITE_JPEG_QUALITY, 70])
 
     def save_as_png(self, full_filename):
+        path = os.path.abspath(full_filename)
+        p2c('pikuli.Region.save_as_png:\n\tinput:     %s\n\tfull path: %s' % (full_filename, path))
+        dir_path = os.path.dirname(full_filename)
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path)
         cv2.imwrite(full_filename, _take_screenshot(self._x, self._y, self._w, self._h, self._main_window_hwnd))
 
 
@@ -498,6 +507,7 @@ class Region(object):
             self._last_match = None
             raise FailExit('\nNew stage of %s\n[error] Incorect \'find()\' method call:\n\tself = %s\n\tps = %s\n\ttimeout = %s' % (traceback.format_exc(), str(self), str(ps), str(timeout)))
         except FindFailed as ex:
+            p2c('pikuli.Region.find: FindFailed; exception_on_find_fail = %s; ps = %s' % (str(exception_on_find_fail), str(ps)))
             if exception_on_find_fail:
                 if not isinstance(ps, list):
                     ps = [ps]
@@ -718,6 +728,55 @@ class Region(object):
 
     def highlight(self, delay=1.5):
         highlight_region(self._x, self._y, self._w, self._h, delay)
+
+
+    def find_all_markers(base_reg, ps):
+        '''
+        Ищет все почти solid-color маркеры. Выделяется группа найденных как один маркер --
+        это нужно, т.к. шаблон ненмого меньше маркера в картинке и поэтому поиск находит несолько
+        в почти одном и том же месте
+
+        Алгоритм: все найденные перекрывающиеся маркеры одного вида -- это один маркер. Его центр --
+        это среднее между центрами всех найденных "фантомов". Если два маркера не перекрываются
+        между собой, но оба перекрываются с третьтим -- всех троих группируем в один.
+        '''
+
+        if not isinstance(ps, list):
+            ps = [ps]
+
+        matches = []  # Список списков. В него будут помещаться
+        for p in ps:
+            unsorted_matches = base_reg.findAll(p)  # Несгруппированные вхождения шаблона
+            grouped_matches  = []
+            while len(unsorted_matches) > 0:
+                next_match = unsorted_matches.pop(0)
+
+                # Добавим next_match в существующую гурппу ...
+                print grouped_matches
+                for g in grouped_matches:
+                    for m in g:
+                        if abs(m.getX() - next_match.getX()) < next_match.getW() and \
+                           abs(m.getY() - next_match.getY()) < next_match.getH():
+                            g.append(next_match)
+                            next_match = None
+                            break
+                    if next_match is None:
+                        break
+
+                # ... или созданим для него новую группу.
+                if next_match is not None:
+                    grouped_matches.append([next_match])
+
+            matches.extend(grouped_matches)
+
+        # Замени группы совпадений на итоговые классы Match:
+        for i in range(len(matches)):
+            sum_score = sum( [m.getScore() for m in matches[i]] )
+            x = sum( [m.getX()*m.getScore() for m in matches[i]] ) / sum_score
+            y = sum( [m.getY()*m.getScore() for m in matches[i]] ) / sum_score
+            matches[i] = Match(x, y, matches[i][0].getW(), matches[i][0].getH(), sum_score/len(matches[i]), matches[i][0].getPattern())
+
+        return matches
 
 
 from Match import *
