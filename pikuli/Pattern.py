@@ -48,7 +48,7 @@ class Pattern(object):
                 raise FailExit('error around \'similarity\' parameter')
 
         except FailExit as e:
-            raise FailExit('[error] Incorect \'Pattern\' class constructor call:\n\timg_path = %s\n\tabspath(img_path) = %s\n\tsimilarity = %s\n\tadditional comment: -{ %s }-' % (str(img_path), str(self.__img_path), str(similarity), str(e)))
+            raise FailExit('[error] Incorect \'Pattern\' class constructor call:\n\timg_path = %s\n\tabspath(img_path) = %s\n\tsimilarity = %s\n\tadditional comment: -{ %s }-\n\tlistImagePath(): %s' % (str(img_path), str(self.__img_path), str(similarity), str(e), str(list(pikuli.Settings.listImagePath()))))
 
         self._cv2_pattern = cv2.imread(self.__img_path)
         self.w = self._w = int(self._cv2_pattern.shape[1])

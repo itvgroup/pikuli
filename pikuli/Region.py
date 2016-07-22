@@ -730,7 +730,7 @@ class Region(object):
         highlight_region(self._x, self._y, self._w, self._h, delay)
 
 
-    def find_all_markers(base_reg, ps):
+    def find_all_solid_markers_by_piece(self, ps):
         '''
         Ищет все почти solid-color маркеры. Выделяется группа найденных как один маркер --
         это нужно, т.к. шаблон ненмого меньше маркера в картинке и поэтому поиск находит несолько
@@ -739,6 +739,8 @@ class Region(object):
         Алгоритм: все найденные перекрывающиеся маркеры одного вида -- это один маркер. Его центр --
         это среднее между центрами всех найденных "фантомов". Если два маркера не перекрываются
         между собой, но оба перекрываются с третьтим -- всех троих группируем в один.
+
+        Если ничего не найдено, то возвращается пустой список.
         '''
 
         if not isinstance(ps, list):
@@ -746,7 +748,7 @@ class Region(object):
 
         matches = []  # Список списков. В него будут помещаться
         for p in ps:
-            unsorted_matches = base_reg.findAll(p)  # Несгруппированные вхождения шаблона
+            unsorted_matches = self.findAll(p)  # Несгруппированные вхождения шаблона
             grouped_matches  = []
             while len(unsorted_matches) > 0:
                 next_match = unsorted_matches.pop(0)

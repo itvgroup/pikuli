@@ -28,8 +28,11 @@ class SettingsClass(object):
         return defvals
 
     def addImagePath(self, path):
-        if path not in self.IMG_ADDITION_PATH:
-            self.IMG_ADDITION_PATH.append(path)
+        _path = os.path.abspath(path)
+        if not os.path.isdir(_path):
+            raise Exception('pikuli.addImagePath(...): Path \'%s\' does not exist!' % str(path))
+        if _path not in self.IMG_ADDITION_PATH:
+            self.IMG_ADDITION_PATH.append(_path)
 
     def listImagePath(self):
         for path in self.IMG_ADDITION_PATH:
@@ -41,7 +44,7 @@ class SettingsClass(object):
             try:
                 os.makedirs(path)
             except:
-                raise Exception('pikuli: can not set SettingsClass.FindFailedDir to \'%s\' -- failed to create directory.' % str(path))
+                raise Exception('pikuli.setFindFailedDir(...): can not set SettingsClass.FindFailedDir to \'%s\' -- failed to create directory.' % str(path))
         self.FindFailedDir = path
 
     def getFindFailedDir(self):
