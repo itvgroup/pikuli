@@ -22,10 +22,10 @@ class Match(Region):
             raise FailExit('\nNew stage of %s\n[error] Incorect \'Match\' constructor call:\n\tx = %s\n\ty = %s\n\tw = %s\n\th = %s\n\tscore = %s\n\t' % (traceback.format_exc(), str(w), str(y), str(w), str(h), str(score)))
 
     def __str__(self):
-        return ('Match of \'%s\' in (%i, %i, %i, %i) with score = %f' % (str(self._pattern.getFilename()), self._x, self._y, self._w, self._h, self._score))
+        return ('<Match of \'%s\' in (%i, %i, %i, %i) with score = %.3f>' % (str(self._pattern.getFilename()), self._x, self._y, self._w, self._h, self._score))
 
     def __repr__(self):
-        return ('<Match of \'%s\' in (%i, %i, %i, %i) with score = %f>' % (str(self._pattern.getFilename()), self._x, self._y, self._w, self._h, self._score))
+        return ('<Match of \'%s\' in (%i, %i, %i, %i) with score = %.3f>' % (str(self._pattern.getFilename()), self._x, self._y, self._w, self._h, self._score))
 
     def getScore(self):
         ''' Sikuli: Get the similarity score the image or pattern was found. The value is between 0 and 1. '''

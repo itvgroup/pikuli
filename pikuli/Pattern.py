@@ -55,7 +55,7 @@ class Pattern(object):
         self.h = self._h = int(self._cv2_pattern.shape[0])
 
     def __str__(self):
-        return 'Pattern of \'%s\' with similarity = %f' % (self.__img_path, self.__similarity)
+        return '<Pattern of \'%s\' with similarity = %.3f>' % (self.__img_path, self.__similarity)
 
     def __repr__(self):
         return '<pikuli.Pattern.Pattern of %s' % os.path.basename(self.__img_path)

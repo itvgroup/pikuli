@@ -131,7 +131,7 @@ class Region(object):
 
     def __str__(self):
         (self.x, self.y, self.w, self.h) = (self._x, self._y, self._w, self._h)
-        return 'Region (%i, %i, %i, %i)' % (self._x, self._y, self._w, self._h)
+        return '<Region (%i, %i, %i, %i)>' % (self._x, self._y, self._w, self._h)
 
 
     def setX(self, x, relation='top-left'):
@@ -429,12 +429,18 @@ class Region(object):
 
     def _wait_for_appear_or_vanish(self, ps, timeout, aov, exception_on_find_fail=None):
         '''
-            ps может быть String или List
-            Если isinstance(ps, list), возвращается первый найденный элемент. Это можно использвоать, если требуется найти любое из переданных изображений.
+            ps может быть String или List:
+              -- Если ps - это список (list) и aov == 'appear', то возвращается первый найденный элемент. Это можно использвоать, если требуется найти любое из переданных изображений.
+              -- Если ps - это список (list) и aov == 'vanish', то функция завершается, когда не будет найден хотя бы один из шаблонов.
 
             exception_on_find_fail -- необязательный аргумент True|False. Здесь нужен только для кастопизации p2c() в случае ненахождения паттерна.
         '''
         ps = _get_list_of_patterns(ps, 'bad \'ps\' argument; it should be a string (path to image file) or \'Pattern\' object: %s' % str(ps))
+
+        if self.getW() == 0:
+            raise FailExit('bad rectangular area: self.getW() == 0')
+        if self.getH() == 0:
+            raise FailExit('bad rectangular area: self.getH() == 0')
 
         if timeout is None:
             timeout = self._find_timeout
