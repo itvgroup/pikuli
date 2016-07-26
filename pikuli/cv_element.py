@@ -28,10 +28,12 @@ class CVElement(object):
             self._reg = where_it_is
             where_it_is = where_it_is.getCenter()
         if not isinstance(where_it_is, Location):
-            raise Exception('pikuli.cv_element.CVElement.__init__(): input argument must be pikuli.Region or pikuli.Location treating as a center of the control.')
+            raise Exception('pikuli.cv_element.CVElement.__init__(): input argument must be pikuli.Region or pikuli.Location treating as a center of the control:\n\twhere_it_is = %s' % str(where_it_is))
         self._center = where_it_is
         if not hasattr(self, '_reg'):
             self._reg = Region(self._center.x, self._center.y, 1, 1)
+        if self._reg.getX() == 0 or self._reg.getY() == 0:
+            raise Exception('pikuli.cv_element.CVElement.__init__(): you try to create \'%s\' with icvorrect width of height:\n\t self._reg = %s' % (type(self).__name__, str(self._reg)))
 
     def reg(self):
         #if not hasattr(self, '_reg'):
