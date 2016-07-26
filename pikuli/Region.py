@@ -408,7 +408,7 @@ class Region(object):
 
     def findAll(self, ps, delay_before=0):
         ''' Если ничего не найдено, то вернется пустой list, и исключения FindFailed не возникнет. '''
-        err_msg_template = '[error] Incorect \'findAll()\' method call:\n\tps = %s\n\tdelay_before = %s\n\tadditional comment: %%s' % (str(ps), str(delay_before))
+        err_msg_template = '[error] Incorect \'findAll()\' method call:\n\tps = %s\n\ttypeOf ps=%s\n\tdelay_before = %s\n\tadditional comment: %%s' % (str(ps),type(ps), str(delay_before))
 
         try:
             delay_before = float(delay_before)
@@ -423,7 +423,7 @@ class Region(object):
         for p in ps:
             pts.extend( self.__find(p, self.__get_field_for_find()) )
             self._last_match.extend( map(lambda pt: Match(pt[0], pt[1], p._w, p._h, pt[2], p), pts) )
-        p2c('pikuli.findAll: total found %i matches of <%s>' % (len(self._last_match), str(ps)) )
+        p2c('pikuli.findAll: total found %i matches of <%s> in %s' % (len(self._last_match), str(ps), str(self)) )
         return self._last_match
 
 
