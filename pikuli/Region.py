@@ -93,6 +93,7 @@ class Region(object):
         (self.x, self.y, self._x, self._y) = (None, None, None, None)
         (self.w, self.h, self._w, self._h) = (None, None, None, None)
         self._last_match = None
+        self._image_at_some_moment = None
 
         self._title = None                 # Идентификатор для человека.
         if 'title' in kwargs:
@@ -350,6 +351,28 @@ class Region(object):
     def __get_field_for_find(self):
         return _take_screenshot(self._x, self._y, self._w, self._h, self._main_window_hwnd)
 
+    def get_current_image(self):
+        ''' Возвращает текущий скриншот региона в виде картинки. В душе -- это np.array. '''
+        return self.__get_field_for_find()
+
+    def is_image_equal_to(self, img):
+        ''' Проверяет, что текущйи скриншот региона совпадет с картинкой img в формате np.array. '''
+        return np.array_equal(self.__get_field_for_find(), img)
+
+    def store_current_image(self):
+        self._image_at_some_moment = self.__get_field_for_find()
+
+    def clear_sored_image(self):
+        self._image_at_some_moment = None  # TODO: вставить delete ???
+
+    def is_image_changes(self):
+        ''' Изменилась ли картинка на экране в регионе? В любом случае обновим сохраненную. '''
+        img = self.__get_field_for_find()
+        eq  = (self._image_at_some_moment is not None) and np.array_equal(img, self._image_at_some_moment)
+        self._image_at_some_moment = img
+        return (not eq)
+
+
     def save_as_jpg(self, full_filename):
         path = os.path.abspath(full_filename)
         p2c('pikuli.Region.save_as_jpg:\n\tinput:     %s\n\tfull path: %s' % (full_filename, path))
@@ -407,7 +430,9 @@ class Region(object):
 
 
     def findAll(self, ps, delay_before=0):
-        ''' Если ничего не найдено, то вернется пустой list, и исключения FindFailed не возникнет. '''
+        '''
+        Если ничего не найдено, то вернется пустой list, и исключения FindFailed не возникнет.
+        '''
         err_msg_template = '[error] Incorect \'findAll()\' method call:\n\tps = %s\n\ttypeOf ps=%s\n\tdelay_before = %s\n\tadditional comment: %%s' % (str(ps),type(ps), str(delay_before))
 
         try:
@@ -493,7 +518,7 @@ class Region(object):
                 raise FindFailed('Unable to find \'%s\' in %s' % (failedImages, str(self)))
 
 
-    def find(self, ps, timeout=None, exception_on_find_fail=True):
+    def find(self, ps, timeout=None, exception_on_find_fail=True, store_imgs_at_fail=None):
         '''
         Ждет, пока паттерн не появится.
 
@@ -505,6 +530,8 @@ class Region(object):
         Возвращает Region, если паттерн появился. Если нет, то:
             a. исключение FindFailed при exception_on_find_fail = True
             b. возвращает None при exception_on_find_fail = False.
+
+        store_imgs_at_fail  --  Сохранять ли картинки при ошибке поиска: True|False|None. None -- значение берется из exception_on_find_fail.
         '''
         #p2c('pikuli.find: try to find %s' % str(ps))
         try:
@@ -514,7 +541,7 @@ class Region(object):
             raise FailExit('\nNew stage of %s\n[error] Incorect \'find()\' method call:\n\tself = %s\n\tps = %s\n\ttimeout = %s' % (traceback.format_exc(), str(self), str(ps), str(timeout)))
         except FindFailed as ex:
             p2c('pikuli.Region.find: FindFailed; exception_on_find_fail = %s; ps = %s' % (str(exception_on_find_fail), str(ps)))
-            if exception_on_find_fail:
+            if store_imgs_at_fail or store_imgs_at_fail is None and exception_on_find_fail:
                 if not isinstance(ps, list):
                     ps = [ps]
                 self.save_as_jpg(os.path.join(os.environ['TEMP'], 'find_failed', 'Region-find-' + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + '_' + '+'.join([Pattern(p).getFilename(full_path=False) for p in ps]) + '.jpg'))
