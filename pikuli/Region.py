@@ -404,12 +404,15 @@ class Region(object):
         # cv2.destroyAllWindows()
 
         CF = 0
-        if CF == 0:
-            res = cv2.matchTemplate(field, ps._cv2_pattern, cv2.TM_CCORR_NORMED)
-            loc = np.where(res > ps.getSimilarity())  # 0.995
-        elif CF == 1:
-            res = cv2.matchTemplate(field, ps._cv2_pattern, cv2.TM_SQDIFF_NORMED)
-            loc = np.where(res < 1.0 - ps.getSimilarity())  # 0.005
+        try:
+            if CF == 0:
+                res = cv2.matchTemplate(field, ps._cv2_pattern, cv2.TM_CCORR_NORMED)
+                loc = np.where(res > ps.getSimilarity())  # 0.995
+            elif CF == 1:
+                res = cv2.matchTemplate(field, ps._cv2_pattern, cv2.TM_SQDIFF_NORMED)
+                loc = np.where(res < 1.0 - ps.getSimilarity())  # 0.005
+        except cv2.error as ex:
+            raise FindFailed('OpenCV ERROR: ' + str(ex))
 
         # for pt in zip(*loc[::-1]):
         #    cv2.rectangle(field, pt, (pt[0] + self._w, pt[1] + self._h), (0, 0, 255), 2)
@@ -452,11 +455,17 @@ class Region(object):
         #p2c('pikuli.findAll: try to find %s' % str(ps))
         time.sleep(delay_before)
         (pts, self._last_match) = ([], [])
-        for p in ps:
-            pts.extend( self.__find(p, self.__get_field_for_find()) )
-            self._last_match.extend( map(lambda pt: Match(pt[0], pt[1], p._w, p._h, p, pt[2]), pts) )
-        p2c('pikuli.findAll: total found %i matches of <%s> in %s' % (len(self._last_match), str(ps), str(self)) )
-        return self._last_match
+        try:
+            for p in ps:
+                pts.extend( self.__find(p, self.__get_field_for_find()) )
+                self._last_match.extend( map(lambda pt: Match(pt[0], pt[1], p._w, p._h, p, pt[2]), pts) )
+        except FindFailed as ex:
+            p2c('pikuli.Region.find: FindFailed; findAll = %s; ps = %s' % (str(exception_on_find_fail), str(ps)))
+            self.save_as_jpg(os.path.join(os.environ['TEMP'], 'find_failed', 'Region-findAll-' + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + '_' + '+'.join([Pattern(p).getFilename(full_path=False) for p in ps]) + '.jpg'))
+            raise ex
+        else:
+            p2c('pikuli.findAll: total found %i matches of <%s> in %s' % (len(self._last_match), str(ps), str(self)) )
+            return self._last_match
 
 
     def _wait_for_appear_or_vanish(self, ps, timeout, aov, exception_on_find_fail=None):
