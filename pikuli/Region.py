@@ -356,20 +356,27 @@ class Region(object):
         return self.__get_field_for_find()
 
     def is_image_equal_to(self, img):
-        ''' Проверяет, что текущйи скриншот региона совпадет с картинкой img в формате np.array. '''
+        ''' Проверяет, что текущее изображение на экране в области (x,y,w,h) совпадет с
+        картинкой img в формате np.array, передаваеймо в функцию как рагумент. '''
         return np.array_equal(self.__get_field_for_find(), img)
 
     def store_current_image(self):
+        ''' Сохраняет в поле класса картинку с экрана из области (x,y,w,h). Формат -- numpu.array. '''
         self._image_at_some_moment = self.__get_field_for_find()
 
     def clear_sored_image(self):
+        ''' Очищает сохраненную в классе картинку. '''
         self._image_at_some_moment = None  # TODO: вставить delete ???
 
-    def is_image_changes(self):
-        ''' Изменилась ли картинка на экране в регионе? В любом случае обновим сохраненную. '''
+    def is_image_changed(self, rewrite_stored_image=False):
+        ''' Изменилась ли картинка на экране в регионе с момента последнего вызова этой фукнции
+        или self.store_current_image()? Отвечаем на этот вопрос путем сравнения сохраненной в классе
+        картинки с тем, что сейчас изоюражено на экране.
+        В зависости от аргумента rewrite_stored_image обновим или нет картинку, сохраненную в классе. '''
         img = self.__get_field_for_find()
         eq  = (self._image_at_some_moment is not None) and np.array_equal(img, self._image_at_some_moment)
-        self._image_at_some_moment = img
+        if rewrite_stored_image:
+            self._image_at_some_moment = img
         return (not eq)
 
 
@@ -447,7 +454,7 @@ class Region(object):
         (pts, self._last_match) = ([], [])
         for p in ps:
             pts.extend( self.__find(p, self.__get_field_for_find()) )
-            self._last_match.extend( map(lambda pt: Match(pt[0], pt[1], p._w, p._h, pt[2], p), pts) )
+            self._last_match.extend( map(lambda pt: Match(pt[0], pt[1], p._w, p._h, p, pt[2]), pts) )
         p2c('pikuli.findAll: total found %i matches of <%s> in %s' % (len(self._last_match), str(ps), str(self)) )
         return self._last_match
 
@@ -490,7 +497,7 @@ class Region(object):
                             # Что-то нашли. Выберем один вариант с лучшим 'score'. Из несольких с одинаковыми 'score' будет первый при построчном проходе по экрану.
                             pt = max(pts, key=lambda pt: pt[2])
                             p2c( 'pikuli.%s.<find...>: %s has been found' % (type(self).__name__, _ps_.getFilename(full_path=False)))
-                            return Match(pt[0], pt[1], _ps_._w, _ps_._h, pt[2], _ps_)
+                            return Match(pt[0], pt[1], _ps_._w, _ps_._h, _ps_, pt[2])
                     elif aov == 'vanish':
                         if len(pts) == 0:
                             p2c( 'pikuli.%s.<find...>: %s has vanished' % (type(self).__name__, _ps_.getFilename(full_path=False)))
@@ -518,7 +525,7 @@ class Region(object):
                 raise FindFailed('Unable to find \'%s\' in %s' % (failedImages, str(self)))
 
 
-    def find(self, ps, timeout=None, exception_on_find_fail=True, store_imgs_at_fail=None):
+    def find(self, ps, timeout=None, exception_on_find_fail=True, save_img_file_at_fail=None):
         '''
         Ждет, пока паттерн не появится.
 
@@ -531,7 +538,7 @@ class Region(object):
             a. исключение FindFailed при exception_on_find_fail = True
             b. возвращает None при exception_on_find_fail = False.
 
-        store_imgs_at_fail  --  Сохранять ли картинки при ошибке поиска: True|False|None. None -- значение берется из exception_on_find_fail.
+        save_img_file_at_fail  --  Сохранять ли картинки при ошибке поиска: True|False|None. None -- значение берется из exception_on_find_fail.
         '''
         #p2c('pikuli.find: try to find %s' % str(ps))
         try:
@@ -541,7 +548,7 @@ class Region(object):
             raise FailExit('\nNew stage of %s\n[error] Incorect \'find()\' method call:\n\tself = %s\n\tps = %s\n\ttimeout = %s' % (traceback.format_exc(), str(self), str(ps), str(timeout)))
         except FindFailed as ex:
             p2c('pikuli.Region.find: FindFailed; exception_on_find_fail = %s; ps = %s' % (str(exception_on_find_fail), str(ps)))
-            if store_imgs_at_fail or store_imgs_at_fail is None and exception_on_find_fail:
+            if save_img_file_at_fail or save_img_file_at_fail is None and exception_on_find_fail:
                 if not isinstance(ps, list):
                     ps = [ps]
                 self.save_as_jpg(os.path.join(os.environ['TEMP'], 'find_failed', 'Region-find-' + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + '_' + '+'.join([Pattern(p).getFilename(full_path=False) for p in ps]) + '.jpg'))
@@ -597,6 +604,7 @@ class Region(object):
 
 
     def getLastMatch(self):
+        ''' Возвращает результаты последнего поиска. '''
         if self._last_match is None or self._last_match == []:
             raise FindFailed('getLastMatch() is empty')
         return self._last_match
@@ -809,7 +817,7 @@ class Region(object):
             sum_score = sum( [m.getScore() for m in matches[i]] )
             x = sum( [m.getX()*m.getScore() for m in matches[i]] ) / sum_score
             y = sum( [m.getY()*m.getScore() for m in matches[i]] ) / sum_score
-            matches[i] = Match(x, y, matches[i][0].getW(), matches[i][0].getH(), sum_score/len(matches[i]), matches[i][0].getPattern())
+            matches[i] = Match(x, y, matches[i][0].getW(), matches[i][0].getH(), matches[i][0].getPattern(), sum_score/len(matches[i]))
 
         return matches
 

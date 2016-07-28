@@ -11,13 +11,26 @@ from Region import *
 
 
 class Match(Region):
-    def __init__(self, x, y, w, h, score, pattern):
+    '''
+        Как потомок Region, класс Match сможет хранить в себе картинку в формате numpy.array; сравнивать
+        сохраненную картинку с тем, что сейчас в области (x, y, w, h) отображается на экране. Будем по
+        умолчанию в конструкторе Match'а сохранять то, что есть на экране.
+    '''
+
+    def __init__(self, x, y, w, h, pattern, score):
+        '''
+            x, y, w, h  --  области экрана ПК, которая содержит в себе искомый шаблон pattern
+            pattern     --  искомый шаблон в формате pikuli.Pattern
+            score       --  число, показывающее достоверность совпадения шаблона с изображение на экране
+        '''
         try:
             super(Match, self).__init__(x, y, w, h)
             if not( score is None  or  (isinstance(score, float) and score > 0.0 and score <= 1.0) ):
                 raise FailExit('not( score is None  or  (isinstance(score, float) and score > 0.0 and score <= 1.0) ):')
             self._score   = score
             self._pattern = pattern
+            self.store_current_image()
+
         except FailExit:
             raise FailExit('\nNew stage of %s\n[error] Incorect \'Match\' constructor call:\n\tx = %s\n\ty = %s\n\tw = %s\n\th = %s\n\tscore = %s\n\t' % (traceback.format_exc(), str(w), str(y), str(w), str(h), str(score)))
 
