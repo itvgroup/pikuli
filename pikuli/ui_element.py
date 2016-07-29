@@ -362,12 +362,12 @@ class UIElement(object):
 
     def get_property(self, name):
         if not hasattr(self, '_winuiaelem'):
-            raise Exception('pikuli.UIElement.find [INTERNAL]: not hasattr(self, \'_winuiaelem\')')
+            raise Exception('pikuli.UIElement.find [INTERNAL]: self <class \'%s\'> not hasattr(self, \'_winuiaelem\')' % type(self).__name__)
         return UIA.get_property_by_id(self._winuiaelem, name)
 
     def get_pattern(self, name):
         if not hasattr(self, '_winuiaelem'):
-            raise Exception('pikuli.UIElement.find [INTERNAL]: not hasattr(self, \'_winuiaelem\')')
+            raise Exception('pikuli.UIElement.find [INTERNAL]: self <class \'%s\'> not hasattr(self, \'_winuiaelem\')' % type(self).__name__)
         try:
             pattern = Pattern(self._winuiaelem, name)
         except DriverException:
