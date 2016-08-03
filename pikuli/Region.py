@@ -460,8 +460,18 @@ class Region(object):
                 pts.extend( self.__find(p, self.__get_field_for_find()) )
                 self._last_match.extend( map(lambda pt: Match(pt[0], pt[1], p._w, p._h, p, pt[2]), pts) )
         except FindFailed as ex:
-            p2c('pikuli.Region.find: FindFailed; findAll = %s; ps = %s' % (str(exception_on_find_fail), str(ps)))
-            self.save_as_jpg(os.path.join(os.environ['TEMP'], 'find_failed', 'Region-findAll-' + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + '_' + '+'.join([Pattern(p).getFilename(full_path=False) for p in ps]) + '.jpg'))
+            dt = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+
+            fn_field   = os.path.join(pikuli.Settings.getFindFailedDir(), 'Region-findAll-field-'   + dt + '-' + '+'.join([Pattern(p).getFilename(full_path=False) for p in ps]) + '.jpg')
+            cv2.imwrite(fn_field, ex.field, [cv2.IMWRITE_JPEG_QUALITY, 70])
+
+            fn_pattern = []
+            for p in ex.patterns:
+                fn_pattern += [os.path.join(pikuli.Settings.getFindFailedDir(), 'Region-findAll-pattern-' + dt + '-' + p.getFilename(full_path=False) + '.jpg')]
+                cv2.imwrite(fn_pattern[-1], p.get_image(), [cv2.IMWRITE_JPEG_QUALITY, 70])
+
+            p2c('pikuli.Region.find: FindFailed; ps = %s\n\tField stored as:\n\t\t%s\n\tPatterns strored as:\n\t\t%s' % (str(ps), fn_field, '\b\t\t'.join(fn_pattern)))
+
             raise ex
         else:
             p2c('pikuli.findAll: total found %i matches of <%s> in %s' % (len(self._last_match), str(ps), str(self)) )
@@ -531,7 +541,7 @@ class Region(object):
                 #cv2.imwrite('c:\\tmp\\FindFailed-field.png', field)
 
                 failedImages = ', '.join(map(lambda p: p.getFilename(full_path=False), ps))
-                raise FindFailed('Unable to find \'%s\' in %s' % (failedImages, str(self)))
+                raise FindFailed('Unable to find \'%s\' in %s' % (failedImages, str(self)), patterns=ps, field=field)
 
 
     def find(self, ps, timeout=None, exception_on_find_fail=True, save_img_file_at_fail=None):
@@ -556,11 +566,27 @@ class Region(object):
             self._last_match = None
             raise FailExit('\nNew stage of %s\n[error] Incorect \'find()\' method call:\n\tself = %s\n\tps = %s\n\ttimeout = %s' % (traceback.format_exc(), str(self), str(ps), str(timeout)))
         except FindFailed as ex:
-            p2c('pikuli.Region.find: FindFailed; exception_on_find_fail = %s; ps = %s' % (str(exception_on_find_fail), str(ps)))
             if save_img_file_at_fail or save_img_file_at_fail is None and exception_on_find_fail:
                 if not isinstance(ps, list):
                     ps = [ps]
-                self.save_as_jpg(os.path.join(os.environ['TEMP'], 'find_failed', 'Region-find-' + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + '_' + '+'.join([Pattern(p).getFilename(full_path=False) for p in ps]) + '.jpg'))
+                dt = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+                #self.save_as_jpg(os.path.join(pikuli.Settings.getFindFailedDir(), 'Region-find-' + dt + '_' + '+'.join([Pattern(p).getFilename(full_path=False) for p in ps]) + '.jpg'))
+
+                fn_field   = os.path.join(pikuli.Settings.getFindFailedDir(), 'Region-find-field-'   + dt + '-' + '+'.join([Pattern(p).getFilename(full_path=False) for p in ps]) + '.jpg')
+                cv2.imwrite(fn_field, ex.field, [cv2.IMWRITE_JPEG_QUALITY, 70])
+
+                fn_pattern = []
+                for p in ex.patterns:
+                    fn_pattern += [os.path.join(pikuli.Settings.getFindFailedDir(), 'Region-find-pattern-' + dt + '-' + p.getFilename(full_path=False) + '.jpg')]
+                    cv2.imwrite(fn_pattern[-1], p.get_image(), [cv2.IMWRITE_JPEG_QUALITY, 70])
+
+                p2c('pikuli.Region.find: FindFailed; exception_on_find_fail = %s; ps = %s\n\tField stored as:\n\t\t%s\n\tPatterns strored as:\n\t\t%s'
+                    % (str(exception_on_find_fail), str(ps), fn_field, '\b\t\t'.join(fn_pattern)))
+
+            else:
+                p2c('pikuli.Region.find: FindFailed; exception_on_find_fail = %s; ps = %s' % (str(exception_on_find_fail), str(ps)))
+
+            if exception_on_find_fail:
                 raise ex
             else:
                 return None

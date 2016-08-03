@@ -82,3 +82,7 @@ class Pattern(object):
     def getH(self):
         (self.w, self.h) = (self._w, self._h)
         return self._h
+
+    def get_image(self):
+        ''' numpy.array '''
+        return self._cv2_pattern
