@@ -22,7 +22,7 @@ class Pattern(object):
         if isinstance(img_path, Pattern):
             if similarity is None:
                 similarity = img_path.getSimilarity()
-            img_path   = img_path.getFilename(full_path=False)
+            img_path = img_path.getFilename(full_path=False)
 
         img_path = str(img_path)
 

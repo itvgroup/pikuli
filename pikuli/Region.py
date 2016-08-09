@@ -33,10 +33,10 @@ def _get_list_of_patterns(ps, failExitText):
     if not isinstance(ps, list):
         ps = [ps]
     for (i, p) in enumerate(ps):
-        if isinstance(p, str):
+        try:
             ps[i] = Pattern(p)
-        elif not isinstance(p, Pattern):
-            raise FailExit(failExitText)
+        except Exception as ex:
+            raise FailExit(failExitText + '\n\t' + ' '*20 + str(ex))
     return ps
 
 
