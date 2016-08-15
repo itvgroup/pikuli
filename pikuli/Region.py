@@ -412,7 +412,7 @@ class Region(object):
                 res = cv2.matchTemplate(field, ps._cv2_pattern, cv2.TM_SQDIFF_NORMED)
                 loc = np.where(res < 1.0 - ps.getSimilarity())  # 0.005
         except cv2.error as ex:
-            raise FindFailed('OpenCV ERROR: ' + str(ex))
+            raise FindFailed('OpenCV ERROR: ' + str(ex), patterns=ps, field=field, cause=FindFailed.OPENCV_ERROR)
 
         # for pt in zip(*loc[::-1]):
         #    cv2.rectangle(field, pt, (pt[0] + self._w, pt[1] + self._h), (0, 0, 255), 2)
@@ -474,7 +474,8 @@ class Region(object):
 
             raise ex
         else:
-            p2c('pikuli.findAll: total found %i matches of <%s> in %s' % (len(self._last_match), str(ps), str(self)) )
+            scores = '[' + ', '.join(['%.2f'%m.getScore() for m in self._last_match]) + ']'
+            p2c('pikuli.findAll: total found %i matches of <%s> in %s; scores = %s' % (len(self._last_match), str(ps), str(self), scores) )
             return self._last_match
 
 
@@ -562,9 +563,11 @@ class Region(object):
         #p2c('pikuli.find: try to find %s' % str(ps))
         try:
             self._last_match = self._wait_for_appear_or_vanish(ps, timeout, 'appear', exception_on_find_fail=exception_on_find_fail)
+
         except FailExit:
             self._last_match = None
             raise FailExit('\nNew stage of %s\n[error] Incorect \'find()\' method call:\n\tself = %s\n\tps = %s\n\ttimeout = %s' % (traceback.format_exc(), str(self), str(ps), str(timeout)))
+
         except FindFailed as ex:
             if save_img_file_at_fail or save_img_file_at_fail is None and exception_on_find_fail:
                 if not isinstance(ps, list):
@@ -586,10 +589,11 @@ class Region(object):
             else:
                 p2c('pikuli.Region.find: FindFailed; exception_on_find_fail = %s; ps = %s' % (str(exception_on_find_fail), str(ps)))
 
-            if exception_on_find_fail:
+            if exception_on_find_fail or ex.cause != FindFailed.NOT_FOUND_ERROR:
                 raise ex
             else:
                 return None
+
         else:
             return self._last_match
 
