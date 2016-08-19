@@ -694,7 +694,13 @@ class Region(object):
 
 
     def dragto(self, *dest_location, **kwargs):
-        ''' Перемащает регион за его центр. '''
+        '''
+        Перемащает регион, хватая мышкой его центр.
+            dest_location -- это tuple из двух координат (x,y) или объект типа Location.
+
+            kwargs:
+                p2c_notif  --  _True_|False печатать на экран об этом дейтсвии.
+        '''
         p2c_notif = kwargs.pop('p2c_notif', True)
         if len(kwargs) != 0:
             raise Exception('Illegal arguments of pikuli.Region.dragto(): %s' % str(kwargs))
