@@ -2,10 +2,15 @@
 '''
    Представляет любую точку на экране. Содержит методы для перемещения точки на экране, перемещения курсора в точку на экране, эмуляции пользовательских действий (клики, ввод текста).
 '''
+
+import logging
+
 import win32api
 import win32con
 import time
 from _functions import *
+
+logger = logging.getLogger('axxon_autotest')
 
 
 DELAY_AFTER_MOUSE_MOVEMENT = 0.500  # Время в [c]
@@ -23,28 +28,21 @@ DRAGnDROP_MOVE_STEP  = 10
 class Location(object):
 
     def __init__(self, x, y, title=None):
+        self.x = int(x)
+        self.y = int(y)
         self.title = title
-        try:
-            self._x = self.x = int(x)
-            self._y = self.y = int(y)
-            self._is_mouse_down = False
-        except:
-            raise FailExit('[error] Incorect \'Location\' class constructor call:\n\tx = %s\n\ty = %s\n\ttitle= %s' % (str(x), str(y), str(title)))
+        self._is_mouse_down = False
 
-    def __str__(self):
-        (self.x, self.y) = (self._x, self._y)
-        return 'Location (%i, %i)' % (self._x, self._y)
+    def __repr__(self):
+        return 'Location({}, {})'.format(self.x, self.y)
 
     def get_xy(self):
-        (self.x, self.y) = (self._x, self._y)
         return (self.x, self.y)
 
     def getX(self):
-        (self.x, self.y) = (self._x, self._y)
         return self.x
 
     def getY(self):
-        (self.x, self.y) = (self._x, self._y)
         return self.y
 
     def mouseMove(self, delay=DELAY_AFTER_MOUSE_MOVEMENT):
@@ -131,6 +129,8 @@ class Location(object):
         self.mouseMove()
         if click:
             self.click(p2c_notif=False)
+        logger.info('{} scrolling: direction={}, '
+                    'count={}...'.format(self, direction, count))
         for i in range(0, int(count)):
             win32api.mouse_event(win32con.MOUSEEVENTF_WHEEL, self.x, self.y, int(direction), 0)
             time.sleep(DELAY_IN_MOUSE_CLICK)
@@ -207,8 +207,8 @@ class Location(object):
 
         if p2c_notif:
             p2c('pikuli.%s.dragto(): drag %s to (%i,%i)' % (type(self).__name__, str(self), self.x, self.y))
-        self.x = self._x = dest_x
-        self.y = self._y = dest_y
+        self.x = dest_x
+        self.y = dest_y
         return self
 
     def drop(self, p2c_notif=True):

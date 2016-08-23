@@ -541,8 +541,11 @@ class Region(object):
                 #cv2.imwrite('c:\\tmp\\FindFailed-pattern.png', ps[0]._cv2_pattern)
                 #cv2.imwrite('c:\\tmp\\FindFailed-field.png', field)
 
-                failedImages = ', '.join(map(lambda p: p.getFilename(full_path=False), ps))
-                raise FindFailed('Unable to find \'%s\' in %s' % (failedImages, str(self)), patterns=ps, field=field)
+                failedImages = ', '.join(map(lambda p: p.getFilename(full_path=True), ps))
+                raise FindFailed(
+                    "Unable to find '{}' in {} after {} secs of trying".format(failedImages, self, elaps_time),
+                    patterns=ps, field=field
+                )
 
 
     def find(self, ps, timeout=None, exception_on_find_fail=True, save_img_file_at_fail=None):
