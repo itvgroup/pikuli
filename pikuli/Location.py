@@ -10,8 +10,6 @@ import win32con
 import time
 from _functions import *
 
-logger = logging.getLogger('axxon_autotest')
-
 
 DELAY_AFTER_MOUSE_MOVEMENT = 0.500  # Время в [c]
 DELAY_IN_MOUSE_CLICK = 0.100        # Время в [c] между нажатием и отжатием кнопки (замерял сам и гуглил)
@@ -32,6 +30,7 @@ class Location(object):
         self.y = int(y)
         self.title = title
         self._is_mouse_down = False
+        self.logger = logging.getLogger('axxon.pikuli')
 
     def __repr__(self):
         return 'Location({}, {})'.format(self.x, self.y)
@@ -86,19 +85,19 @@ class Location(object):
         win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, self.x, self.y, 0, 0)
         time.sleep(DEALY_AFTER_CLICK)
         if p2c_notif:
-            p2c('pikuli.%s.click(): click on %s' % (type(self).__name__, str(self)))
+            self.logger.info('pikuli.%s.click(): click on %s' % (type(self).__name__, str(self)))
 
     def mouseDown(self, p2c_notif=True):
         self.mouseMove()
         win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, self.x, self.y, 0, 0)
         if p2c_notif:
-            p2c('pikuli.%s.mouseDown(): mouseDown on %s' % (type(self).__name__, str(self)))
+            self.logger.info('pikuli.%s.mouseDown(): mouseDown on %s' % (type(self).__name__, str(self)))
 
     def mouseUp(self, p2c_notif=True):
         self.mouseMove()
         win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, self.x, self.y, 0, 0)
         if p2c_notif:
-            p2c('pikuli.%s.mouseUp(): mouseUp on %s' % (type(self).__name__, str(self)))
+            self.logger.info('pikuli.%s.mouseUp(): mouseUp on %s' % (type(self).__name__, str(self)))
 
     def rightClick(self, after_cleck_delay=DEALY_AFTER_CLICK, p2c_notif=True):
         self.mouseMove()
@@ -107,7 +106,7 @@ class Location(object):
         win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTUP, self.x, self.y, 0, 0)
         time.sleep(DEALY_AFTER_CLICK)
         if p2c_notif:
-            p2c('pikuli.%s.rightClick(): rightClick on %s' % (type(self).__name__, str(self)))
+            self.logger.info('pikuli.%s.rightClick(): rightClick on %s' % (type(self).__name__, str(self)))
 
     def doubleClick(self, after_cleck_delay=DEALY_AFTER_CLICK, p2c_notif=True):
         self.mouseMove()
@@ -120,7 +119,7 @@ class Location(object):
         win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, self.x, self.y, 0, 0)
         time.sleep(DEALY_AFTER_CLICK)
         if p2c_notif:
-            p2c('pikuli.%s.doubleClick(): doubleClick on %s' % (type(self).__name__, str(self)))
+            self.logger.info('pikuli.%s.doubleClick(): doubleClick on %s' % (type(self).__name__, str(self)))
 
     def scroll(self, direction=1, count=1, click=True, p2c_notif=True):
         # direction:
@@ -129,13 +128,13 @@ class Location(object):
         self.mouseMove()
         if click:
             self.click(p2c_notif=False)
-        logger.info('{} scrolling: direction={}, '
-                    'count={}...'.format(self, direction, count))
+        self.logger.info('{} scrolling: direction={}, '
+                         'count={}...'.format(self, direction, count))
         for i in range(0, int(count)):
             win32api.mouse_event(win32con.MOUSEEVENTF_WHEEL, self.x, self.y, int(direction), 0)
             time.sleep(DELAY_IN_MOUSE_CLICK)
         if p2c_notif:
-            p2c('pikuli.%s.scroll(): scroll on %s; direction=%s, count=%s, click=%s' % (type(self).__name__, str(self), str(direction), str(count), str(click)))
+            self.logger.info('pikuli.%s.scroll(): scroll on %s; direction=%s, count=%s, click=%s' % (type(self).__name__, str(self), str(direction), str(count), str(click)))
 
     def type(self, text, modifiers=None, click=True, click_type_delay=DELAY_BETWEEN_CLICK_AND_TYPE, p2c_notif=True):
         ''' Не как в Sikuli '''
@@ -143,7 +142,7 @@ class Location(object):
             self.click(after_cleck_delay=click_type_delay, p2c_notif=False)
         type_text(str(text), modifiers, p2c_notif=False)
         if p2c_notif:
-            p2c('pikuli.%s.type(): type on %s \'%s\'; modifiers=%s, click=%s' % (type(self).__name__, str(self), repr(text), str(modifiers), str(click)))
+            self.logger.info('pikuli.%s.type(): type on %s \'%s\'; modifiers=%s, click=%s' % (type(self).__name__, str(self), repr(text), str(modifiers), str(click)))
 
     def enter_text(self, text, modifiers=None, click=True, click_type_delay=DELAY_BETWEEN_CLICK_AND_TYPE, p2c_notif=True):
         ''' Не как в Sikuli
@@ -154,9 +153,10 @@ class Location(object):
         time.sleep(0.5)
         type_text(str(text) + Key.ENTER, modifiers, p2c_notif=False)
         if p2c_notif:
-            p2c('pikuli.%s.enter_text(): enter_text on %s \'%s\'; modifiers=%s, click=%s' % (type(self).__name__, str(self), repr(text), str(modifiers), str(click)))
+            self.logger.info('pikuli.%s.enter_text(): enter_text on %s \'%s\'; modifiers=%s, click=%s' % (type(self).__name__, str(self), repr(text), str(modifiers), str(click)))
 
-        p2c('[WARNING] We need to eliminate all calls of Location.enter_text() !!!!!')
+        self.logger.warning('We need to eliminate all calls '
+                            'of Location.enter_text() !!!!!')
 
 
     def dragto(self, *dest_location, **kwargs):
@@ -206,7 +206,7 @@ class Location(object):
             la += a_sgn * DRAGnDROP_MOVE_STEP
 
         if p2c_notif:
-            p2c('pikuli.%s.dragto(): drag %s to (%i,%i)' % (type(self).__name__, str(self), self.x, self.y))
+            self.logger.info('pikuli.%s.dragto(): drag %s to (%i,%i)' % (type(self).__name__, str(self), self.x, self.y))
         self.x = dest_x
         self.y = dest_y
         return self
@@ -216,7 +216,7 @@ class Location(object):
             self.mouseUp(p2c_notif=False)
             self._is_mouse_down = False
             if p2c_notif:
-                p2c('pikuli.%s.drop(): drop %s' % (type(self).__name__, str(self)))
+                self.logger.info('pikuli.%s.drop(): drop %s' % (type(self).__name__, str(self)))
             return self
         else:
             raise FailExit('You try drop <%s>, but it is not bragged before!' % str(self))
@@ -230,5 +230,5 @@ class Location(object):
         self.dragto(*dest_location, p2c_notif=False)
         self.drop(p2c_notif=False)
         if p2c_notif:
-            p2c('pikuli.%s.dragto(): drag %s to (%i,%i) and drop' % (type(self).__name__, src, self.x, self.y))
+            self.logger.info('pikuli.%s.dragto(): drag %s to (%i,%i) and drop' % (type(self).__name__, src, self.x, self.y))
         return self

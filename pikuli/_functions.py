@@ -3,9 +3,8 @@
 '''
    Файл содержит вспомогательные функции, используемые в pikuli.
 '''
-import sys
 import time
-import threading
+import logging
 
 import win32con
 import win32api
@@ -245,13 +244,15 @@ def _take_screenshot(x, y, w, h, hwnd=None):
 
 
 def get_text_from_clipboard(p2c_notif=True):
+    logger = logging.getLogger('axxon.pikuli')
     win32clipboard.OpenClipboard()
     try:
         data = win32clipboard.GetClipboardData()
         if p2c_notif:
-            p2c('pikuli._functions.get_text_from_clipboard(): data = \'%s\'' % str(data))
+            logger.info('pikuli._functions.get_text_from_clipboard(): '
+                        'data = \'{}\''.format(data))
     except Exception as ex:
-        p2c(str(ex.message))
+        logger.error(ex)
         data = ''
     win32clipboard.CloseClipboard()
     return data
@@ -419,7 +420,7 @@ def type_text(s, modifiers=None, p2c_notif=True):
                 release_key(_KeyCodes['SHIFT'][0], _KeyCodes['SHIFT'][1])
 
         else:
-            raise FailExit('unknown symbol \'%s\' in \'%s\'' % (str(c), str(s)))
+            raise FailExit('unknown symbol \'%s\' in \'%s\'' % (c, s))
 
     if modifiers is not None:
         for k in KeyModifier._rev:
@@ -427,9 +428,6 @@ def type_text(s, modifiers=None, p2c_notif=True):
                 release_key(_KeyCodes[KeyModifier._rev[k]][0], _KeyCodes[KeyModifier._rev[k]][1])
 
     if p2c_notif:
-        p2c('pikuli._functions.type_text(): \'%s\' was typed; modifiers=%s' % (repr(s), str(modifiers)))
-
-
-
-
-
+        logger = logging.getLogger('axxon.pikuli')
+        logger.info('pikuli._functions.type_text(): \'%s\' '
+                    'was typed; modifiers=%s' % (repr(s), str(modifiers)))

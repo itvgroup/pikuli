@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import os
-# import sys
-
-# from _functions import p2c
 
 
 class SettingsClass(object):
@@ -38,7 +35,6 @@ class SettingsClass(object):
         for path in self.IMG_ADDITION_PATH:
             yield path
 
-
     def setFindFailedDir(self, path):
         if not os.path.exists(path):
             try:
@@ -49,7 +45,6 @@ class SettingsClass(object):
 
     def getFindFailedDir(self):
         return self.FindFailedDir
-
 
     def setPatternURLTemplate(self, GetPattern_URLTemplate):
         self.GetPattern_URLTemplate = GetPattern_URLTemplate
