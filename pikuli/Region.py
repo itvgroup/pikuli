@@ -21,7 +21,7 @@ from _exceptions import *
 from Pattern import *
 from Location import *
 import hwnd_element
-# import pikuli
+import pikuli
 
 RELATIONS = ['top-left', 'center']
 
@@ -379,8 +379,8 @@ class Region(object):
             self._image_at_some_moment = img
         return (not eq)
 
-
     def save_as_jpg(self, full_filename):
+
         path = os.path.abspath(full_filename)
         p2c('pikuli.Region.save_as_jpg:\n\tinput:     %s\n\tfull path: %s' % (str(self), path))
         dir_path = os.path.dirname(full_filename)
@@ -391,6 +391,7 @@ class Region(object):
     def save_as_png(self, full_filename):
         path = os.path.abspath(full_filename)
         p2c('pikuli.Region.save_as_png:\n\tinput:     %s\n\tfull path: %s' % (str(self), path))
+
         dir_path = os.path.dirname(full_filename)
         if not os.path.exists(dir_path):
             os.makedirs(dir_path)

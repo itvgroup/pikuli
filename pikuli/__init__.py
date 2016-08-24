@@ -13,6 +13,7 @@ Doc pywin32:
 '''
 
 import logging
+import os
 
 from ._functions import *
 from ._exceptions import *
@@ -42,3 +43,15 @@ __all__ = [
     'Location',
     'Pattern',
 ]
+
+
+class LogRecord(str):
+    def __new__(cls, *chunks):
+        sep = ' '
+        value = sep.join(str(chunk) for chunk in chunks)
+        return str.__new__(cls, value)
+
+
+class File(object):
+    def __init__(self, filename):
+        self.abspath = os.path.abspath(filename)
