@@ -6,8 +6,8 @@
 '''
 
 import traceback
-from _exceptions import *
-from Region import *
+from _exceptions import FailExit
+from Region import Region
 
 
 class Match(Region):
@@ -48,7 +48,7 @@ class Match(Region):
         ''' Sikuli: Get the 'location' object that will be used as the click point.
         Typically, when no offset was specified by Pattern.targetOffset(), the click point is the center of the matched region.
         If an offset was given, the click point is the offset relative to the center. '''
-        raise Exception('TODO here')
+        raise NotImplementedError
 
     def getPattern(self):
         return self._pattern

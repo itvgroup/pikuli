@@ -39,7 +39,7 @@ class SettingsClass(object):
         if not os.path.exists(path):
             try:
                 os.makedirs(path)
-            except:
+            except Exception:
                 raise Exception('pikuli.setFindFailedDir(...): can not set SettingsClass.FindFailedDir to \'%s\' -- failed to create directory.' % str(path))
         self.FindFailedDir = path
 

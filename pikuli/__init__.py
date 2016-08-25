@@ -12,8 +12,8 @@ Doc pywin32:
 
 '''
 
-import logging
 import os
+import logging
 
 from ._functions import *
 from ._exceptions import *
@@ -27,13 +27,13 @@ from .Pattern import Pattern
 
 
 Settings = SettingsClass()
+logger = logging.getLogger('axxon.pikuli')
 
 try:
     Settings.addImagePath(
         os.path.dirname(os.path.abspath(sys.modules['__main__'].__file__)))
 except Exception as e:
-    logging.getLogger('axxon.pikuli').error(
-        'Unable to addImagePath() initializing pikuli package: {}'.format(e))
+    logger.error('Problem with addImagePath: {}'.format(e))
 
 __all__ = [
     'Settings',

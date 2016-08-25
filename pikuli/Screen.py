@@ -1,36 +1,35 @@
 # -*- coding: utf-8 -*-
 
-'''
-   Screen - представление физических мониторов компьютера.
-'''
-
 import _functions
-from _exceptions import *
-from Region import *
+from _exceptions import FailExit
+from Region import Region
 
 
 class Screen(Region):
-    ''' Экран.
-
-        x, y  --  координаты левого верхнего угла в системе координат виртуального рабочего стола
-        w, h  --  размеры прямоуголника экрана
-    '''
+    """ Represents physical computer display screen.
+        x, y  --  left upper corner coords relative to virtual desktop.
+        w, h  --  screen rectangle area dimensions.
+        n     --  display number.
+    """
     def __init__(self, n):
-        if n == 'virt':
-            n = 0
+        self.n = 0 if n == 'virt' else n
 
-        if isinstance(n, int) and n >= 0:
-            # Returns a sequence of tuples. For each monitor found, returns a handle to the monitor, device context handle, and intersection rectangle: (hMonitor, hdcMonitor, PyRECT)
-            (mon_hndl, _, mon_rect) = _functions._screen_n_to_mon_descript(n)
+        if self.n < 0:
+            raise FailExit('Monitor number is less than zero.')
 
-            super(Screen, self).__init__(mon_rect[0], mon_rect[1], mon_rect[2]-mon_rect[0], mon_rect[3]-mon_rect[1], title='Screen (%i)' % n)
-            self.n = self._n = n
-            self.__mon_hndl = mon_hndl
+        # Returns a sequence of tuples.
+        # For each monitor found, returns a handle to the monitor,
+        # device context handle, and intersection rectangle:
+        # (hMonitor, hdcMonitor, PyRECT).
+        self.__mon_hndl, _, mon_rect = \
+            _functions._screen_n_to_mon_descript(self.n)
 
-        else:
-            raise FailExit()
+        super(Screen, self).__init__(mon_rect[0],
+                                     mon_rect[1],
+                                     mon_rect[2] - mon_rect[0],
+                                     mon_rect[3] - mon_rect[1],
+                                     title='Screen ({})'.format(self.n))
 
-    def __str__(self):
-        super(Screen, self).__str__()
-        self.n = self._n
-        return 'Screen (%i) (%i, %i, %i, %i)' % (self._n, self._x, self._y, self._w, self._h)
+    def __repr__(self):
+        return '<Screen ({}) ({}, {}, {}, {})>'.format(
+            self.n, self._x, self._y, self._w, self._h)

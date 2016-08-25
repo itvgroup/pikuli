@@ -7,6 +7,7 @@ import types
 import sys
 import re
 import time
+import logging
 
 from win32api import *
 from win32gui import *
@@ -22,9 +23,12 @@ comtypes.client.GetModule('oleacc.dll')             # Что-то там наг�
 from comtypes.gen.Accessibility import IAccessible  # ... и теперь чать этого импортируем
 
 import Region
-from _functions import p2c, wait_while, wait_while_not
-from _exceptions import *
+from _functions import wait_while, wait_while_not
+from _exceptions import FindFailed, FailExit
 import ui_element
+
+
+logger = logging.getLogger('axxon.pikuli')
 
 '''
 !!! TODO: !!!
@@ -123,22 +127,6 @@ def _find_window_by_process_name_and_title(proc_name, in_title):
         raise FindFailed('pikuli.HWNDElement: more then one window with %s in title of the process \'%s\' (%s) was found.' % (str(in_title), str(proc_name), str(extra['pid'])))
 
     return (extra['pid'], extra['hwnd'])
-
-
-"""
-def _wait_for(func, timeout):
-    DELAY_BETWEEN_ATTEMTS = 0.5
-    elaps_time = 0
-    while True:
-        f = func()
-        # p2c(str(func) + ' ' + str(f))
-        if f:
-            return True
-        elif elaps_time > timeout:
-            return False
-        time.sleep(DELAY_BETWEEN_ATTEMTS)
-        elaps_time += DELAY_BETWEEN_ATTEMTS
-"""
 
 
 class HWNDElement(object):
@@ -375,12 +363,13 @@ class HWNDElement(object):
 
     def bring_to_front(self):
         if self.is_empty():
-            raise Exception('HWNDElement: this is an empty class. Initialise it first.')
+            raise Exception(
+                'HWNDElement: this is an empty class. Initialise it first.')
         try:
             SetForegroundWindow(self.hwnd)
             return True
         except Exception as ex:
-            p2c('bring_to_front: %s' % str(ex))
+            logger.error('HWNDElement: could not bring_to_front(): {}'.format(ex))
             return False
 
     def is_visible(self):
@@ -482,7 +471,7 @@ class HWNDElement(object):
         if 'HWNDElements' in self.class_name.lower():
             return str(self._obj().accValue())
         else:
-            raise Exception('TODO')
+            raise NotImplementedError
 
 
     def get_parent(self):

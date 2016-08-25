@@ -1,23 +1,19 @@
 # -*- coding: utf-8 -*-
 
-'''
-   Patten - класс объектов, представляющих изображения, использующиеся для поиска на экране
-'''
-
 import os
 import cv2
 
 import pikuli
-from _functions import *
-from _exceptions import *
+from _exceptions import FailExit
 
 
 class Pattern(object):
+    """ Represents images being searched for on display. """
     def __init__(self, img_path, similarity=None):
         '''
         img_path  --  имя файла или объект Pattern
         '''
-        (self.__similarity, self.__img_path) = (None, None)
+        self.__similarity, self.__img_path = None, None
 
         if isinstance(img_path, Pattern):
             if similarity is None:
@@ -76,13 +72,12 @@ class Pattern(object):
         return self.__similarity
 
     def getW(self):
-        (self.w, self.h) = (self._w, self._h)
+        self.w, self.h = self._w, self._h
         return self._w
 
     def getH(self):
-        (self.w, self.h) = (self._w, self._h)
+        self.w, self.h = self._w, self._h
         return self._h
 
     def get_image(self):
-        ''' numpy.array '''
         return self._cv2_pattern

@@ -11,15 +11,19 @@ import time
 import traceback
 import datetime
 import os
+import logging
 
 import cv2
 import numpy as np
 import win32gui
 
-from _functions import p2c, _take_screenshot, verify_timeout_argument
-from _exceptions import *
-from Pattern import *
-from Location import *
+from _functions import _take_screenshot, verify_timeout_argument
+from _exceptions import FindFailed, FailExit
+from Pattern import Pattern
+from Location import (Location,
+                      DELAY_BETWEEN_CLICK_AND_TYPE,
+                      DRAGnDROP_MOVE_DELAY,
+                      DRAGnDROP_MOVE_STEP)
 import hwnd_element
 import pikuli
 
@@ -27,6 +31,8 @@ RELATIONS = ['top-left', 'center']
 
 DELAY_BETWEEN_CV_ATTEMPT = 1.0      # Время в [c] между попытками распознования графического объекта
 DEFAULT_FIND_TIMEOUT     = 3.1
+
+logger = logging.getLogger('axxon.pikuli')
 
 
 def _get_list_of_patterns(ps, failExitText):
@@ -382,7 +388,7 @@ class Region(object):
     def save_as_jpg(self, full_filename):
 
         path = os.path.abspath(full_filename)
-        p2c('pikuli.Region.save_as_jpg:\n\tinput:     %s\n\tfull path: %s' % (str(self), path))
+        logger.info('pikuli.Region.save_as_jpg:\n\tinput:     %s\n\tfull path: %s' % (str(self), path))
         dir_path = os.path.dirname(full_filename)
         if not os.path.exists(dir_path):
             os.makedirs(dir_path)
@@ -390,7 +396,7 @@ class Region(object):
 
     def save_as_png(self, full_filename):
         path = os.path.abspath(full_filename)
-        p2c('pikuli.Region.save_as_png:\n\tinput:     %s\n\tfull path: %s' % (str(self), path))
+        logger.info('pikuli.Region.save_as_png:\n\tinput:     %s\n\tfull path: %s' % (str(self), path))
 
         dir_path = os.path.dirname(full_filename)
         if not os.path.exists(dir_path):
@@ -453,7 +459,6 @@ class Region(object):
 
         ps = _get_list_of_patterns(ps, err_msg_template % 'bad \'ps\' argument; it should be a string (path to image file) or \'Pattern\' object')
 
-        #p2c('pikuli.findAll: try to find %s' % str(ps))
         time.sleep(delay_before)
         (pts, self._last_match) = ([], [])
         try:
@@ -471,12 +476,12 @@ class Region(object):
                 fn_pattern += [os.path.join(pikuli.Settings.getFindFailedDir(), 'Region-findAll-pattern-' + dt + '-' + p.getFilename(full_path=False) + '.jpg')]
                 cv2.imwrite(fn_pattern[-1], p.get_image(), [cv2.IMWRITE_JPEG_QUALITY, 70])
 
-            p2c('pikuli.Region.find: FindFailed; ps = %s\n\tField stored as:\n\t\t%s\n\tPatterns strored as:\n\t\t%s' % (str(ps), fn_field, '\b\t\t'.join(fn_pattern)))
+            logger.info('pikuli.Region.find: FindFailed; ps = %s\n\tField stored as:\n\t\t%s\n\tPatterns strored as:\n\t\t%s' % (str(ps), fn_field, '\b\t\t'.join(fn_pattern)))
 
             raise ex
         else:
             scores = '[' + ', '.join(['%.2f'%m.getScore() for m in self._last_match]) + ']'
-            p2c('pikuli.findAll: total found %i matches of <%s> in %s; scores = %s' % (len(self._last_match), str(ps), str(self), scores) )
+            logger.info('pikuli.findAll: total found %i matches of <%s> in %s; scores = %s' % (len(self._last_match), str(ps), str(self), scores) )
             return self._last_match
 
 
@@ -486,7 +491,7 @@ class Region(object):
               -- Если ps - это список (list) и aov == 'appear', то возвращается первый найденный элемент. Это можно использвоать, если требуется найти любое из переданных изображений.
               -- Если ps - это список (list) и aov == 'vanish', то функция завершается, когда не будет найден хотя бы один из шаблонов.
 
-            exception_on_find_fail -- необязательный аргумент True|False. Здесь нужен только для кастопизации p2c() в случае ненахождения паттерна.
+            exception_on_find_fail -- необязательный аргумент True|False. Здесь нужен только для кастопизации вывода в лог в случае ненахождения паттерна.
         '''
         ps = _get_list_of_patterns(ps, 'bad \'ps\' argument; it should be a string (path to image file) or \'Pattern\' object: %s' % str(ps))
 
@@ -517,11 +522,11 @@ class Region(object):
                         if len(pts) != 0:
                             # Что-то нашли. Выберем один вариант с лучшим 'score'. Из несольких с одинаковыми 'score' будет первый при построчном проходе по экрану.
                             pt = max(pts, key=lambda pt: pt[2])
-                            p2c( 'pikuli.%s.<find...>: %s has been found' % (type(self).__name__, _ps_.getFilename(full_path=False)))
+                            logger.info( 'pikuli.%s.<find...>: %s has been found' % (type(self).__name__, _ps_.getFilename(full_path=False)))
                             return Match(pt[0], pt[1], _ps_._w, _ps_._h, _ps_, pt[2])
                     elif aov == 'vanish':
                         if len(pts) == 0:
-                            p2c( 'pikuli.%s.<find...>: %s has vanished' % (type(self).__name__, _ps_.getFilename(full_path=False)))
+                            logger.info( 'pikuli.%s.<find...>: %s has vanished' % (type(self).__name__, _ps_.getFilename(full_path=False)))
                             return
                     else:
                         raise FailExit('unknown \'aov\' = \'%s\'' % str(aov))
@@ -529,7 +534,7 @@ class Region(object):
             time.sleep(DELAY_BETWEEN_CV_ATTEMPT)
             elaps_time += DELAY_BETWEEN_CV_ATTEMPT
             if elaps_time >= timeout:
-                p2c( 'pikuli.%s.<find...>: %s hasn\'t been found' % (type(self).__name__, _ps_.getFilename(full_path=False)) +
+                logger.info( 'pikuli.%s.<find...>: %s hasn\'t been found' % (type(self).__name__, _ps_.getFilename(full_path=False)) +
                      ', but exception was disabled.' if exception_on_find_fail is not None and not exception_on_find_fail else '' )
                 #TODO: Какие-то ту ошибки. Да и следует передавать, наверно, картинки в FindFailed(), а где-то из модулей робота сохранять, если надо.
                 #t = time.time()
@@ -564,7 +569,7 @@ class Region(object):
 
         save_img_file_at_fail  --  Сохранять ли картинки при ошибке поиска: True|False|None. None -- значение берется из exception_on_find_fail.
         '''
-        #p2c('pikuli.find: try to find %s' % str(ps))
+        #logger.info('pikuli.find: try to find %s' % str(ps))
         try:
             self._last_match = self._wait_for_appear_or_vanish(ps, timeout, 'appear', exception_on_find_fail=exception_on_find_fail)
 
@@ -587,11 +592,11 @@ class Region(object):
                     fn_pattern += [os.path.join(pikuli.Settings.getFindFailedDir(), 'Region-find-pattern-' + dt + '-' + p.getFilename(full_path=False) + '.jpg')]
                     cv2.imwrite(fn_pattern[-1], p.get_image(), [cv2.IMWRITE_JPEG_QUALITY, 70])
 
-                p2c('pikuli.Region.find: FindFailed; exception_on_find_fail = %s; ps = %s\n\tField stored as:\n\t\t%s\n\tPatterns strored as:\n\t\t%s'
+                logger.info('pikuli.Region.find: FindFailed; exception_on_find_fail = %s; ps = %s\n\tField stored as:\n\t\t%s\n\tPatterns strored as:\n\t\t%s'
                     % (str(exception_on_find_fail), str(ps), fn_field, '\b\t\t'.join(fn_pattern)))
 
             else:
-                p2c('pikuli.Region.find: FindFailed; exception_on_find_fail = %s; ps = %s' % (str(exception_on_find_fail), str(ps)))
+                logger.info('pikuli.Region.find: FindFailed; exception_on_find_fail = %s; ps = %s' % (str(exception_on_find_fail), str(ps)))
 
             if exception_on_find_fail or ex.cause != FindFailed.NOT_FOUND_ERROR:
                 raise ex
@@ -609,7 +614,7 @@ class Region(object):
         except FailExit:
             raise FailExit('\nNew stage of %s\n[error] Incorect \'waitVanish()\' method call:\n\tself = %s\n\tps = %s\n\ttimeout = %s' % (traceback.format_exc(), str(self), str(ps), str(timeout)))
         except FindFailed:
-            p2c(str(ps))
+            logger.info(str(ps))
             return False
         else:
             return True
@@ -624,7 +629,7 @@ class Region(object):
         except FailExit:
             raise FailExit('\nNew stage of %s\n[error] Incorect \'exists()\' method call:\n\tself = %s\n\tps = %s' % (traceback.format_exc(), str(self), str(ps)))
         except FindFailed:
-            p2c(str(ps))
+            logger.info(str(ps))
             return False
         else:
             return True
@@ -666,35 +671,35 @@ class Region(object):
     def click(self, after_cleck_delay=DEALY_AFTER_CLICK, p2c_notif=True):
         self.getCenter().click(after_cleck_delay=DEALY_AFTER_CLICK, p2c_notif=False)
         if p2c_notif:
-            p2c('pikuli.%s.click(): click in center of %s' % (type(self).__name__, str(self)))
+            logger.info('pikuli.%s.click(): click in center of %s' % (type(self).__name__, str(self)))
 
 
     def rightClick(self, after_cleck_delay=DEALY_AFTER_CLICK, p2c_notif=True):
         self.getCenter().rightClick(after_cleck_delay=DEALY_AFTER_CLICK)
         if p2c_notif:
-            p2c('pikuli.%s.rightClick(): right click in center of %s' % (type(self).__name__, str(self)))
+            logger.info('pikuli.%s.rightClick(): right click in center of %s' % (type(self).__name__, str(self)))
 
     def doubleClick(self, after_cleck_delay=DEALY_AFTER_CLICK, p2c_notif=True):
         self.getCenter().doubleClick(after_cleck_delay=DEALY_AFTER_CLICK)
         if p2c_notif:
-            p2c('pikuli.%s.doubleClick(): double click in center of %s' % (type(self).__name__, str(self)))
+            logger.info('pikuli.%s.doubleClick(): double click in center of %s' % (type(self).__name__, str(self)))
 
     def type(self, text, modifiers=None, click=True, click_type_delay=DELAY_BETWEEN_CLICK_AND_TYPE, p2c_notif=True):
         ''' Не как в Sikuli '''
         self.getCenter().type(text, modifiers=modifiers, click=click, p2c_notif=False)
         if p2c_notif:
-            p2c('pikuli.%s.type(): \'%s\' was typed in center of %s; click=%s, modifiers=%s' % (type(self).__name__, repr(text), str(self), str(click), str(modifiers)))
+            logger.info('pikuli.%s.type(): \'%s\' was typed in center of %s; click=%s, modifiers=%s' % (type(self).__name__, repr(text), str(self), str(click), str(modifiers)))
 
     def enter_text(self, text, modifiers=None, click=True, click_type_delay=DELAY_BETWEEN_CLICK_AND_TYPE, p2c_notif=True):
         ''' Не как в Sikuli '''
         self.getCenter().enter_text(text, modifiers=modifiers, click=click, p2c_notif=False)
         if p2c_notif:
-            p2c('pikuli.%s.enter_text(): \'%s\' was entred in center of %s; click=%s, modifiers=%s' % (type(self).__name__, repr(text), str(self), str(click), str(modifiers)))
+            logger.info('pikuli.%s.enter_text(): \'%s\' was entred in center of %s; click=%s, modifiers=%s' % (type(self).__name__, repr(text), str(self), str(click), str(modifiers)))
 
     def scroll(self, direction=1, count=1, click=True, p2c_notif=True):
         self.getCenter().scroll(direction, count, click)
         if p2c_notif:
-            p2c('pikuli.%s.scroll(): scroll in center of %s; direction=%s, count=%s, click=%s' % (type(self).__name__, str(self), str(direction), str(count), str(click)))
+            logger.info('pikuli.%s.scroll(): scroll in center of %s; direction=%s, count=%s, click=%s' % (type(self).__name__, str(self), str(direction), str(count), str(click)))
 
 
     def dragto(self, *dest_location, **kwargs):
@@ -716,7 +721,7 @@ class Region(object):
         # Изменим у текущего объект координаты, т.к. его передвинули:
         center = self.getCenter()
         if p2c_notif:
-            p2c('pikuli.%s.dragto(): drag center of %s to (%i,%i)' % (type(self).__name__, str(self), self.x, self.y))
+            logger.info('pikuli.%s.dragto(): drag center of %s to (%i,%i)' % (type(self).__name__, str(self), self.x, self.y))
         self._x += self.drag_location.x - center.x
         self._y += self.drag_location.y - center.y
         (self.x, self.y) = (self._x, self._y)
@@ -727,7 +732,7 @@ class Region(object):
             self.drag_location.drop()
             self.drag_location = None
             if p2c_notif:
-                p2c('pikuli.%s.drop(): drop %s' % (type(self).__name__, str(self)))
+                logger.info('pikuli.%s.drop(): drop %s' % (type(self).__name__, str(self)))
 
     def dragndrop(self, *dest_location, **kwargs):
         ''' Перемащает регион за его центр. '''
@@ -740,7 +745,7 @@ class Region(object):
         self.dragto(*dest_location)
         self.drop()
         if p2c_notif:
-            p2c('pikuli.%s.dragto(): drag center of %s to (%i,%i) and drop' % (type(self).__name__, str(self), self.x, self.y))
+            logger.info('pikuli.%s.dragto(): drag center of %s to (%i,%i) and drop' % (type(self).__name__, str(self), self.x, self.y))
 
     """
     '''def dragto(self, *args):

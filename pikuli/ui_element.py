@@ -7,16 +7,19 @@ import datetime
 import traceback
 import sys
 import re
+import logging
 
 import _ctypes
 import win32gui
 
 import UIA
 import Region
-from _functions import p2c, wait_while, wait_while_not, Key, KeyModifier, type_text, verify_timeout_argument
-from _exceptions import *
+from _functions import (wait_while,
+                        wait_while_not, Key, KeyModifier,
+                        type_text, verify_timeout_argument)
+from _exceptions import FindFailed, FailExit
 import hwnd_element
-from oleacc_h import *
+from oleacc_h import (STATE_SYSTEM, ROLE_SYSTEM, ROLE_SYSTEM_rev)
 
 # "A lot of HRESULT codes…" (https://blogs.msdn.microsoft.com/eldar/2007/04/03/a-lot-of-hresult-codes/)
 COR_E_TIMEOUT = -2146233083  # -2146233083 =<математически>= -0x80131505;   0x80131505 =<в разрядной сетке>= (-2146233083 & 0xFFFFFFFF)
@@ -30,6 +33,10 @@ NAMES_of_COR_E = {
 NEXT_SEARCH_ITER_DELAY = 2  # Задержка между итерациями поиска, пока ещё не вышел timeout
 DEFAULT_FIND_TIMEOUT   = 11
 CONTROL_CHECK_AFTER_CLICK_DELAY = 3
+
+CONSOLE_ERASE_LINE_SEQUENCE = '\033[F' + '\033[2K'
+
+logger = logging.getLogger('axxon.pikuli')
 
 '''
 TODO:
@@ -52,12 +59,12 @@ if '_default_timeout' not in globals():
 
 def uia_set_default_timeout(timeout):
     global _default_timeout
-    p2c('uia_set_default_timeout(): _default_timeout  %f -> %f' % (_default_timeout, timeout))
+    logger.info('uia_set_default_timeout(): _default_timeout  %f -> %f' % (_default_timeout, timeout))
     _default_timeout = float(timeout)
 
 def uia_set_initial_default_timeout():
     global _default_timeout
-    p2c('uia_set_initial_default_timeout(): _default_timeout  %f -> %f' % (_default_timeout, DEFAULT_FIND_TIMEOUT))
+    logger.info('uia_set_initial_default_timeout(): _default_timeout  %f -> %f' % (_default_timeout, DEFAULT_FIND_TIMEOUT))
     _default_timeout = DEFAULT_FIND_TIMEOUT
 """
 
@@ -501,7 +508,7 @@ class UIElement(object):
             объект типа Region.
         '''
         self._test4readiness()
-        # p2c(kwargs)
+
 
         # Обработка воходных аргументов:
         find_first_only        = kwargs.pop('find_first_only', True)
@@ -512,7 +519,7 @@ class UIElement(object):
         next_serach_iter_delya = kwargs.pop('next_serach_iter_delya', NEXT_SEARCH_ITER_DELAY)
         _find_all              = kwargs.pop('_find_all', False)
 
-        # p2c('find: timeout = %s; self._find_timeout = %s' % (str(timeout), str(self._find_timeout)))
+        # logger.info('find: timeout = %s; self._find_timeout = %s' % (str(timeout), str(self._find_timeout)))
         if timeout is None:
             timeout = self._find_timeout
         if exception_on_find_fail is None:
@@ -602,7 +609,6 @@ class UIElement(object):
                 try:
                     uielem_val = winuiaelem.GetCurrentPropertyValue(UIA.UIA_automation_element_property_identifers_mapping[key])
                 except Exception as ex:
-                    # p2c(str(self), repr(self))
                     raise ex
                 if isinstance(criteria[key], list):
                     for substr in criteria[key]:
@@ -682,10 +688,6 @@ class UIElement(object):
                         found_winuiaelem_arr.append( elem )
                     _add_to_next_level_todo(elem)
 
-                    """try:
-                        p2c(repr(UIElement(elem)))
-                    except:
-                        p2c('-- some exception --')"""
 
                 (current_level_todo_arr, next_level_todo_arr, level) = _goto_next_level()
 
@@ -715,7 +717,7 @@ class UIElement(object):
         # - subroutines: end -
         txt_search_timeout        = 'searching with timeout = %s (call/class/module: %s/%s/%s) ...' % (str(timeout), str(_timeout), str(self._find_timeout), str(DEFAULT_FIND_TIMEOUT))
         txt_pikuli_search_pattern = '%s: by criteria %s %%s' % (_func_name, str__not_none_criteria)
-        p2c(txt_pikuli_search_pattern % txt_search_timeout)
+        logger.info(txt_pikuli_search_pattern % txt_search_timeout)
 
         walker = UIA.IUIAutomation_object.CreateTreeWalker(UIA.IUIAutomation_object.CreateTrueCondition())
         t0 = datetime.datetime.today()
@@ -767,19 +769,21 @@ class UIElement(object):
                         if exception_on_find_fail:
                             raise FindFailed('%s: no one elements was found\n\tself     = %s\n\tkwargs   = %s\n\tcriteria = %s\n\ttimeout  = %s'
                                              % (_func_name, repr(self), str(kwargs), str__criteria, str(timeout)))
-                        p2c(txt_pikuli_search_pattern % 'has been found: None (%s)' % str(timeout), reprint_last_line=True)
+                        logger.info(CONSOLE_ERASE_LINE_SEQUENCE)
+                        logger.info(txt_pikuli_search_pattern % 'has been found: None (%s)' % str(timeout))
                         return None
                     # t0 = datetime.datetime.today()
                     time.sleep(next_serach_iter_delya)
                 else:
                     found_elem = self.__create_instance_of_suitable_class(ex.winuiaelem)
-                    p2c(txt_pikuli_search_pattern % ('has been found: %s (%s)' % (repr(found_elem), str(timeout))), reprint_last_line=True)
+                    logger.info(CONSOLE_ERASE_LINE_SEQUENCE)
+                    logger.info(txt_pikuli_search_pattern % ('has been found: %s (%s)' % (repr(found_elem), str(timeout))))
                     return found_elem
 
             except _ctypes.COMError as ex:
                 if ex.args[0] == COR_E_TIMEOUT or ex.args[0] == COR_E_SUBSCRIBERS_FAILED:
-                    p2c('Cath %s exception: \"%s\". Checking timeout...' % (NAMES_of_COR_E[ex.args[0] ], str(ex)))
-                    p2c(txt_pikuli_search_pattern % txt_search_timeout)
+                    logger.error('Cath %s exception: \"%s\". Checking timeout...' % (NAMES_of_COR_E[ex.args[0] ], str(ex)))
+                    logger.info(txt_pikuli_search_pattern % txt_search_timeout)
                     if (datetime.datetime.today()-t0).total_seconds() >= timeout:
                         raise FindFailed('%s: Timeout while looking for UIA element:\n\tself = %s\n\tkwargs = %s' % (_func_name, repr(self), str(kwargs)))
                     # t0 = datetime.datetime.today()
@@ -787,7 +791,7 @@ class UIElement(object):
                 else:
                     tb_text = ''.join(traceback.format_list(traceback.extract_tb(sys.exc_info()[2])[1:]))
                     full_text = 'Traceback for error point:\n' + tb_text.rstrip() + '\nError message:\n  ' + type(ex).__name__ + ': ' + str(ex)
-                    p2c(full_text)
+                    logger.info(full_text)
                     raise ex
 
             else:
@@ -804,7 +808,8 @@ class UIElement(object):
             if exception_on_find_fail:
                 raise FindFailed(': no one elements was found\n\tself = %s\n\tkwargs = %s\n\tcriteria = %s' % (_func_name, repr(self), str(kwargs), str__criteria))
             found_elem = []
-            p2c(txt_pikuli_search_pattern % ('there has been found no one UI-elem (%s)' % (str(timeout))), reprint_last_line=True)
+            logger.info(CONSOLE_ERASE_LINE_SEQUENCE)
+            logger.info(txt_pikuli_search_pattern % ('there has been found no one UI-elem (%s)' % (str(timeout))))
         else:
             found_elem = map(self.__create_instance_of_suitable_class, found_winuiaelem_arr)
 
@@ -820,8 +825,8 @@ class UIElement(object):
                     s = ss
                 if 'ss' in locals() and len(s) != len(ss):
                     s = s[:-1] + ', ...]'
-
-            p2c(txt_pikuli_search_pattern % ('there has been found %i UI-elems: %s (%s)' % (len(found_elem), s, str(timeout))), reprint_last_line=True)
+            logger.info(CONSOLE_ERASE_LINE_SEQUENCE)
+            logger.info(txt_pikuli_search_pattern % ('there has been found %i UI-elems: %s (%s)' % (len(found_elem), s, str(timeout))))
         return found_elem
 
 
@@ -935,7 +940,7 @@ class _uielement_Control(UIElement):
             if hasattr(c, 'REQUIRED_PATTERNS'):
                 for (pattern, methods) in c.REQUIRED_PATTERNS.items():
                     if self.get_property('Is'+pattern+'Available') is None:
-                        p2c('[WARNING] pikuli.ui_element: %s should support \'%s\', but it does not. The following methods will be unavalibale: %s' % (str(self), pattern, ' -- ALL --' if methods is None else str(methods)))
+                        logger.warning('[WARNING] pikuli.ui_element: %s should support \'%s\', but it does not. The following methods will be unavalibale: %s' % (str(self), pattern, ' -- ALL --' if methods is None else str(methods)))
                         if methods is None:
                             critical_error = True
                         else:
@@ -944,7 +949,7 @@ class _uielement_Control(UIElement):
             if hasattr(c, 'REQUIRED_METHODS'):
                 for (req_method, dep_methods) in c.REQUIRED_METHODS.items():
                     if not hasattr(self, req_method):
-                        p2c('[WARNING] pikuli.ui_element: %s should have %s() method, but it does not. The following dependent methods will be unavalibale: %s' % (str(self), str(req_method), str(dep_methods)))
+                        logger.warning('[WARNING] pikuli.ui_element: %s should have %s() method, but it does not. The following dependent methods will be unavalibale: %s' % (str(self), str(req_method), str(dep_methods)))
                         methods_to_block += methods
 
         if critical_error:
@@ -952,7 +957,7 @@ class _uielement_Control(UIElement):
 
         for m in methods_to_block:
             if not hasattr(self, m):
-                p2c('[WARNING] pikuli.ui_element: you try to block method \'%s\' by means of unsupported \'%s\' in %s. But this method does not defined in class \'%s\'. Do you have a mistake in definition of \'%s\'?' % (m, pattern, str(self), type(self).__name__, type(self).__name__))
+                logger.warning('[WARNING] pikuli.ui_element: you try to block method \'%s\' by means of unsupported \'%s\' in %s. But this method does not defined in class \'%s\'. Do you have a mistake in definition of \'%s\'?' % (m, pattern, str(self), type(self).__name__, type(self).__name__))
             else:
                 setattr(self, m, self._unavaulable_method_dummy)
 
@@ -980,7 +985,7 @@ class _uielement_Control(UIElement):
                 self.scroll_into_view()
             self.reg().click(p2c_notif=False)
             if p2c_notif:
-                p2c('pikuli.%s.click(): click in center of %s' % (type(self).__name__, str(self)))
+                logger.info('pikuli.%s.click(): click in center of %s' % (type(self).__name__, str(self)))
         else:
             raise Exception('CheckBox.check(...): unsupported method = \'%s\'' % str(method))
 
@@ -1010,9 +1015,9 @@ class _ValuePattern_methods(UIElement):
             changed = False
         if p2c_notif:
             if changed:
-                p2c('pikuli.%s.set_value(): set \'%s\' to %s (via ValuePattern)' % (type(self).__name__, repr(text), str(self)))
+                logger.info('pikuli.%s.set_value(): set \'%s\' to %s (via ValuePattern)' % (type(self).__name__, repr(text), str(self)))
             else:
-                p2c('pikuli.%s.set_value(): \'%s\' is alredy in %s (via ValuePattern)' % (type(self).__name__, repr(text), str(self)))
+                logger.info('pikuli.%s.set_value(): \'%s\' is alredy in %s (via ValuePattern)' % (type(self).__name__, repr(text), str(self)))
         return changed
 
     def is_readoly(self):
@@ -1042,9 +1047,9 @@ class _LegacyIAccessiblePattern_value_methods(UIElement):
             changed = False
         if p2c_notif:
             if changed:
-                p2c('pikuli.%s.set_value(): set \'%s\' to %s (via LegacyIAccessiblePattern)' % (type(self).__name__, repr(text), str(self)))
+                logger.info('pikuli.%s.set_value(): set \'%s\' to %s (via LegacyIAccessiblePattern)' % (type(self).__name__, repr(text), str(self)))
             else:
-                p2c('pikuli.%s.set_value(): \'%s\' is alredy in %s (via LegacyIAccessiblePattern)' % (type(self).__name__, repr(text), str(self)))
+                logger.info('pikuli.%s.set_value(): \'%s\' is alredy in %s (via LegacyIAccessiblePattern)' % (type(self).__name__, repr(text), str(self)))
         return changed
 
 
@@ -1098,7 +1103,7 @@ class _Enter_Text_method(UIElement):
                 raise Exception('_Enter_Text_method.type_text(...): text is still %s, not %s after %s seconds' % (self.get_value(), repr(chck_text), str(check_timeout)))
 
         if p2c_notif:
-            p2c('pikuli.%s.type_text(): type \'%s\' in %s' % (type(self).__name__, repr(text), str(self)))
+            logger.info('pikuli.%s.type_text(): type \'%s\' in %s' % (type(self).__name__, repr(text), str(self)))
 
 
     def enter_text(self, text, method='click', clean_method=None, check_timeout=CONTROL_CHECK_AFTER_CLICK_DELAY, p2c_notif=True):
@@ -1147,9 +1152,9 @@ class _Enter_Text_method(UIElement):
 
         if p2c_notif:
             if changed:
-                p2c('pikuli.%s.enter_text(): enter \'%s\' in %s' % (type(self).__name__, repr(text), str(self)))
+                logger.info('pikuli.%s.enter_text(): enter \'%s\' in %s' % (type(self).__name__, repr(text), str(self)))
             else:
-                p2c('pikuli.%s.enter_text(): \'%s\' is alredy in %s' % (type(self).__name__, repr(text), str(self)))
+                logger.info('pikuli.%s.enter_text(): \'%s\' is alredy in %s' % (type(self).__name__, repr(text), str(self)))
         return changed
 
 
@@ -1386,8 +1391,8 @@ class Tree(_uielement_Control):
             item_name -- Cписок строк-названий эелементов дерева, пречисленных по их вложенности один в другой. Последняя строка в списке -- искомый элемент.
             force_expand -- разворачивать ли свернутые элементы на пути поиска искового.
         '''
-        # p2c(item_name, force_expand)
-        p2c('pikuli.Tree.find_item: searching by criteria item_name = \'%s\', timeout = %s' % (str(item_name), str(timeout)), reprint_last_line=True)
+        logger.info(CONSOLE_ERASE_LINE_SEQUENCE)
+        logger.info('pikuli.Tree.find_item: searching by criteria item_name = \'%s\', timeout = %s' % (str(item_name), str(timeout)))
 
         if isinstance(item_name, str):
             item_name = [item_name]
@@ -1399,14 +1404,13 @@ class Tree(_uielement_Control):
         else:
             elem = self.find(Name=item_name[0], exact_level=1, timeout=timeout, exception_on_find_fail=exception_on_find_fail)
             if elem is None:
-                p2c('pikuli.ui_element.Tree.find_item: %s has not been found. No exception -- returning None' % str(item_name))
+                logger.info('pikuli.ui_element.Tree.find_item: %s has not been found. No exception -- returning None' % str(item_name))
                 return None
             if len(item_name) == 1:
                 found_elem = elem
             else:
                 found_elem = elem.find_item(item_name[1:], force_expand, timeout=timeout, exception_on_find_fail=exception_on_find_fail)
-        #p2c('pikuli.Tree.find_item: %s has been found by criteria \'%s\', timeout = %s, elem.timeout = %s'
-        #    % (str(item_name), repr(found_elem), str(timeout), str(found_elem._find_timeout)), reprint_last_line=True)
+
         return found_elem
 
 
@@ -1466,7 +1470,8 @@ class TreeItem(_uielement_Control):
             item_name -- Cписок строк-названий эелементов дерева, пречисленных по их вложенности один в другой. Последняя строка в списке -- искомый элемент.
             force_expand -- разворачивать ли свернутые элементы на пути поиска искового.
         '''
-        p2c('pikuli.TreeItem.find_item: searching by criteria item_name = \'%s\', timeout = %s' % (str(item_name), str(timeout)), reprint_last_line=True)
+        logger.info(CONSOLE_ERASE_LINE_SEQUENCE)
+        logger.info('pikuli.TreeItem.find_item: searching by criteria item_name = \'%s\', timeout = %s' % (str(item_name), str(timeout)))
 
         if isinstance(item_name, str):
             item_name = [item_name]
@@ -1480,14 +1485,13 @@ class TreeItem(_uielement_Control):
         self.expand()
         elem = self.find(Name=item_name[0], exact_level=1, timeout=timeout, exception_on_find_fail=exception_on_find_fail)
         if elem is None:
-            p2c('pikuli.ui_element.TreeItem.find_item: %s has not been found. No exception -- returning None' % str(item_name))
+            logger.info('pikuli.ui_element.TreeItem.find_item: %s has not been found. No exception -- returning None' % str(item_name))
             return None
         if len(item_name) == 1:
             found_elem = elem
         else:
             found_elem = elem.find_item(item_name[1:], force_expand, timeout=timeout)
-        #p2c('pikuli.TreeItem.find_item: %s has been found by criteria \'%s\', timeout = %s, elem.timeout = %s'
-        #    % (str(item_name), repr(found_elem), str(timeout), str(found_elem._find_timeout)), reprint_last_line=True)
+
         return found_elem
 
 
@@ -1527,8 +1531,8 @@ class ANPropGrid_Table(_uielement_Control):
             elif len(rows) == 0:
                 raise FindFailed('pikuli.ANPropGrid_Table: row \'%s\' not found.\nSearch arguments:\n\trow_name = %s\n\tforce_expand = %s' % (str(nested_name), str(row_name), str(force_expand)))
             return rows[0]
-
-        p2c('pikuli.ANPropGrid_Table.find_row: searching by criteria item_name = \'%s\'' % str(row_name), reprint_last_line=True)
+        logger.info(CONSOLE_ERASE_LINE_SEQUENCE)
+        logger.info('pikuli.ANPropGrid_Table.find_row: searching by criteria item_name = \'%s\'' % str(row_name))
         if isinstance(row_name, list):
             row = _find_row_precisely(self, row_name[0], 1)
             for nested_name in row_name[1:]:
@@ -1539,7 +1543,7 @@ class ANPropGrid_Table(_uielement_Control):
             found_elem = row
         else:
             found_elem = _find_row_precisely(self, row_name, 1)
-        # p2c('pikuli.ANPropGrid_Table.find_row: \'%s\' has been found: %s' % (str(row_name), repr(found_elem)))
+        # logger.info('pikuli.ANPropGrid_Table.find_row: \'%s\' has been found: %s' % (str(row_name), repr(found_elem)))
         return found_elem
 
 

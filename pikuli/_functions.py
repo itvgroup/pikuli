@@ -11,8 +11,6 @@ import win32api
 import win32gui
 import win32ui
 import win32clipboard
-# import win32print
-# from ctypes import windll
 
 import numpy as np
 
@@ -20,17 +18,14 @@ import pikuli
 from ._exceptions import FailExit
 
 
+logger = logging.getLogger('axxon.pikuli')
+
+
 # Константа отсутствует в win32con, но есть в http://userpages.umbc.edu/~squire/download/WinGDI.h:
 CAPTUREBLT = 0x40000000
 
 
 DELAY_KBD_KEY_PRESS = 0.020
-
-try:
-    from p2c_module import p2c
-except ImportError:
-    def p2c(*msgs, **kwargs):
-        print('pikuli._functions.p2c: %s, %s' % (str(msgs), str(kwargs)))
 
 
 def verify_timeout_argument(timeout, allow_None=False, err_msg='pikuli.verify_timeout_argument()'):
@@ -244,7 +239,6 @@ def _take_screenshot(x, y, w, h, hwnd=None):
 
 
 def get_text_from_clipboard(p2c_notif=True):
-    logger = logging.getLogger('axxon.pikuli')
     win32clipboard.OpenClipboard()
     try:
         data = win32clipboard.GetClipboardData()
@@ -428,6 +422,5 @@ def type_text(s, modifiers=None, p2c_notif=True):
                 release_key(_KeyCodes[KeyModifier._rev[k]][0], _KeyCodes[KeyModifier._rev[k]][1])
 
     if p2c_notif:
-        logger = logging.getLogger('axxon.pikuli')
-        logger.info('pikuli._functions.type_text(): \'%s\' '
-                    'was typed; modifiers=%s' % (repr(s), str(modifiers)))
+        logger.info('pikuli._functions.type_text(): \'{}\' '
+                    'was typed; modifiers={}'.format(repr(s), str(modifiers)))
