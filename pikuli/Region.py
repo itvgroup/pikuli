@@ -17,20 +17,24 @@ import cv2
 import numpy as np
 import win32gui
 
-from _functions import _take_screenshot, verify_timeout_argument
+from _functions import (_take_screenshot,
+                        verify_timeout_argument,
+                        highlight_region)
 from _exceptions import FindFailed, FailExit
 from Pattern import Pattern
 from Location import (Location,
                       DELAY_BETWEEN_CLICK_AND_TYPE,
                       DRAGnDROP_MOVE_DELAY,
-                      DRAGnDROP_MOVE_STEP)
+                      DRAGnDROP_MOVE_STEP,
+                      DEALY_AFTER_CLICK)
 import hwnd_element
 import pikuli
 
 RELATIONS = ['top-left', 'center']
 
-DELAY_BETWEEN_CV_ATTEMPT = 1.0      # Время в [c] между попытками распознования графического объекта
-DEFAULT_FIND_TIMEOUT     = 3.1
+# Время в [c] между попытками распознования графического объекта
+DELAY_BETWEEN_CV_ATTEMPT = 1.0
+DEFAULT_FIND_TIMEOUT = 3.1
 
 logger = logging.getLogger('axxon.pikuli')
 
@@ -42,7 +46,7 @@ def _get_list_of_patterns(ps, failExitText):
         try:
             ps[i] = Pattern(p)
         except Exception as ex:
-            raise FailExit(failExitText + '\n\t' + ' '*20 + str(ex))
+            raise FailExit(failExitText + '\n\t' + ' ' * 20 + str(ex))
     return ps
 
 
