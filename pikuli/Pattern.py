@@ -11,7 +11,7 @@ class Pattern(object):
     """ Represents images being searched for on display. """
     def __init__(self, img_path, similarity=None):
         '''
-        img_path  --  имя файла или объект Pattern
+        img_path  --  имя файла или объект Pattern, similarity -- принимает float значение от 0.0 до 1.0
         '''
         self.__similarity, self.__img_path = None, None
 
@@ -41,7 +41,7 @@ class Pattern(object):
             elif isinstance(similarity, float) and similarity > 0.0 and similarity <= 1.0:
                 self.__similarity = similarity
             else:
-                raise FailExit('error around \'similarity\' parameter')
+                raise FailExit('error around \'similarity\' parameter : %s' % str(similarity))
 
         except FailExit as e:
             raise FailExit('[error] Incorect \'Pattern\' class constructor call:\n\timg_path = %s\n\tabspath(img_path) = %s\n\tsimilarity = %s\n\tadditional comment: -{ %s }-\n\tlistImagePath(): %s' % (str(img_path), str(self.__img_path), str(similarity), str(e), str(list(pikuli.Settings.listImagePath()))))
