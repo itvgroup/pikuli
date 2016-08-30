@@ -28,13 +28,13 @@ from .Pattern import Pattern
 
 
 Settings = SettingsClass()
-logger = logging.getLogger('axxon.pikuli')
 
 try:
     Settings.addImagePath(
         os.path.dirname(os.path.abspath(sys.modules['__main__'].__file__)))
 except Exception as e:
-    logger.error('Problem with addImagePath: {}'.format(e))
+    logging.getLogger('axxon.pikuli').error(
+        'Problem with addImagePath: {}'.format(e))
 
 __all__ = [
     'Settings',
@@ -44,15 +44,3 @@ __all__ = [
     'Location',
     'Pattern',
 ]
-
-
-class LogRecord(str):
-    def __new__(cls, *chunks):
-        sep = ' '
-        value = sep.join(str(chunk) for chunk in chunks)
-        return str.__new__(cls, value)
-
-
-class File(object):
-    def __init__(self, filename):
-        self.abspath = os.path.abspath(filename)

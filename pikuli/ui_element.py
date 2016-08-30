@@ -567,7 +567,8 @@ class UIElement(object):
                     except psutil.NoSuchProcess:
                         pass
             if isinstance(val, str):
-                raise Exception('%s(): can not find process by its name; ProcessId = \'%s\'' % (_func_name, str(val)))
+                logger.error('Pikuli Cannot find process by name')
+                raise Exception('%s(): can not find process by its name: "%s"' % (_func_name, str(val)))
         criteria['ProcessId'] = val
 
         # Сделаем not_none_criteria и criteria, которые выводится на экран, крсивее:

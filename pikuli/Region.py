@@ -36,7 +36,7 @@ RELATIONS = ['top-left', 'center']
 DELAY_BETWEEN_CV_ATTEMPT = 1.0
 DEFAULT_FIND_TIMEOUT = 3.1
 
-logger = logging.getLogger('axxon.pikuli')
+logger = logging.getLogger('axxon')
 
 
 def _get_list_of_patterns(ps, failExitText):
@@ -390,7 +390,6 @@ class Region(object):
         return (not eq)
 
     def save_as_jpg(self, full_filename):
-
         path = os.path.abspath(full_filename)
         logger.info('pikuli.Region.save_as_jpg:\n\tinput:     %s\n\tfull path: %s' % (str(self), path))
         dir_path = os.path.dirname(full_filename)
