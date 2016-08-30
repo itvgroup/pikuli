@@ -36,7 +36,7 @@ RELATIONS = ['top-left', 'center']
 DELAY_BETWEEN_CV_ATTEMPT = 1.0
 DEFAULT_FIND_TIMEOUT = 3.1
 
-logger = logging.getLogger('axxon')
+logger = logging.getLogger('axxon.pikuli')
 
 
 def _get_list_of_patterns(ps, failExitText):
@@ -852,7 +852,7 @@ class Region(object):
                 next_match = unsorted_matches.pop(0)
 
                 # Добавим next_match в существующую гурппу ...
-                print grouped_matches
+                logger.info(grouped_matches)
                 for g in grouped_matches:
                     for m in g:
                         if abs(m.getX() - next_match.getX()) < next_match.getW() and \

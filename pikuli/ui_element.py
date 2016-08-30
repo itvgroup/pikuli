@@ -700,7 +700,7 @@ class UIElement(object):
                 found_winuiaelem_arr = []
                 child_winuiaelem = walker.GetFirstChildElement(winuiaelem)
                 while child_winuiaelem:
-                    # print '*', found_winuiaelem_arr, _descendants_exact_level(walker, child_winuiaelem, level+1)
+
                     found_winuiaelem_arr += _descendants_exact_level(walker, child_winuiaelem, level+1)
                     child_winuiaelem = walker.GetNextSiblingElement(child_winuiaelem)
                 return found_winuiaelem_arr
@@ -860,46 +860,7 @@ class UIElement(object):
 
 
     def wait_prop_chage(self, prop_name, timeout=None):
-        ''' TODO: events
-        IUIAutomation_object.AddFocusChangedEventHandler
 
-        from inspect import currentframe, getframeinfo, getargspec
-        import comtypes
-        import ctypes
-
-        print comtypes.POINTER(comtypes.c_int)()
-
-        import sys
-        sys.path.append(r'Z:\python-shared-modules')
-        from pikuli.ui_element import *
-        from pikuli.UIA import *
-
-        #print hasattr(UIA_wrapper, 'IUnknown')
-        #print hasattr(UIA_wrapper, 'IUIAutomationPropertyChangedEventHandler')
-        print '1>', filter(lambda f: 'uui' in f, dir(UIA_wrapper))
-        print '2>', filter(lambda f: 'uui' in f, dir(IUIAutomation_object))
-        print UIA_wrapper.IUIAutomation
-        print UIA_wrapper.CUIAutomation
-        print comtypes.POINTER(UIA_wrapper.IUIAutomationPropertyChangedEventHandler)()._iid_
-        print comtypes.POINTER(UIA_wrapper.IUIAutomationPropertyChangedEventHandler)()
-
-        """CreateObject(
-            comtypes.POINTER(UIA_wrapper.IUIAutomationPropertyChangedEventHandler)()._iid_,
-            None,
-            None,
-            UIA_wrapper.IUIAutomationPropertyChangedEventHandler
-        )"""
-
-        but = Button(0x500C6)
-        print IUIAutomation_object.AddPropertyChangedEventHandlerNativeArray(
-            but._winuiaelem,
-            UIA_wrapper.TreeScope_Element,
-            None,
-            comtypes.POINTER(UIA_wrapper.IUIAutomationPropertyChangedEventHandler)(),
-            [30005],
-            1
-        )
-        '''
         prop_id = UIA.UIA_automation_element_property_identifers_mapping.get(prop_name, None)
         if prop_id is None:
             raise FailExit('...')
