@@ -1049,7 +1049,6 @@ for enum in UIA_enums.items():
     if enum_name_type is not ctypes.c_int:
         #enum type should be c_int in UIA wrapper namespace
         #skip this enum if enum type is not c_int
-        logger.debug("Enum: %s not exist in current UIA namespace" % enum_name)
         continue
 
     for enum_content_name in enum_contents:
