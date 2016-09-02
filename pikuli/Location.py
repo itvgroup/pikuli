@@ -9,7 +9,7 @@ import time
 import win32api
 import win32con
 
-from _functions import KeyModifier, Key, type_text
+from _functions import KeyModifier, Key, type_text, FailExit
 
 DELAY_AFTER_MOUSE_MOVEMENT = 0.500  # Время в [c]
 DELAY_IN_MOUSE_CLICK = 0.100        # Время в [c] между нажатием и отжатием кнопки (замерял сам и гуглил)

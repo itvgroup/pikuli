@@ -14,6 +14,7 @@ Doc pywin32:
 
 import os
 import logging
+import sys
 
 from ._functions import *
 from ._exceptions import *

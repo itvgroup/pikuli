@@ -15,7 +15,7 @@ import win32clipboard
 import numpy as np
 
 import pikuli
-from ._exceptions import FailExit
+from ._exceptions import FailExit, FindFailed
 
 
 logger = logging.getLogger('axxon.pikuli')
