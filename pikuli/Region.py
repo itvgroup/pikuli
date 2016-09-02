@@ -390,7 +390,6 @@ class Region(object):
         return (not eq)
 
     def save_as_jpg(self, full_filename):
-
         path = os.path.abspath(full_filename)
         logger.info('pikuli.Region.save_as_jpg:\n\tinput:     %s\n\tfull path: %s' % (str(self), path))
         dir_path = os.path.dirname(full_filename)
@@ -853,7 +852,7 @@ class Region(object):
                 next_match = unsorted_matches.pop(0)
 
                 # Добавим next_match в существующую гурппу ...
-                print grouped_matches
+                logger.info(grouped_matches)
                 for g in grouped_matches:
                     for m in g:
                         if abs(m.getX() - next_match.getX()) < next_match.getW() and \
