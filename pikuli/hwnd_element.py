@@ -337,7 +337,7 @@ class HWNDElement(object):
             if len(extra['hwnds']) != 1:
                 try:
                     str_hwnds = map(hex, extra['hwnds'])
-                except:
+                except Exception:
                     str_hwnds = str(extra['hwnds'])
                 raise FindFailed('pikuli.HWNDElement.find: more than one elemnt was found with win_class = \'%s\' and title = \'%s\': extra[\'hwnds\'] = %s' % (str(win_class), str(title), str_hwnds))
 

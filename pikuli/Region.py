@@ -109,7 +109,7 @@ class Region(object):
         if 'title' in kwargs:
             try:
                 self._title = str(kwargs['title'])
-            except:
+            except Exception:
                 self._title = repr(kwargs['title'])
         self._id           = kwargs.get('id', None)  # Идентификатор для использования в коде.
         self._winctrl      = kwargs.get('winctrl', None)
@@ -757,7 +757,7 @@ class Region(object):
         elif len(args) == 2:
             try:
                 (dest_x, dest_y) = (int(args[0]), int(args[1]))
-            except:
+            except Exception:
                 raise FailExit('')
             dest_location = Location(dest_x, dest_y)
         else:

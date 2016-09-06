@@ -171,13 +171,13 @@ class Location(object):
         elif len(dest_location) == 2:
             try:
                 (dest_x, dest_y) = (int(dest_location[0]), int(dest_location[1]))
-            except:
+            except Exception:
                 raise FailExit('')
             delay = DRAGnDROP_MOVE_DELAY
         elif len(dest_location) == 3:
             try:
                 (dest_x, dest_y) = (int(dest_location[0]), int(dest_location[1]))
-            except:
+            except Exception:
                 raise FailExit('')
             delay = float(dest_location[2])
 
