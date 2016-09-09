@@ -336,7 +336,7 @@ class UIElement(object):
         if type(self).__name__ in CONTROLS_CLASSES:
             return u'<%s \'%s\',\'%s\'>' % (type(self).__name__, name, getattr(self, 'AutomationId', ''))
         control_type_id = self.get_property('ControlType')
-        legacy_role_id  = self.get_pattern('LegacyIAccessiblePattern').CurrentRole
+        legacy_role_id = getattr(self.get_pattern('LegacyIAccessiblePattern'), 'CurrentRole', None)  # LegacyIAccessiblePattern will be None in case of CustomControl.
         return u'<%s %s,%s,\'%s\',\'%s\'>' % (type(self).__name__, UIA.UIA_automation_control_type_identifiers_mapping_rev.get(control_type_id, control_type_id), ROLE_SYSTEM_rev.get(legacy_role_id, legacy_role_id), name, getattr(self, 'AutomationId', ''))
 
     def _long_info(self):
@@ -396,7 +396,7 @@ class UIElement(object):
         while True:
             try:
                 winuielem_ControlType = UIA.get_property_by_id(winuielem, 'ControlType')
-                winuielem_CurrentRole = UIA.get_pattern_by_id(winuielem, 'LegacyIAccessiblePattern').CurrentRole
+                winuielem_CurrentRole = getattr(UIA.get_pattern_by_id(winuielem, 'LegacyIAccessiblePattern'), 'CurrentRole', None)  # LegacyIAccessiblePattern will be None in case of CustomControl.
                 class_by_controltype  = class_by_legacy = None
 
                 for class_ in CONTROLS_CLASSES:
@@ -469,12 +469,13 @@ class UIElement(object):
         Поиск дочернего окна-объекта любого уровня вложенности. Под окном пнимается любой WinForms-элемент любого класса.
 
         В **kwargs можно передавать следующие поля, использующиеся для сравнения с одноименноыми UIA-свойствами элементов интерфейса:
-            AutomationId     --  Неки текстовый ID, который, видимо, может назанчаться при создании тестируемой программы.
-            ClassName        --  Имя класса. К примеру, "WindowsForms10.Window.8.app.0.1e929c1_r9_ad1".
-            Name             --  Имя (title) искомого элемента UI.
-            ControlType      --  Тип контрола. Строковое название из структуры UIA_automation_control_type_identifiers_mapping / списка UIA_automation_control_type_identifiers.
-                                 (см. также "Control Type Identifiers", https://msdn.microsoft.com/en-us/library/windows/desktop/ee671198(v=vs.85).aspx)
-            ProcessId        --  Для UAI это число (PID). Дополним возможность указания строки -- имени исполняемого файла, по которому предварительно будем определять PID.
+            AutomationId          --  Неки текстовый ID, который, видимо, может назанчаться при создании тестируемой программы.
+            ClassName             --  Имя класса. К примеру, "WindowsForms10.Window.8.app.0.1e929c1_r9_ad1".
+            Name                  --  Имя (title) искомого элемента UI.
+            ControlType           --  Тип контрола. Строковое название из структуры UIA_automation_control_type_identifiers_mapping / списка UIA_automation_control_type_identifiers.
+                                      (см. также "Control Type Identifiers", https://msdn.microsoft.com/en-us/library/windows/desktop/ee671198(v=vs.85).aspx)
+            LocalizedControlType  --  Локализованное название контрола.
+            ProcessId             --  Для UAI это число (PID). Дополним возможность указания строки -- имени исполняемого файла, по которому предварительно будем определять PID.
 
             AutomationId, ClassName, Name --  Строка или "скомпилированное" регулярное выржение (объект от re.compile()).
 
@@ -536,7 +537,7 @@ class UIElement(object):
 
         criteria = {}
         not_none_criteria = {}
-        for key in ['AutomationId', 'ClassName', 'Name']:
+        for key in ['AutomationId', 'ClassName', 'Name', 'LocalizedControlType']:
             val = kwargs.pop(key, None)
             if val is not None:
                 not_none_criteria[key] = val
@@ -604,7 +605,7 @@ class UIElement(object):
                criteria['ControlType'] != winuiaelem.GetCurrentPropertyValue(UIA.UIA_automation_element_property_identifers_mapping['ControlType']):
                 return False
 
-            for key in ['AutomationId', 'ClassName', 'Name']:
+            for key in ['AutomationId', 'ClassName', 'Name', 'LocalizedControlType']:
                 if criteria[key] is None:
                     continue
                 try:
@@ -1119,6 +1120,15 @@ class _Enter_Text_method(UIElement):
                 logger.info('pikuli.%s.enter_text(): \'%s\' is alredy in %s' % (type(self).__name__, repr(text), str(self)))
         return changed
 
+
+
+class CustomControl(UIElement):
+    """
+    Cunstom (Graphic, for example) control. It does not support LegacyIAccessiblePattern, because this patternt
+    adds to provider by Windows only for navire controls. But for all native ones.
+    """
+
+    CONTROL_TYPE = 'Custom'
 
 
 
