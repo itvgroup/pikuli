@@ -25,7 +25,7 @@ from comtypes.gen.Accessibility import IAccessible  # ... и теперь чат
 import Region
 from _functions import wait_while, wait_while_not
 from _exceptions import FindFailed, FailExit
-import ui_element
+import uia_element
 
 
 logger = logging.getLogger('axxon.pikuli')
@@ -151,7 +151,7 @@ class HWNDElement(object):
             args[0]: hwnd       --  hwnd этого элемента окна.
 
         Вариант №3 (экземпляр класса для какого-либо элемента главного окна):
-            args[0]: ui_element --  UIA елемент (класс UIElement).
+            args[0]: uia_element --  UIA елемент (класс UIAElement).
 
         Вариант №4:
             нет аргуметов       --  пустой экземпляр класса. Вызов его методов будет приводить к исключениям с понятными текстовыми сообщениями.
@@ -200,7 +200,7 @@ class HWNDElement(object):
             if not extra['res']:
                 raise Exception('pikuli.HWNDElement: constructor error: hwnd = %s is not child for main window %s' % (str(hwnd), str(self.hwnd_main_win)))'''
 
-        elif len(args) == 1 and isinstance(args[0], ui_element.UIElement):
+        elif len(args) == 1 and isinstance(args[0], uia_element.UIAElement):
             if args[0].hwnd is None or args[0].hwnd == 0:
                 raise Exception('pikuli.HWNDElement: constructor error: args[0].hwnd is None or args[0].hwnd == 0:; args = %s' % str(args))
             self.hwnd          = args[0].hwnd

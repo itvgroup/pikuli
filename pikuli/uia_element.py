@@ -112,7 +112,7 @@ class Method(object):
             argument_name = argument[1]
 
             if argument_type == "POINTER(IUIAutomationElement)":
-                argument_type = "UIElement"
+                argument_type = "UIAElement"
             elif argument_type in UIA.UIA_enums:
                 argument_type = UIA.UIA_enums[argument_type]
 
@@ -136,8 +136,8 @@ class Method(object):
         For output value, use original value
         For input arguments:
             1. If required argument is an enum, check if input argument fit requirement
-            2. If required argument is "POINTER(IUIAutomationElement)", we accept UIElement object,
-               get required pointer object from UIElement, and send it to function
+            2. If required argument is "POINTER(IUIAutomationElement)", we accept UIAElement object,
+               get required pointer object from UIAElement, and send it to function
             3. Other, no change
         '''
         args = list(in_args)
@@ -224,7 +224,7 @@ class Pattern(object):
 
                 if argument_direction == "in":
                     if argument_type == "POINTER(IUIAutomationElement)":
-                        argument_type = "UIElement"
+                        argument_type = "UIAElement"
                     elif argument_type in UIA.UIA_enums:
                         argument_type = UIA.UIA_enums[argument_type]
 
@@ -251,7 +251,7 @@ class Pattern(object):
 
 
 
-class UIElement(object):
+class UIAElement(object):
     '''
     Доступные поля:
         pid            --  PID процесса, которому принадлежит окно
@@ -272,16 +272,16 @@ class UIElement(object):
 
         Возможные значения аргумента pointer2elem:
             a) pointer2elem == hwnd искомого элемента GUI. В часности ноль -- это указатель корневой UIA-элемент ("рабочий стол").
-            b) pointer2elem -- это уже интерфейс к искомому элементу GUI (указатель на обект типа IUIAutomationElement или экземпляр настоящего класса UIElement)
+            b) pointer2elem -- это уже интерфейс к искомому элементу GUI (указатель на обект типа IUIAutomationElement или экземпляр настоящего класса UIAElement)
 
         Возвращение методами этого класса объектов UI-элементов (реализовано в методе __create_instance_of_suitable_class):
              1. Если self._winuiaelem позволяет получить ControlType, ищется подходящий класс (дочерний для _uielement_Control) с сооветствующим занчением атрибута CONTROL_TYPE.
              2. Если self._winuiaelem = 'Custom', то запрашивается LegacyIAccessible.Role и ищется класс с сответствующим значением LEGACYACC_ROLE.
-             3. Если по какой-то причние пункты 1 и 2 выше не позволили подобрать класс, то испульзуется родительский UIElement.
+             3. Если по какой-то причние пункты 1 и 2 выше не позволили подобрать класс, то испульзуется родительский UIAElement.
              4. Если нашлось несколько подходящих классов, то генерируется исключение.
         '''
         self._reg = None
-        self._find_timeout = verify_timeout_argument(find_timeout, err_msg='pikuli.UIElement.__init__()')
+        self._find_timeout = verify_timeout_argument(find_timeout, err_msg='pikuli.UIAElement.__init__()')
 
         if pointer2elem == 0:
             # Коренвой элемент.
@@ -295,14 +295,14 @@ class UIElement(object):
             if isinstance(pointer2elem, UIA.type_IUIAutomationElement):
                 self._winuiaelem = pointer2elem
                 self._from_hwnd = False
-            elif isinstance(pointer2elem, UIElement):
+            elif isinstance(pointer2elem, UIAElement):
                 self._winuiaelem = pointer2elem._winuiaelem
                 self._from_hwnd = False
             elif isinstance(pointer2elem, int) or isinstance(pointer2elem, long):
                 self._winuiaelem = UIA.IUIAutomation_object.ElementFromHandle(pointer2elem)
                 self._from_hwnd = True
             else:
-                raise Exception('pikuli.UIElement: can not construct UIElement')
+                raise Exception('pikuli.UIAElement: can not construct UIAElement')
 
             self.pid   = self._winuiaelem.CurrentProcessId
             self.hwnd  = self._winuiaelem.CurrentNativeWindowHandle
@@ -316,7 +316,7 @@ class UIElement(object):
                 except psutil.NoSuchProcess:
                     pass
             if self.proc_name is None:
-                raise Exception('pikuli.ui_element.UIElement.__init__(): self.proc_name is None -- Cannot find process with self.pid = %s and self.hwnd = %s\n\trepr(self) = %s\n\tstr(self):%s\n\tprocesses:\n%s'
+                raise Exception('pikuli.ui_element.UIAElement.__init__(): self.proc_name is None -- Cannot find process with self.pid = %s and self.hwnd = %s\n\trepr(self) = %s\n\tstr(self):%s\n\tprocesses:\n%s'
                                 % (str(self.pid), str(self.hwnd), repr(self), str(self), str(_processes)))
 
     def __getattr__(self, name):
@@ -369,12 +369,12 @@ class UIElement(object):
 
     def get_property(self, name):
         if not hasattr(self, '_winuiaelem'):
-            raise Exception('pikuli.UIElement.find [INTERNAL]: self <class \'%s\'> not hasattr(self, \'_winuiaelem\')' % type(self).__name__)
+            raise Exception('pikuli.UIAElement.find [INTERNAL]: self <class \'%s\'> not hasattr(self, \'_winuiaelem\')' % type(self).__name__)
         return UIA.get_property_by_id(self._winuiaelem, name)
 
     def get_pattern(self, name):
         if not hasattr(self, '_winuiaelem'):
-            raise Exception('pikuli.UIElement.find [INTERNAL]: self <class \'%s\'> not hasattr(self, \'_winuiaelem\')' % type(self).__name__)
+            raise Exception('pikuli.UIAElement.find [INTERNAL]: self <class \'%s\'> not hasattr(self, \'_winuiaelem\')' % type(self).__name__)
         try:
             pattern = Pattern(self._winuiaelem, name)
         except DriverException:
@@ -384,7 +384,7 @@ class UIElement(object):
     def _test4readiness(self):
         ''' TODO: По идеи, надо сделать некую проврку, что класс создан правильно и готов к использованию.
         if self.is_empty():
-            raise Exception('pikuli.UIElement.find: this is an empty class. Initialise it first.')'''
+            raise Exception('pikuli.UIAElement.find: this is an empty class. Initialise it first.')'''
         return True
 
 
@@ -405,28 +405,28 @@ class UIElement(object):
                     class_legacy_accessible_role = getattr(globals()[class_], 'LEGACYACC_ROLE', None)
 
                     if class_control_type is None:
-                        raise Exception('pikuli.UIElement [INTERNAL]: CONTROL_TYPE is not setted for <class %s>. Processing controll \'%s\'' % (class_, UIElement(winuielem).Name))
+                        raise Exception('pikuli.UIAElement [INTERNAL]: CONTROL_TYPE is not setted for <class %s>. Processing controll \'%s\'' % (class_, UIAElement(winuielem).Name))
 
                     elif class_control_type != 'Custom' and winuielem_ControlType != UIA.UIA_automation_control_type_identifiers_mapping['Custom']:
                         class_control_type_id = UIA.UIA_automation_control_type_identifiers_mapping.get(class_control_type, None)  # Ищем тип class_control_type среди известных нам.
                         if class_control_type_id is None:
-                            raise Exception('pikuli.UIElement [INTERNAL]: CONTROL_TYPE = \'%s\' in <class %s> is unknown.Processing controll \'%s\'' % (class_control_type, class_, UIElement(winuielem).Name))
+                            raise Exception('pikuli.UIAElement [INTERNAL]: CONTROL_TYPE = \'%s\' in <class %s> is unknown.Processing controll \'%s\'' % (class_control_type, class_, UIAElement(winuielem).Name))
                         if winuielem_ControlType == class_control_type_id:
                             if class_by_controltype is not None or class_by_legacy is not None:
-                                raise Exception('pikuli.UIElement [INTERNAL]: more than one class are suitable for UI-element \'%s\':' % UIElement(winuielem).Name +
+                                raise Exception('pikuli.UIAElement [INTERNAL]: more than one class are suitable for UI-element \'%s\':' % UIAElement(winuielem).Name +
                                                 '\n\tclass_by_controltype = \'%s\'\n\tclass_by_legacy = \'%s\'\n\tclass_ = \'%s\'' % (class_by_controltype, class_by_legacy, class_))
                             class_by_controltype = class_
 
                     elif class_control_type == 'Custom' and winuielem_ControlType == UIA.UIA_automation_control_type_identifiers_mapping['Custom']:
                         if class_legacy_accessible_role is None:
-                            raise Exception('pikuli.UIElement [INTERNAL]: CONTROL_TYPE = \'Custom\', but LEGACYACC_ROLE is not setted for <class %s>. Processing controll \'%s\'' % (class_, UIElement(winuielem).Name))
+                            raise Exception('pikuli.UIAElement [INTERNAL]: CONTROL_TYPE = \'Custom\', but LEGACYACC_ROLE is not setted for <class %s>. Processing controll \'%s\'' % (class_, UIAElement(winuielem).Name))
                         else:
                             class_legacy_accessible_role_id = ROLE_SYSTEM.get(class_legacy_accessible_role, None)
                             if class_legacy_accessible_role_id is None:
-                                raise Exception('pikuli.UIElement [INTERNAL]: \'class_legacy_accessible_role_id\' is None for UIElement Control \'%s\'.' % UIElement(winuielem).Name)
+                                raise Exception('pikuli.UIAElement [INTERNAL]: \'class_legacy_accessible_role_id\' is None for UIAElement Control \'%s\'.' % UIAElement(winuielem).Name)
                             if winuielem_CurrentRole == class_legacy_accessible_role_id:
                                 if class_by_controltype is not None or class_by_legacy is not None:
-                                    raise Exception('pikuli.UIElement [INTERNAL]: more than one class are suitable for UI-element \'%s\':' % UIElement(winuielem).Name +
+                                    raise Exception('pikuli.UIAElement [INTERNAL]: more than one class are suitable for UI-element \'%s\':' % UIAElement(winuielem).Name +
                                                     '\n\tclass_by_controltype = \'%s\'\n\tclass_by_legacy = \'%s\'\n\tclass_ = \'%s\'' % (class_by_controltype, class_by_legacy, class_))
                                 class_by_legacy = class_
 
@@ -435,21 +435,21 @@ class UIElement(object):
                 elif class_by_legacy is not None:
                     return globals()[class_by_legacy](winuielem, find_timeout=self._find_timeout)
                 else:
-                    return UIElement(winuielem, find_timeout=self._find_timeout)
+                    return UIAElement(winuielem, find_timeout=self._find_timeout)
 
                 _counter += 1
 
             except _ctypes.COMError as ex:
                 time.sleep(EACH_ERROR_DELAY)
                 if _counter >= MAX_ERROR_TIMES:
-                    raise Exception('pikuli.UIElement.__create_instance_of_suitable_class: COMError too many times (max times %i with delay %i)' % (MAX_ERROR_TIMES, EACH_ERROR_DELAY))
+                    raise Exception('pikuli.UIAElement.__create_instance_of_suitable_class: COMError too many times (max times %i with delay %i)' % (MAX_ERROR_TIMES, EACH_ERROR_DELAY))
 
 
     def set_find_timeout(self, timeout):
         if timeout is None:
             self._find_timeout = DEFAULT_FIND_TIMEOUT
         else:
-            self._find_timeout = verify_timeout_argument(timeout, err_msg='pikuli.UIElement.set_find_timeout()')
+            self._find_timeout = verify_timeout_argument(timeout, err_msg='pikuli.UIAElement.set_find_timeout()')
 
     def get_find_timeout(self):
         return self._find_timeout
@@ -516,7 +516,7 @@ class UIElement(object):
         max_descend_level      = kwargs.pop('max_descend_level', None)
         exact_level            = kwargs.pop('exact_level', None)
         exception_on_find_fail = kwargs.pop('exception_on_find_fail', None)
-        timeout = _timeout     = verify_timeout_argument(kwargs.pop('timeout', None), allow_None=True, err_msg='pikuli.UIElement.__init__()')
+        timeout = _timeout     = verify_timeout_argument(kwargs.pop('timeout', None), allow_None=True, err_msg='pikuli.UIAElement.__init__()')
         next_serach_iter_delya = kwargs.pop('next_serach_iter_delya', NEXT_SEARCH_ITER_DELAY)
         _find_all              = kwargs.pop('_find_all', False)
 
@@ -526,9 +526,9 @@ class UIElement(object):
         if exception_on_find_fail is None:
             exception_on_find_fail = find_first_only
         if _find_all:
-            _func_name = 'pikuli.UIElement.find_all'
+            _func_name = 'pikuli.UIAElement.find_all'
         else:
-            _func_name = 'pikuli.UIElement.find'
+            _func_name = 'pikuli.UIAElement.find'
 
         if max_descend_level is not None and exact_level is not None:
             raise Exception('%s: max_descend_level is not None and exact_level is not None' % _func_name)
@@ -890,7 +890,7 @@ class UIElement(object):
 
 
 
-class _uielement_Control(UIElement):
+class _uielement_Control(UIAElement):
 
     REQUIRED_PATTERNS = {'LegacyIAccessiblePattern': None}  # То есть, всегда, для всех функций.
 
@@ -916,7 +916,7 @@ class _uielement_Control(UIElement):
                         methods_to_block += methods
 
         if critical_error:
-            raise Exception('pikuli.UIElement: UIElement Control %s does not support some vital UIA-patterns. See WARNINGs above.' % str(self))
+            raise Exception('pikuli.UIAElement: UIAElement Control %s does not support some vital UIA-patterns. See WARNINGs above.' % str(self))
 
         for m in methods_to_block:
             if not hasattr(self, m):
@@ -954,7 +954,7 @@ class _uielement_Control(UIElement):
 
 
 
-class _ValuePattern_methods(UIElement):
+class _ValuePattern_methods(UIAElement):
 
     REQUIRED_PATTERNS = {'ValuePattern': ['get_value', 'set_value', 'is_readoly']}
 
@@ -988,7 +988,7 @@ class _ValuePattern_methods(UIElement):
 
 
 
-class _LegacyIAccessiblePattern_value_methods(UIElement):
+class _LegacyIAccessiblePattern_value_methods(UIAElement):
 
     def get_value(self):
         return self.get_pattern('LegacyIAccessiblePattern').CurrentValue
@@ -1019,7 +1019,7 @@ class _LegacyIAccessiblePattern_value_methods(UIElement):
 
 ENTER_TEXT_CLEAN_METHODS = ['end&backspaces', 'single_backspace']
 
-class _Enter_Text_method(UIElement):
+class _Enter_Text_method(UIAElement):
 
     REQUIRED_METHODS = {'get_value': ['type_text', 'enter_text'], 'set_value': ['type_text', 'enter_text']}
     _type_text_click = {'click_method': 'click', 'click_location': ('getCenter', None, None), 'enter_text_clean_method': 'end&backspaces'}
@@ -1121,15 +1121,21 @@ class _Enter_Text_method(UIElement):
         return changed
 
 
+class Desktop(UIAElement):
+    '''
+    Represents the Desktop. Creating an instance of this class is equal to UIAElement(0).
+    '''
+    def __int__(self):
+        super(Desktop, self).__init__(0)
 
-class CustomControl(UIElement):
+
+class CustomControl(UIAElement):
     """
     Cunstom (Graphic, for example) control. It does not support LegacyIAccessiblePattern, because this patternt
     adds to provider by Windows only for navire controls. But for all native ones.
     """
 
     CONTROL_TYPE = 'Custom'
-
 
 
 class Window(_uielement_Control):
