@@ -254,10 +254,10 @@ class Pattern(object):
 class UIAElement(object):
     '''
     Доступные поля:
-        pid            --  PID процесса, которому принадлежит окно
-        hwnd           --  win32 указатель на искомое окно
-        name()         --  заголовок искомого окна (для кнопок/чек-боксов/т.п. -- это их надписи)
-        proc_name      --  имя процесса (exe-файла), которому принадлежит окно
+        pid        --  PID процесса, которому принадлежит окно
+        hwnd       --  win32 указатель на искомое окно
+        name()     --  заголовок искомого окна (для кнопок/чек-боксов/т.п. -- это их надписи)
+        proc_name  --  имя процесса (exe-файла), которому принадлежит окно
     '''
 
     def __init__(self, pointer2elem, derived_self=None, find_timeout=DEFAULT_FIND_TIMEOUT):  #, timeout=10):
@@ -282,14 +282,16 @@ class UIAElement(object):
         '''
         self._reg = None
         self._find_timeout = verify_timeout_argument(find_timeout, err_msg='pikuli.UIAElement.__init__()')
+        self._proc_name = None  # Кеш для proc_name
 
         if pointer2elem == 0:
             # Коренвой элемент.
             self._winuiaelem = UIA.IUIAutomation_object.GetRootElement()
-            self._from_hwnd  = True
-            self.pid         = None
-            self.hwnd        = 0
-            self.proc_name   = None
+            self._from_hwnd = True
+            self.pid = None
+            self.hwnd = 0
+
+            self._has_proc_name = False  # Объект будет возвращать None при запросе proc_name
 
         else:
             if isinstance(pointer2elem, UIA.type_IUIAutomationElement):
@@ -304,20 +306,27 @@ class UIAElement(object):
             else:
                 raise Exception('pikuli.UIAElement: can not construct UIAElement')
 
-            self.pid   = self._winuiaelem.CurrentProcessId
-            self.hwnd  = self._winuiaelem.CurrentNativeWindowHandle
-            self.proc_name = None
+            self.pid = self._winuiaelem.CurrentProcessId
+            self.hwnd = self._winuiaelem.CurrentNativeWindowHandle
+
+            self._has_proc_name = True  # Объект будет возвращать proc_name
+
+
+    @property
+    def proc_name(self):
+        if self._has_proc_name and (self._proc_name is None):
             for proc in psutil.process_iter():
                 try:
                     _processes = proc.as_dict(attrs=['pid', 'name'])
                     if proc.pid == self._winuiaelem.CurrentProcessId:
-                        self.proc_name = proc.name()
+                        proc_name = proc.name()
                         break
                 except psutil.NoSuchProcess:
                     pass
-            if self.proc_name is None:
+            if proc_name is None:
                 raise Exception('pikuli.ui_element.UIAElement.__init__(): self.proc_name is None -- Cannot find process with self.pid = %s and self.hwnd = %s\n\trepr(self) = %s\n\tstr(self):%s\n\tprocesses:\n%s'
                                 % (str(self.pid), str(self.hwnd), repr(self), str(self), str(_processes)))
+        return proc_name
 
     def __getattr__(self, name):
         '''
