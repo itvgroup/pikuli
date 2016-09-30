@@ -359,7 +359,7 @@ class Region(object):
 
 
     def __get_field_for_find(self):
-        return _take_screenshot(self._x, self._y, self._w, self._h, self._main_window_hwnd)
+        return self.get_raw_screenshot()
 
     def get_current_image(self):
         ''' Возвращает текущий скриншот региона в виде картинки. В душе -- это np.array. '''
@@ -395,7 +395,7 @@ class Region(object):
         dir_path = os.path.dirname(full_filename)
         if not os.path.exists(dir_path):
             os.makedirs(dir_path)
-        cv2.imwrite(full_filename, _take_screenshot(self._x, self._y, self._w, self._h, self._main_window_hwnd), [cv2.IMWRITE_JPEG_QUALITY, 70])
+        cv2.imwrite(full_filename, self.get_raw_screenshot(), [cv2.IMWRITE_JPEG_QUALITY, 70])
 
     def save_as_png(self, full_filename):
         path = os.path.abspath(full_filename)
@@ -404,8 +404,16 @@ class Region(object):
         dir_path = os.path.dirname(full_filename)
         if not os.path.exists(dir_path):
             os.makedirs(dir_path)
-        cv2.imwrite(full_filename, _take_screenshot(self._x, self._y, self._w, self._h, self._main_window_hwnd))
+        cv2.imwrite(full_filename, self.get_raw_screenshot())
 
+    @property
+    def geometry(self):
+        return self._x, self._y, self._w, self._h
+
+    def get_raw_screenshot(self):
+        """Returns Region screenshot as a 2D numpy array of int8
+        """
+        return _take_screenshot(*(self.geometry + (self._main_window_hwnd,)))
 
     def __find(self, ps, field):
         # cv2.imshow('field', field)

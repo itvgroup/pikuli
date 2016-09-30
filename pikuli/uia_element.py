@@ -868,6 +868,10 @@ class UIAElement(object):
 
         return self._reg
 
+    @property
+    def region(self):
+        return self.reg()
+
 
     def wait_prop_chage(self, prop_name, timeout=None):
 
