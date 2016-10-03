@@ -8,6 +8,7 @@ import traceback
 import sys
 import re
 import logging
+import json
 
 import _ctypes
 import win32gui
@@ -372,6 +373,9 @@ class UIAElement(object):
 
     def __repr__(self):
         return self._short_info()
+
+    def get_help_text(self):
+        return json.loads(self.HelpText or {})
 
     def get_details(self):
         return self._long_info()
