@@ -34,6 +34,7 @@ NAMES_of_COR_E = {
 NEXT_SEARCH_ITER_DELAY = 2  # Задержка между итерациями поиска, пока ещё не вышел timeout
 DEFAULT_FIND_TIMEOUT   = 11
 CONTROL_CHECK_AFTER_CLICK_DELAY = 3
+DYNAMIC_FIND_TIMEOUT = None
 
 CONSOLE_ERASE_LINE_SEQUENCE = '\033[F' + '\033[2K'
 
@@ -535,7 +536,10 @@ class UIAElement(object):
 
         # logger.info('find: timeout = %s; self._find_timeout = %s' % (str(timeout), str(self._find_timeout)))
         if timeout is None:
-            timeout = self._find_timeout
+            if DYNAMIC_FIND_TIMEOUT is not None:
+                timeout = DYNAMIC_FIND_TIMEOUT
+            else:
+                timeout = self._find_timeout
         if exception_on_find_fail is None:
             exception_on_find_fail = find_first_only
         if _find_all:
