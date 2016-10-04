@@ -475,6 +475,13 @@ class UIAElement(object):
         return self.find(**kwargs)
 
 
+    def find_nested(self, *args):
+        elem = self
+        for crit in args:
+            elem = elem.find(**crit)
+        return elem
+
+
     #def find(self, _criteria, find_first_only=True, max_descend_level=None, exact_level=None, exception_on_find_fail=None):
     #def find(self, AutomationId=True, ClassName=True, Name=True, ControlType=True, ProcessId=True,
     #         find_first_only=True, max_descend_level=None, exact_level=None, exception_on_find_fail=None):
