@@ -14,6 +14,7 @@ class FindFailed(RuntimeError):
 
     def __init__(self, msg, patterns=None, field=None, cause=NOT_FOUND_ERROR):
         super(FindFailed, self).__init__(msg)
+
         if (patterns is not None) and (field is not None):
             self.patterns = patterns
             self.field = field
@@ -21,3 +22,5 @@ class FindFailed(RuntimeError):
             self.patterns = None
             self.field = None
         self.cause = cause
+
+        self.raise_tb_str = ''.join(traceback.format_stack()[:-1]).rstrip()  # traceback к точке raise'а

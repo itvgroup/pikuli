@@ -17,7 +17,7 @@ import logging
 import sys
 
 from ._functions import *
-from ._exceptions import *
+from ._exceptions import FailExit, FindFailed
 from ._SettingsClass import *
 
 from .Region import Region
@@ -44,4 +44,6 @@ __all__ = [
     'Match',
     'Location',
     'Pattern',
+    'FailExit',
+    'FindFailed'
 ]

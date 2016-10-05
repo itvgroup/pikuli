@@ -475,10 +475,12 @@ class UIAElement(object):
         return self.find(**kwargs)
 
 
-    def find_nested(self, *args):
+    def find_nested(self, *args, exception_on_find_fail=True):
         elem = self
         for crit in args:
-            elem = elem.find(**crit)
+            elem = elem.find(**crit.update({'exception_on_find_fail': exception_on_find_fail}))
+            if elem is None:
+                return None
         return elem
 
 
@@ -1407,15 +1409,28 @@ class Tree(_uielement_Control):
 
         if len(item_name) == 0:
             raise Exception('pikuli.ui_element.Tree: len(item_name) == 0')
+
         else:
-            elem = self.find(Name=item_name[0], exact_level=1, timeout=timeout, exception_on_find_fail=exception_on_find_fail)
-            if elem is None:
-                logger.info('pikuli.ui_element.Tree.find_item: %s has not been found. No exception -- returning None' % str(item_name))
-                return None
+            elem = self.find_all(Name=item_name[0], exact_level=1, timeout=timeout, exception_on_find_fail=exception_on_find_fail)
+            if (elem is None) or (len(elem) == 0):
+                if exception_on_find_fail:
+                    logger.error('pikuli.ui_element.Tree.find_item: \'%s\' has not been found. Raising exception...' % str(item_name))
+                    raise Exception('pikuli.ui_element.Tree.find_item: \'%s\' has not been found.' % str(item_name))
+                else:
+                    logger.error('pikuli.ui_element.Tree.find_item: \'%s\' has not been found. No exception -- returning None' % str(item_name))
+                    return None
+            if len(elem) != 1:
+                if exception_on_find_fail:
+                    logger.error('pikuli.ui_element.Tree.find_item: more than one elemnt \'%s\' has been found. Raising exception...' % str(item_name))
+                    raise Exception('pikuli.ui_element.Tree: more than one elemnt \'%s\' has been found.' % str(item_name))
+                else:
+                    logger.error('pikuli.ui_element.Tree.find_item: more than one elemnt \'%s\' has been found. No exception -- returning None' % str(item_name))
+                    return None
+
             if len(item_name) == 1:
-                found_elem = elem
+                found_elem = elem[0]
             else:
-                found_elem = elem.find_item(item_name[1:], force_expand, timeout=timeout, exception_on_find_fail=exception_on_find_fail)
+                found_elem = elem[0].find_item(item_name[1:], force_expand, timeout=timeout, exception_on_find_fail=exception_on_find_fail)
 
         return found_elem
 
@@ -1489,14 +1504,27 @@ class TreeItem(_uielement_Control):
             raise FindFailed('pikuli.ui_element.TreeItem: item \'%s\' was found, but it is not fully expanded. Try to set force_expand = True.\nSearch arguments:\n\titem_name = %s\n\tforce_expand = %s' % (self.Name, str(item_name), str(force_expand)))
 
         self.expand()
-        elem = self.find(Name=item_name[0], exact_level=1, timeout=timeout, exception_on_find_fail=exception_on_find_fail)
-        if elem is None:
-            logger.info('pikuli.ui_element.TreeItem.find_item: %s has not been found. No exception -- returning None' % str(item_name))
-            return None
+
+        elem = self.find_all(Name=item_name[0], exact_level=1, timeout=timeout, exception_on_find_fail=exception_on_find_fail)
+        if (elem is None) or (len(elem) == 0):
+            if exception_on_find_fail:
+                logger.error('pikuli.ui_element.TreeItem.find_item: \'%s\' has not been found. Raising exception...' % str(item_name))
+                raise Exception('pikuli.ui_element.TreeItem.find_item: \'%s\' has not been found.' % str(item_name))
+            else:
+                logger.error('pikuli.ui_element.TreeItem.find_item: \'%s\' has not been found. No exception -- returning None' % str(item_name))
+                return None
+        if len(elem) != 1:
+            if exception_on_find_fail:
+                logger.error('pikuli.ui_element.TreeItem.find_item: more than one elemnt \'%s\' has been found. Raising exception...' % str(item_name))
+                raise Exception('pikuli.ui_element.TreeItem: more than one elemnt \'%s\' has been found.' % str(item_name))
+            else:
+                logger.error('pikuli.ui_element.TreeItem.find_item: more than one elemnt \'%s\' has been found. No exception -- returning None' % str(item_name))
+                return None
+
         if len(item_name) == 1:
-            found_elem = elem
+            found_elem = elem[0]
         else:
-            found_elem = elem.find_item(item_name[1:], force_expand, timeout=timeout)
+            found_elem = elem[0].find_item(item_name[1:], force_expand, timeout=timeout)
 
         return found_elem
 
