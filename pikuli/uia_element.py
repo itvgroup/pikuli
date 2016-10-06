@@ -475,10 +475,17 @@ class UIAElement(object):
         return self.find(**kwargs)
 
 
-    def find_nested(self, *args, exception_on_find_fail=True):
+    def find_nested(self, *args, **kwargs):
+        exception_on_find_fail = kwargs.pop('exception_on_find_fail', True)
+        if len(kwargs) != 0:
+            raise FailExit('Unsupported arguments of find_nested(...): %s' % str(kwargs))
+
         elem = self
         for crit in args:
-            elem = elem.find(**crit.update({'exception_on_find_fail': exception_on_find_fail}))
+            if not isinstance(crit, dict):
+                raise FailExit('Check arguments \'*args\' of find_nested(...) method: \'args\' must be a list of dictionaries. Not list of list of dicts, for instance!\nargs = %s' % str(args))
+
+            elem = elem.find(**dict(crit, exception_on_find_fail=exception_on_find_fail))
             if elem is None:
                 return None
         return elem
@@ -980,7 +987,7 @@ class _uielement_Control(UIAElement):
             if p2c_notif:
                 logger.info('pikuli.%s.click(): click in center of %s' % (type(self).__name__, str(self)))
         else:
-            raise Exception('CheckBox.check(...): unsupported method = \'%s\'' % str(method))
+            raise Exception('pikuli.%s.click(): unsupported method = \'%s\'' % (type(self).__name__, str(method)))
 
 
 
