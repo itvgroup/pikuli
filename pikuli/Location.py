@@ -137,17 +137,20 @@ class Location(object):
         if p2c_notif:
             logger.info('pikuli.%s.scroll(): scroll on %s; direction=%s, count=%s, click=%s' % (type(self).__name__, str(self), str(direction), str(count), str(click)))
 
-    def type(self, text, modifiers=None, click=True, click_type_delay=DELAY_BETWEEN_CLICK_AND_TYPE, p2c_notif=True):
+    def type(self, text, modifiers=None, click=True, press_enter=False,
+             click_type_delay=DELAY_BETWEEN_CLICK_AND_TYPE,
+             p2c_notif=True):
         ''' Не как в Sikuli '''
         if click:
             self.click(after_cleck_delay=click_type_delay, p2c_notif=False)
-        type_text(str(text), modifiers, p2c_notif=False)
+        _text = str(text) + (Key.ENTER if press_enter else '')
+        type_text(_text, modifiers, p2c_notif=False)
         if p2c_notif:
             logger.info('pikuli.%s.type(): type on %s \'%s\'; modifiers=%s, click=%s' % (type(self).__name__, str(self), repr(text), str(modifiers), str(click)))
 
     def enter_text(self, text, modifiers=None, click=True, click_type_delay=DELAY_BETWEEN_CLICK_AND_TYPE, p2c_notif=True):
         ''' Не как в Sikuli
-        TODO: не нужкт тут Ctrl+a  --  не всегда и не везде работает'''
+        TODO: не нужен тут Ctrl+a  --  не всегда и не везде работает'''
         if click:
             self.click(after_cleck_delay=click_type_delay, p2c_notif=False)
         type_text('a', KeyModifier.CTRL, p2c_notif=False)
