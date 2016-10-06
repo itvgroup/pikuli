@@ -474,15 +474,18 @@ class UIAElement(object):
         kwargs['_find_all'] = True
         return self.find(**kwargs)
 
-
-    def find_nested(self, *args, exception_on_find_fail=True):
+    def find_nested(self, *args, **kwargs):
+        flag = kwargs.get('exception_on_find_fail', True)
         elem = self
         for crit in args:
-            elem = elem.find(**crit.update({'exception_on_find_fail': exception_on_find_fail}))
+            elem = elem.find(exception_on_find_fail=flag, **crit)
             if elem is None:
                 return None
         return elem
 
+    def find_by_control(self, *names):
+        steps = [dict(exact_level=1, LocalizedControlType=n) for n in names]
+        return self.find_nested(*steps)
 
     #def find(self, _criteria, find_first_only=True, max_descend_level=None, exact_level=None, exception_on_find_fail=None):
     #def find(self, AutomationId=True, ClassName=True, Name=True, ControlType=True, ProcessId=True,
@@ -888,7 +891,6 @@ class UIAElement(object):
     @property
     def region(self):
         return self.reg()
-
 
     def wait_prop_chage(self, prop_name, timeout=None):
 

@@ -42,7 +42,7 @@ logger = logging.getLogger('axxon.pikuli')
 def _get_list_of_patterns(ps, failExitText):
     if not isinstance(ps, list):
         ps = [ps]
-    for (i, p) in enumerate(ps):
+    for i, p in enumerate(ps):
         try:
             ps[i] = Pattern(p)
         except Exception as ex:
@@ -695,9 +695,14 @@ class Region(object):
         if p2c_notif:
             logger.info('pikuli.%s.doubleClick(): double click in center of %s' % (type(self).__name__, str(self)))
 
-    def type(self, text, modifiers=None, click=True, click_type_delay=DELAY_BETWEEN_CLICK_AND_TYPE, p2c_notif=True):
+    def type(self, text, modifiers=None, click=True, press_enter=False,
+             click_type_delay=DELAY_BETWEEN_CLICK_AND_TYPE, p2c_notif=True):
         ''' Не как в Sikuli '''
-        self.getCenter().type(text, modifiers=modifiers, click=click, p2c_notif=False)
+        self.getCenter().type(text,
+                              modifiers=modifiers,
+                              press_enter=press_enter,
+                              click=click,
+                              p2c_notif=False)
         if p2c_notif:
             logger.info('pikuli.%s.type(): \'%s\' was typed in center of %s; click=%s, modifiers=%s' % (type(self).__name__, repr(text), str(self), str(click), str(modifiers)))
 
