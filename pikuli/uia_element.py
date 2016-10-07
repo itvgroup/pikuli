@@ -475,17 +475,19 @@ class UIAElement(object):
         return self.find(**kwargs)
 
     def find_nested(self, *args, **kwargs):
-        flag = kwargs.get('exception_on_find_fail', True)
         elem = self
         for crit in args:
-            elem = elem.find(exception_on_find_fail=flag, **crit)
+            # So that we don't mutate the original args.
+            params = crit.copy()
+            params.update(**kwargs)
+            elem = elem.find(**params)
             if elem is None:
                 return None
         return elem
 
-    def find_by_control(self, *names):
+    def find_by_control(self, *names, **kwargs):
         steps = [dict(exact_level=1, LocalizedControlType=n) for n in names]
-        return self.find_nested(*steps)
+        return self.find_nested(*steps, **kwargs)
 
     #def find(self, _criteria, find_first_only=True, max_descend_level=None, exact_level=None, exception_on_find_fail=None):
     #def find(self, AutomationId=True, ClassName=True, Name=True, ControlType=True, ProcessId=True,
