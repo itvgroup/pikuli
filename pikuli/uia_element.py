@@ -840,7 +840,7 @@ class UIAElement(object):
             raise('%s [INTERNAL]: Strange! We should not be here: ' % _func_name + str(getframeinfo(currentframe())))
         if len(found_winuiaelem_arr) == 0:
             if exception_on_find_fail:
-                raise FindFailed(': no one elements was found\n\tself = %s\n\tkwargs = %s\n\tcriteria = %s' % (_func_name, repr(self), str(kwargs), str__criteria))
+                raise FindFailed('%s: no one elements was found\n\tself = %s\n\tkwargs = %s\n\tcriteria = %s' % (_func_name, repr(self), str(kwargs), str__criteria))
             found_elem = []
             logger.info(CONSOLE_ERASE_LINE_SEQUENCE)
             logger.info(txt_pikuli_search_pattern % ('there has been found no one UI-elem (%s)' % (str(timeout))))

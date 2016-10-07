@@ -25,6 +25,7 @@ from .Match import Match
 from .Screen import Screen
 from .Location import Location
 from .Pattern import Pattern
+from .hwnd_element import HWNDElement
 
 
 Settings = SettingsClass()
@@ -45,5 +46,7 @@ __all__ = [
     'Location',
     'Pattern',
     'FailExit',
-    'FindFailed'
+    'FindFailed',
+    'wait_while',
+    'HWNDElement',
 ]
