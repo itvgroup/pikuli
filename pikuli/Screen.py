@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import _functions
-from _exceptions import FailExit
+from . import FailExit
 from Region import Region
 
 

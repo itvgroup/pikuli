@@ -20,7 +20,7 @@ import win32gui
 from _functions import (_take_screenshot,
                         verify_timeout_argument,
                         highlight_region)
-from _exceptions import FindFailed, FailExit
+from . import FindFailed, FailExit
 from Pattern import Pattern
 from Location import (Location,
                       DELAY_BETWEEN_CLICK_AND_TYPE,

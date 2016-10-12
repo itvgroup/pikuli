@@ -6,7 +6,7 @@
 '''
 
 import traceback
-from _exceptions import FailExit
+from . import FailExit
 from Region import Region
 
 
