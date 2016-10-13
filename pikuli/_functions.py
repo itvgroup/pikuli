@@ -243,13 +243,24 @@ def get_text_from_clipboard(p2c_notif=True):
     try:
         data = win32clipboard.GetClipboardData()
         if p2c_notif:
-            logger.info('pikuli._functions.get_text_from_clipboard(): '
-                        'data = \'{}\''.format(data))
+            logger.info('pikuli._functions.get_text_from_clipboard(): data = \'{}\''.format(data))
     except Exception as ex:
         logger.error(ex)
-        data = ''
+        raise
     win32clipboard.CloseClipboard()
     return data
+
+def set_text_to_clipboard(data, p2c_notif=True):
+    if p2c_notif:
+        logger.info('pikuli._functions.set_text_to_clipboard(): data = \'{}\''.format(data))
+    win32clipboard.OpenClipboard()
+    try:
+        win32clipboard.EmptyClipboard()
+        win32clipboard.SetClipboardText(str(data))  # А еще есть SetClipboardData (http://docs.activestate.com/activepython/2.4/pywin32/win32clipboard.html)
+    except Exception as ex:
+        logger.error(ex)
+        raise
+    win32clipboard.CloseClipboard()
 
 
 """

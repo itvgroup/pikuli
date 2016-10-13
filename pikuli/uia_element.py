@@ -17,7 +17,8 @@ import UIA
 import Region
 from _functions import (wait_while,
                         wait_while_not, Key, KeyModifier,
-                        type_text, verify_timeout_argument)
+                        type_text, verify_timeout_argument,
+                        set_text_to_clipboard, get_text_from_clipboard)
 from _exceptions import FindFailed, FailExit
 import hwnd_element
 from oleacc_h import (STATE_SYSTEM, ROLE_SYSTEM, ROLE_SYSTEM_rev)
@@ -982,7 +983,27 @@ class _uielement_Control(UIAElement):
         if method == 'click':
             if hasattr(self, 'scroll_into_view'):
                 self.scroll_into_view()
-            self.reg().click(p2c_notif=False)
+
+            if hasattr(self, '_type_text_click'):
+                click_location = self._type_text_click['click_location']
+                f = getattr(self.reg(), click_location[0], None)
+                if f is None:
+                    raise Exception('_Enter_Text_method.type_text(...): [INTERNAL] wrong \'click_location\':\n\t_type_text_click = %s' % str(_type_text_click))
+                if click_location[1] is None:
+                    loc = f()
+                elif click_location[2] is None:
+                    loc = f(*click_location[1])
+                else:
+                    loc = f(*click_location[1], **click_location[2])
+
+                click_method = getattr(loc, self._type_text_click['click_method'], None)
+                if click_method is None:
+                    raise Exception('_Enter_Text_method.type_text(...): [INTERNAL] wrong \'click_method\':\n\t_type_text_click = %s' % str(_type_text_click))
+                click_method(p2c_notif=False)
+
+            else:
+                self.reg().click(p2c_notif=False)
+
             if p2c_notif:
                 logger.info('pikuli.%s.click(): click in center of %s' % (type(self).__name__, str(self)))
         else:
@@ -1053,12 +1074,45 @@ class _LegacyIAccessiblePattern_value_methods(UIAElement):
 
 
 
-ENTER_TEXT_CLEAN_METHODS = ['end&backspaces', 'single_backspace']
+TEXT_CLEAN_METHODS = ['uia_api', 'end&backspaces', 'home&deletes', 'single_backspace']
 
 class _Enter_Text_method(UIAElement):
 
     REQUIRED_METHODS = {'get_value': ['type_text', 'enter_text'], 'set_value': ['type_text', 'enter_text']}
     _type_text_click = {'click_method': 'click', 'click_location': ('getCenter', None, None), 'enter_text_clean_method': 'end&backspaces'}
+
+
+    def paste_text(self, text, check_timeout=CONTROL_CHECK_AFTER_CLICK_DELAY, p2c_notif=True):
+        """ Обязательно кликнет, а затем сделат Ctrl+V. Удаления или выделения старого текста нет! """
+        buff = get_text_from_clipboard()
+        try:
+            set_text_to_clipboard(text)
+            self.click()
+            self.type_text('v', modifiers=KeyModifier.CTRL)
+        except:
+            raise
+        finally:
+            set_text_to_clipboard(buff)
+
+    def clear_text(self, clean_method, check_timeout=CONTROL_CHECK_AFTER_CLICK_DELAY, p2c_notif=True):
+        if clean_method is None:
+            raise Exception('_Enter_Text_method.clear_text(...): clean_method = None, but self._type_text_click does not contain \'enter_text_clean_method\' field\n\tself._type_text_click = %s' % str(self._type_text_click))
+        if clean_method not in TEXT_CLEAN_METHODS:
+            raise Exception('_Enter_Text_method.clear_text(...): unsupported clean_method = \'%s\'.' % str(clean_method))
+
+        if clean_method == 'uia_api':
+            if hasattr(self, 'set_value'):
+                self.set_value('')
+            else:
+                raise Exception('_Enter_Text_method.clear_text(...): clean_method = \'%s\', but control \'%s\' does not support \'set_value()\' method.' % str(clean_method, str(type(self))))
+        elif clean_method == 'end&backspaces':
+            self.type_text(Key.END + Key.BACKSPACE*(len(self.get_value())+1), chck_text=False, click=True, p2c_notif=False)
+        elif clean_method == 'home&deletes':
+            self.type_text(Key.HOME + Key.DELETE*(len(self.get_value())+1), chck_text=False, click=True, p2c_notif=False)
+        elif clean_method == 'single_backspace':
+            self.type_text(Key.BACKSPACE, chck_text=False, click=True, p2c_notif=False)
+        elif clean_method in TEXT_CLEAN_METHODS:
+            raise Exception('_Enter_Text_method.clear_text(...): [ITERNAL] [TODO] clean_method = \'%s\' is valid, but has not been realised yet.' % str(clean_method))
 
     def type_text(self, text, modifiers=None, chck_text=False, click=True, check_timeout=CONTROL_CHECK_AFTER_CLICK_DELAY, p2c_notif=True):
         '''
@@ -1077,22 +1131,7 @@ class _Enter_Text_method(UIAElement):
         text = str(text)
 
         if click:
-            click_location = self._type_text_click['click_location']
-            f = getattr(self.reg(), click_location[0], None)
-            if f is None:
-                raise Exception('_Enter_Text_method.type_text(...): [INTERNAL] wrong \'click_location\':\n\t_type_text_click = %s' % str(_type_text_click))
-            if click_location[1] is None:
-                loc = f()
-            elif click_location[2] is None:
-                loc = f(*click_location[1])
-            else:
-                loc = f(*click_location[1], **click_location[2])
-
-            click_method = getattr(loc, self._type_text_click['click_method'], None)
-            if click_method is None:
-                raise Exception('_Enter_Text_method.type_text(...): [INTERNAL] wrong \'click_method\':\n\t_type_text_click = %s' % str(_type_text_click))
-            click_method(p2c_notif=False)
-
+            self.click()
         type_text(text, modifiers=modifiers)
 
         if not (chck_text == False):
@@ -1113,7 +1152,7 @@ class _Enter_Text_method(UIAElement):
             -- invoke - Через UIA. Используется set_value().
         clean_method:
             -- None - использовать из структуры self._type_text_click
-            -- Одно из значений ENTER_TEXT_CLEAN_METHODS = ['end&backspaces', 'single_backspace']
+            -- Одно из значений TEXT_CLEAN_METHODS = ['uia_api', 'end&backspaces', 'home&deletes', 'single_backspace']
 
         Возвращает:
             -- True, если состяние контрола изменилось.
@@ -1124,19 +1163,7 @@ class _Enter_Text_method(UIAElement):
         if method == 'click':
             if text != self.get_value():
                 #self.type_text('a', modifiers=KeyModifier.CTRL, chck_text=False, click=True) -- не на всех контролах корректно работает
-                if clean_method is None:
-                    clean_method = self._type_text_click.get('enter_text_clean_method', None)
-                if clean_method is None:
-                    raise Exception('_Enter_Text_method.enter_text(...): clean_method = None, but self._type_text_click does not contain \'enter_text_clean_method\' field\n\tself._type_text_click = %s' % str(self._type_text_click))
-                if clean_method not in ENTER_TEXT_CLEAN_METHODS:
-                    raise Exception('_Enter_Text_method.enter_text(...): unsupported clean_method = \'%s\'.' % str(clean_method))
-
-                if clean_method == 'end&backspaces':
-                    self.type_text(Key.END + Key.BACKSPACE*(len(self.get_value())+1), chck_text=False, click=True, p2c_notif=False)
-                elif clean_method == 'single_backspace':
-                    self.type_text(Key.BACKSPACE, chck_text=False, click=True, p2c_notif=False)
-                elif clean_method in ENTER_TEXT_CLEAN_METHODS:
-                    raise Exception('_Enter_Text_method.enter_text(...): [ITERNAL] [TODO] clean_method = \'%s\' is valid, but has not been realised yet.' % str(clean_method))
+                self.clear_text(clean_method, check_timeout=check_timeout, p2c_notif=p2c_notif)
 
                 #if len(self.get_value()) != 0:  --  а если поле не поддается очищению, а сосдение -- очищается (пример: "гриды")? Лучше првоерку убрать -- важен еонечный результа.
                 #    raise Exception('_Enter_Text_method.enter_text(...): can not clear the text field. It still contains the following: %s' % self.get_value())
