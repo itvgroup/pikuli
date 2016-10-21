@@ -205,11 +205,14 @@ def _take_screenshot(x, y, w, h, hwnd=None):
     bmp = win32ui.CreateBitmapFromHandle(new_bitmap_h)
     bmp_info = bmp.GetInfo()
     if bmp_info['bmHeight'] != h or bmp_info['bmWidth'] != w:
-        raise FailExit('bmp_info = %s, but (w, h) = (%s, %s)' % (str(bmp_info), str(w), str(h)))
+        raise FailExit('bmp_info = %s, but (x, y, w, h, hwnd) = %s' %
+                       (str(bmp_info), str((w, y, w, h, hwnd))))
     if bmp_info['bmType'] != 0 or bmp_info['bmPlanes'] != 1:
-        raise FailExit('bmp_info = %s: bmType !=0 or bmPlanes != 1' % str(bmp_info))
+        raise FailExit('bmp_info = %s: bmType !=0 or bmPlanes != 1; (x, y, w, h, hwnd) = %s' %
+                       (str(bmp_info), str((w, y, w, h, hwnd))))
     if bmp_info['bmBitsPixel'] % 8 != 0:
-        raise FailExit('bmp_info = %s: bmBitsPixel mod. 8 is not zero' % str(bmp_info))
+        raise FailExit('bmp_info = %s: (bmBitsPixel mod. 8) != 0; (x, y, w, h, hwnd) = %s' %
+                       (str(bmp_info), str((w, y, w, h, hwnd))))
 
     bmp_arr = list(bmp.GetBitmapBits())
     del bmp_arr[3::4]  # Dele alpha channel. TODO: Is it fast enough???
