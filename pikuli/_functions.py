@@ -180,7 +180,7 @@ def _take_screenshot(x, y, w, h, hwnd=None):
     #       w = win32print.GetDeviceCaps(scr_hdc, win32con.HORZRES)
     #       h = win32print.GetDeviceCaps(scr_hdc, win32con.VERTRES)
     #
-    [x, y, w, h] = map(int, [x, y, w, h])
+    x, y, w, h = map(int, (x, y, w, h))
     mpos = list(win32api.GetCursorPos())
 
     # Получим контекст всех дисплев или всего рабочего стола:
@@ -190,7 +190,7 @@ def _take_screenshot(x, y, w, h, hwnd=None):
         scr_hdc = win32gui.CreateDC('DISPLAY', None, None)
     else:
         scr_hdc = win32gui.GetDC(hwnd)  # Контекст только клиентской части окна! Не вклчаются даже менюшеки типа 'File' и скролл-бары.
-        (x, y)  = win32gui.ScreenToClient(hwnd, (x, y))
+        x, y  = win32gui.ScreenToClient(hwnd, (x, y))
 
     # Спрячем курсо вне эурана: не влияние на интерфейс (подсветка чего-то при наведении), не попадет на скриншот.
     #win32api.SetCursorPos((win32print.GetDeviceCaps(scr_hdc, win32con.HORZRES) + 1, win32print.GetDeviceCaps(scr_hdc, win32con.VERTRES) + 1))

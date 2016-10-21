@@ -5,11 +5,12 @@
 
 import logging
 import time
+from collections import namedtuple
 
 import win32api
 import win32con
 
-from _functions import KeyModifier, Key, type_text, FailExit
+from _functions import KeyModifier, Key, type_text, FailExit, _take_screenshot
 
 DELAY_AFTER_MOUSE_MOVEMENT = 0.500  # Время в [c]
 DELAY_IN_MOUSE_CLICK = 0.100        # Время в [c] между нажатием и отжатием кнопки (замерял сам и гуглил)
@@ -22,6 +23,8 @@ DELAY_BETWEEN_CLICK_AND_TYPE = DEALY_AFTER_CLICK
 DRAGnDROP_MOVE_DELAY = 0.005
 DRAGnDROP_MOVE_STEP  = 10
 
+Color = namedtuple('Color', 'r g b')
+
 logger = logging.getLogger('axxon.pikuli')
 
 
@@ -33,11 +36,15 @@ class Location(object):
         self.title = title
         self._is_mouse_down = False
 
+    def get_rgb(self):
+        arr = _take_screenshot(self.x, self.y, 1, 1)
+        return Color(*arr.reshape(3)[::-1])
+
     def __repr__(self):
         return 'Location({}, {})'.format(self.x, self.y)
 
     def get_xy(self):
-        return (self.x, self.y)
+        return self.x, self.y
 
     def getX(self):
         return self.x
@@ -52,32 +59,27 @@ class Location(object):
     def offset(self, dx, dy):
         if isinstance(dx, int) and isinstance(dy, int):
             return Location(self.x + dx, self.y + dy)
-        else:
-            raise FailExit('Location.offset: incorrect offset values')
+        raise FailExit('Location.offset: incorrect offset values')
 
     def above(self, dy):
         if isinstance(dy, int) and dy >= 0:
             return Location(self.x, self.y - dy)
-        else:
-            raise FailExit('Location.above: incorrect value')
+        raise FailExit('Location.above: incorrect value')
 
     def below(self, dy):
         if isinstance(dy, int) and dy >= 0:
             return Location(self.x, self.y + dy)
-        else:
-            raise FailExit('Location.below: incorrect value')
+        raise FailExit('Location.below: incorrect value')
 
     def left(self, dx):
         if isinstance(dx, int) and dx >= 0:
             return Location(self.x - dx, self.y)
-        else:
-            raise FailExit('Location.left: incorrect value')
+        raise FailExit('Location.left: incorrect value')
 
     def right(self, dx):
         if isinstance(dx, int) and dx >= 0:
             return Location(self.x + dx, self.y)
-        else:
-            raise FailExit('Location.right: incorrect value')
+        raise FailExit('Location.right: incorrect value')
 
     def click(self, after_cleck_delay=DEALY_AFTER_CLICK, p2c_notif=True):
         self.mouseMove()
