@@ -6,7 +6,6 @@
    Контент может быть определен с поомощью методов Region.find() или Region.findAll(), которым передается объект класса Pattern (прямоугольная пиксельная область).
    Эти методы возвращают объект класса Match (потомок Region), имеющим те же свойства и методы, что и Region. Размеры Match равны размерам Pattern, используемого для поиска.
 '''
-
 import time
 import traceback
 import datetime
@@ -29,6 +28,9 @@ from Location import (Location,
                       DEALY_AFTER_CLICK)
 import hwnd_element
 import pikuli
+from .File import File
+
+
 
 RELATIONS = ['top-left', 'center']
 
@@ -391,7 +393,7 @@ class Region(object):
 
     def save_as_jpg(self, full_filename):
         path = os.path.abspath(full_filename)
-        logger.info('pikuli.Region.save_as_jpg:\n\tinput:     %s\n\tfull path: %s' % (str(self), path))
+        logger.info('pikuli.Region.save_as_jpg:\n\tinput:     %s\n\tfull path: [[f]]' % self, extra={'f': File(path)})
         dir_path = os.path.dirname(full_filename)
         if not os.path.exists(dir_path):
             os.makedirs(dir_path)
@@ -399,7 +401,7 @@ class Region(object):
 
     def save_as_png(self, full_filename):
         path = os.path.abspath(full_filename)
-        logger.info('pikuli.Region.save_as_png:\n\tinput:     %s\n\tfull path: %s' % (str(self), path))
+        logger.info('pikuli.Region.save_as_png:\n\tinput:      %s\n\tfull path: [[f]]' % self, extra={'f': File(path)})
 
         dir_path = os.path.dirname(full_filename)
         if not os.path.exists(dir_path):
