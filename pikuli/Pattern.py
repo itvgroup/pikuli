@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
 
 import os
+import logging
 import cv2
 
 import pikuli
 from _exceptions import FailExit
+
+
+logger = logging.getLogger('axxon.pikuli')
 
 
 class Pattern(object):
@@ -81,3 +85,11 @@ class Pattern(object):
 
     def get_image(self):
         return self._cv2_pattern
+
+    def save_as_png(self, full_filename):
+        path = os.path.abspath(full_filename)
+        logger.info('pikuli.Pattern.save_as_png:\n\tfull path: %s' % path)
+        dir_path = os.path.dirname(full_filename)
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path)
+        cv2.imwrite(full_filename, self._cv2_pattern)

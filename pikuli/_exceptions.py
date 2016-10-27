@@ -14,7 +14,7 @@ class FindFailed(RuntimeError):
     NOT_FOUND_ERROR = 0
     OPENCV_ERROR = 1
 
-    def __init__(self, msg, patterns=None, field=None, cause=NOT_FOUND_ERROR):
+    def __init__(self, msg='[NO TEXT MESSAGE]', patterns=None, field=None, cause=NOT_FOUND_ERROR):
         super(FindFailed, self).__init__(msg)
 
         if (patterns is not None) and (field is not None):

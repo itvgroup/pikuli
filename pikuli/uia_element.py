@@ -1096,9 +1096,9 @@ class _Enter_Text_method(UIAElement):
 
     def clear_text(self, clean_method, check_timeout=CONTROL_CHECK_AFTER_CLICK_DELAY, p2c_notif=True):
         if clean_method is None:
-            raise Exception('_Enter_Text_method.clear_text(...): clean_method = None, but self._type_text_click does not contain \'enter_text_clean_method\' field\n\tself._type_text_click = %s' % str(self._type_text_click))
-        if clean_method not in TEXT_CLEAN_METHODS:
-            raise Exception('_Enter_Text_method.clear_text(...): unsupported clean_method = \'%s\'.' % str(clean_method))
+            clean_method = self._type_text_click.get('enter_text_clean_method', None)
+        if clean_method is None:
+            raise Exception('_Enter_Text_method.enter_text(...): clean_method = None, but self._type_text_click does not contain \'enter_text_clean_method\' field\n\tself._type_text_click = %s' % str(self._type_text_click))
 
         if clean_method == 'uia_api':
             if hasattr(self, 'set_value'):
@@ -1113,6 +1113,8 @@ class _Enter_Text_method(UIAElement):
             self.type_text(Key.BACKSPACE, chck_text=False, click=True, p2c_notif=False)
         elif clean_method in TEXT_CLEAN_METHODS:
             raise Exception('_Enter_Text_method.clear_text(...): [ITERNAL] [TODO] clean_method = \'%s\' is valid, but has not been realised yet.' % str(clean_method))
+        else:
+            raise Exception('_Enter_Text_method.clear_text(...): clean_method = {!r}'.format(clean_method))
 
     def type_text(self, text, modifiers=None, chck_text=False, click=True, check_timeout=CONTROL_CHECK_AFTER_CLICK_DELAY, p2c_notif=True):
         '''
@@ -1442,7 +1444,18 @@ class Tree(_uielement_Control):
 
         if len(item_name) == 0:
             raise Exception('pikuli.ui_element.Tree: len(item_name) == 0')
+        else:
+            elem = self.find(Name=item_name[0], exact_level=1, timeout=timeout, exception_on_find_fail=exception_on_find_fail)
+            if elem is None:
+                logger.info('pikuli.ui_element.Tree.find_item: %s has not been found. No exception -- returning None' % str(item_name))
+                return None
+            if len(item_name) == 1:
+                found_elem = elem
+            else:
+                found_elem = elem.find_item(item_name[1:], force_expand, timeout=timeout, exception_on_find_fail=exception_on_find_fail)
 
+        """
+        TODO: не работает пауза: сразу содает несолкьо анализов ситацайии, не дожидаясь появления первого
         else:
             elem = self.find_all(Name=item_name[0], exact_level=1, timeout=timeout, exception_on_find_fail=exception_on_find_fail)
             if (elem is None) or (len(elem) == 0):
@@ -1464,8 +1477,12 @@ class Tree(_uielement_Control):
                 found_elem = elem[0]
             else:
                 found_elem = elem[0].find_item(item_name[1:], force_expand, timeout=timeout, exception_on_find_fail=exception_on_find_fail)
+        """
 
         return found_elem
+
+
+
 
 
 
@@ -1538,6 +1555,17 @@ class TreeItem(_uielement_Control):
 
         self.expand()
 
+        elem = self.find(Name=item_name[0], exact_level=1, timeout=timeout, exception_on_find_fail=exception_on_find_fail)
+        if elem is None:
+            logger.info('pikuli.ui_element.TreeItem.find_item: %s has not been found. No exception -- returning None' % str(item_name))
+            return None
+        if len(item_name) == 1:
+            found_elem = elem
+        else:
+            found_elem = elem.find_item(item_name[1:], force_expand, timeout=timeout)
+
+        """
+        TODO: не работает пауза: сразу содает несолкьо анализов ситацайии, не дожидаясь появления первого
         elem = self.find_all(Name=item_name[0], exact_level=1, timeout=timeout, exception_on_find_fail=exception_on_find_fail)
         if (elem is None) or (len(elem) == 0):
             if exception_on_find_fail:
@@ -1558,6 +1586,7 @@ class TreeItem(_uielement_Control):
             found_elem = elem[0]
         else:
             found_elem = elem[0].find_item(item_name[1:], force_expand, timeout=timeout)
+        """
 
         return found_elem
 
