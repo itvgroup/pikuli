@@ -18,6 +18,8 @@ class FindFailed(RuntimeError):
         super(FindFailed, self).__init__(msg)
 
         if (patterns is not None) and (field is not None):
+            if not isinstance(patterns, list):
+                patterns = [patterns]
             self.patterns = patterns
             self.field = field
         else:
