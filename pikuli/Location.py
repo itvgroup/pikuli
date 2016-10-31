@@ -36,9 +36,11 @@ class Location(object):
         self.title = title
         self._is_mouse_down = False
 
-    def get_rgb(self):
+    def get_color(self):
         arr = _take_screenshot(self.x, self.y, 1, 1)
         return Color(*arr.reshape(3)[::-1])
+
+    getColor = get_color
 
     def __repr__(self):
         return 'Location({}, {})'.format(self.x, self.y)
