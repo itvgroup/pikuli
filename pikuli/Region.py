@@ -6,7 +6,6 @@
    Контент может быть определен с поомощью методов Region.find() или Region.findAll(), которым передается объект класса Pattern (прямоугольная пиксельная область).
    Эти методы возвращают объект класса Match (потомок Region), имеющим те же свойства и методы, что и Region. Размеры Match равны размерам Pattern, используемого для поиска.
 '''
-
 import time
 import traceback
 import datetime
@@ -29,6 +28,9 @@ from Location import (Location,
                       DEALY_AFTER_CLICK)
 import hwnd_element
 import pikuli
+from .File import File
+
+
 
 RELATIONS = ['top-left', 'center']
 
@@ -391,7 +393,7 @@ class Region(object):
 
     def save_as_jpg(self, full_filename):
         path = os.path.abspath(full_filename)
-        logger.info('pikuli.Region.save_as_jpg:\n\tinput:     %s\n\tfull path: %s' % (str(self), path))
+        logger.info('pikuli.Region.save_as_jpg:\n\tinput:     %s\n\tfull path: [[f]]' % self, extra={'f': File(path)})
         dir_path = os.path.dirname(full_filename)
         if not os.path.exists(dir_path):
             os.makedirs(dir_path)
@@ -399,7 +401,7 @@ class Region(object):
 
     def save_as_png(self, full_filename):
         path = os.path.abspath(full_filename)
-        logger.info('pikuli.Region.save_as_png:\n\tinput:     %s\n\tfull path: %s' % (str(self), path))
+        logger.info('pikuli.Region.save_as_png:\n\tinput:      %s\n\tfull path: [[f]]' % self, extra={'f': File(path)})
 
         dir_path = os.path.dirname(full_filename)
         if not os.path.exists(dir_path):
@@ -476,10 +478,11 @@ class Region(object):
             for p in ps:
                 pts.extend( self.__find(p, self.__get_field_for_find()) )
                 self._last_match.extend( map(lambda pt: Match(pt[0], pt[1], p._w, p._h, p, pt[2]), pts) )
+
         except FindFailed as ex:
             dt = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
 
-            fn_field   = os.path.join(pikuli.Settings.getFindFailedDir(), 'Region-findAll-field-'   + dt + '-' + '+'.join([Pattern(p).getFilename(full_path=False) for p in ps]) + '.jpg')
+            fn_field = os.path.join(pikuli.Settings.getFindFailedDir(), 'Region-findAll-field-'   + dt + '-' + '+'.join([Pattern(p).getFilename(full_path=False) for p in ps]) + '.jpg')
             cv2.imwrite(fn_field, ex.field, [cv2.IMWRITE_JPEG_QUALITY, 70])
 
             fn_pattern = []
@@ -487,12 +490,15 @@ class Region(object):
                 fn_pattern += [os.path.join(pikuli.Settings.getFindFailedDir(), 'Region-findAll-pattern-' + dt + '-' + p.getFilename(full_path=False) + '.jpg')]
                 cv2.imwrite(fn_pattern[-1], p.get_image(), [cv2.IMWRITE_JPEG_QUALITY, 70])
 
-            logger.info('pikuli.Region.find: FindFailed; ps = %s\n\tField stored as:\n\t\t%s\n\tPatterns strored as:\n\t\t%s' % (str(ps), fn_field, '\b\t\t'.join(fn_pattern)))
+            logger.info('pikuli.Region.findAll: FindFailed; ps = {}'
+                        '\n\tField stored as:\n\t\t[[f]]'
+                        '\n\tPatterns strored as:\n\t\t{}'.format(ps, '\b\t\t'.join(['[[f]]'] * len(fn_pattern))),
+                        extra={'f': [File(fn_field)] + [File(f) for f in fn_pattern]})
 
             raise ex
         else:
             scores = '[' + ', '.join(['%.2f'%m.getScore() for m in self._last_match]) + ']'
-            logger.info('pikuli.findAll: total found %i matches of <%s> in %s; scores = %s' % (len(self._last_match), str(ps), str(self), scores) )
+            logger.info('pikuli.findAll: total found {} matches of <{}> in {}; scores = {}'.format((len(self._last_match), str(ps), str(self), scores)) )
             return self._last_match
 
 
@@ -603,8 +609,10 @@ class Region(object):
                     fn_pattern += [os.path.join(pikuli.Settings.getFindFailedDir(), 'Region-find-pattern-' + dt + '-' + p.getFilename(full_path=False) + '.jpg')]
                     cv2.imwrite(fn_pattern[-1], p.get_image(), [cv2.IMWRITE_JPEG_QUALITY, 70])
 
-                logger.info('pikuli.Region.find: FindFailed; exception_on_find_fail = %s; ps = %s\n\tField stored as:\n\t\t%s\n\tPatterns strored as:\n\t\t%s'
-                    % (str(exception_on_find_fail), str(ps), fn_field, '\b\t\t'.join(fn_pattern)))
+                logger.info('pikuli.Region.find: FindFailed; ps = {}'
+                            '\n\tField stored as:\n\t\t[[f]]'
+                            '\n\tPatterns strored as:\n\t\t{}'.format(ps, '\b\t\t'.join(['[[f]]'] * len(fn_pattern))),
+                            extra={'f': [File(fn_field)] + [File(f) for f in fn_pattern]})
 
             else:
                 logger.info('pikuli.Region.find: FindFailed; exception_on_find_fail = %s; ps = %s' % (str(exception_on_find_fail), str(ps)))
