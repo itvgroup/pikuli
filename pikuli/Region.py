@@ -498,7 +498,8 @@ class Region(object):
             raise ex
         else:
             scores = '[' + ', '.join(['%.2f'%m.getScore() for m in self._last_match]) + ']'
-            logger.info('pikuli.findAll: total found {} matches of <{}> in {}; scores = {}'.format((len(self._last_match), str(ps), str(self), scores)) )
+            logger.info('pikuli.findAll: total found {} matches of <{}> in {}; scores = {}'.format(
+                len(self._last_match), str(ps), str(self), scores))
             return self._last_match
 
 
