@@ -379,6 +379,12 @@ class UIAElement(object):
     def get_help_text(self):
         return json.loads(self.HelpText or {})
 
+    def get_bounding_rectangle(self):
+        return self.BoundingRectangle or {}
+
+    def get_first_child(self):
+        return self.FirstChild or None
+
     def get_details(self):
         return self._long_info()
 
