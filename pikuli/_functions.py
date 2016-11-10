@@ -244,7 +244,7 @@ def _take_screenshot(x, y, w, h, hwnd=None):
 def get_text_from_clipboard(p2c_notif=True):
     win32clipboard.OpenClipboard()
     try:
-        data = win32clipboard.GetClipboardData()
+        data = str(win32clipboard.GetClipboardData(win32clipboard.CF_TEXT))  # or it may be CF_UNICODETEXT or others (http://docs.activestate.com/activepython/3.1/pywin32/win32clipboard__GetClipboardData_meth.html)
         if p2c_notif:
             logger.info('pikuli._functions.get_text_from_clipboard(): data = \'{}\''.format(data))
     except Exception as ex:
