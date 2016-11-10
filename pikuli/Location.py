@@ -58,6 +58,8 @@ class Location(object):
         win32api.SetCursorPos((self.x, self.y))
         time.sleep(delay)
 
+    move_mouse = mouseMove
+
     def offset(self, dx, dy):
         if isinstance(dx, int) and isinstance(dy, int):
             return Location(self.x + dx, self.y + dy)
@@ -240,3 +242,5 @@ class Location(object):
         if p2c_notif:
             logger.info('pikuli.%s.dragto(): drag %s to (%i,%i) and drop' % (type(self).__name__, src, self.x, self.y))
         return self
+
+    drag_and_drop = dragndrop

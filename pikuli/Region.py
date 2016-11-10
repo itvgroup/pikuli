@@ -54,6 +54,15 @@ def _get_list_of_patterns(ps, failExitText):
 
 class Region(object):
 
+    def __eq__(self, other):
+        return (
+            (self.x, self.y, self.w, self.h) ==
+            (other.x, other.y, other.w, other.h)
+        )
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     def __init__(self, *args, **kwargs):  # relation='top-left', title=None):
         '''
         - Конструктор области. -
@@ -359,6 +368,25 @@ class Region(object):
     def getCenter(self, x_offs=0, y_offs=0):
         return Location(self._x + x_offs + self._w/2,    self._y + y_offs + self._h/2)
 
+    @property
+    def top_left(self):
+        return self.getTopLeft()
+
+    @property
+    def top_right(self):
+        return self.getTopRight()
+
+    @property
+    def bottom_left(self):
+        return self.getBottomLeft()
+
+    @property
+    def bottom_right(self):
+        return self.getBottomRight()
+
+    @property
+    def center(self):
+        return self.getCenter()
 
     def __get_field_for_find(self):
         return self.get_raw_screenshot()
