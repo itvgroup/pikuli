@@ -842,14 +842,14 @@ class UIAElement(object):
                         if exception_on_find_fail:
                             raise FindFailed('%s: no one elements was found\n\tself     = %s\n\tkwargs   = %s\n\tcriteria = %s\n\ttimeout  = %s'
                                              % (_func_name, repr(self), str(kwargs), str__criteria, str(timeout)))
-                        logger.info(CONSOLE_ERASE_LINE_SEQUENCE)
+                        # logger.info(CONSOLE_ERASE_LINE_SEQUENCE)
                         logger.info(txt_pikuli_search_pattern % 'has been found: None (%s)' % str(timeout))
                         return None
                     # t0 = datetime.datetime.today()
                     time.sleep(next_serach_iter_delya)
                 else:
                     found_elem = self.__create_instance_of_suitable_class(ex.winuiaelem)
-                    logger.info(CONSOLE_ERASE_LINE_SEQUENCE)
+                    # logger.info(CONSOLE_ERASE_LINE_SEQUENCE)
                     logger.info(txt_pikuli_search_pattern % ('has been found: %s (%s)' % (repr(found_elem), str(timeout))))
                     return found_elem
 
@@ -881,7 +881,7 @@ class UIAElement(object):
             if exception_on_find_fail:
                 raise FindFailed('%s: no one elements was found\n\tself = %s\n\tkwargs = %s\n\tcriteria = %s' % (_func_name, repr(self), str(kwargs), str__criteria))
             found_elem = []
-            logger.info(CONSOLE_ERASE_LINE_SEQUENCE)
+            # logger.info(CONSOLE_ERASE_LINE_SEQUENCE)
             logger.info(txt_pikuli_search_pattern % ('there has been found no one UI-elem (%s)' % (str(timeout))))
         else:
             found_elem = map(self.__create_instance_of_suitable_class, found_winuiaelem_arr)
@@ -898,7 +898,7 @@ class UIAElement(object):
                     s = ss
                 if 'ss' in locals() and len(s) != len(ss):
                     s = s[:-1] + ', ...]'
-            logger.info(CONSOLE_ERASE_LINE_SEQUENCE)
+            # logger.info(CONSOLE_ERASE_LINE_SEQUENCE)
             logger.info(txt_pikuli_search_pattern % ('there has been found %i UI-elems: %s (%s)' % (len(found_elem), s, str(timeout))))
         return found_elem
 
@@ -1444,7 +1444,7 @@ class Tree(_uielement_Control):
         '''
 
         def _next_node(treeitem):
-            if not treeitem.has_subitems():
+            if not treeitem.is_expandable():
                 # Если нет ветви, идущей из этого "узелка":
                 branch = None
             else:
@@ -1474,7 +1474,7 @@ class Tree(_uielement_Control):
             item_name -- Cписок строк-названий эелементов дерева, пречисленных по их вложенности один в другой. Последняя строка в списке -- искомый элемент.
             force_expand -- разворачивать ли свернутые элементы на пути поиска искового.
         '''
-        logger.info(CONSOLE_ERASE_LINE_SEQUENCE)
+        # logger.info(CONSOLE_ERASE_LINE_SEQUENCE)
         logger.info('pikuli.Tree.find_item: searching by criteria item_name = \'%s\', timeout = %s' % (str(item_name), str(timeout)))
 
         if isinstance(item_name, str):
@@ -1531,36 +1531,36 @@ class TreeItem(_uielement_Control):
     CONTROL_TYPE = 'TreeItem'
     REQUIRED_PATTERNS = {
         'SelectionItemPattern': ['is_selected'],
-        'ExpandCollapsePattern': ['has_subitems', 'is_expanded', 'is_collapsed', 'expand', 'collapse'],
+        'ExpandCollapsePattern': ['is_expandable', 'is_expanded', 'is_collapsed', 'expand', 'collapse'],
         'ScrollItemPattern': ['scroll_into_view']
         }
 
     def is_selected(self):
         return bool(self.get_pattern('SelectionItemPattern').CurrentIsSelected)
 
-    def has_subitems(self):
+    def is_expandable(self):
         return not (self.get_pattern('ExpandCollapsePattern').CurrentExpandCollapseState == UIA.UIA_wrapper.ExpandCollapseState_LeafNode)
 
     def is_expanded(self):
         ''' Проверка, что развернут текущий узел (полностью, не частично). Без учета состояния дочерних узлов. Если нет дочерних, то функция вернет False. '''
-        if not self.has_subitems():
+        if not self.is_expandable():
             return False
         return (self.get_pattern('ExpandCollapsePattern').CurrentExpandCollapseState == UIA.UIA_wrapper.ExpandCollapseState_Expanded)
 
     def is_collapsed(self):
         ''' Проверка, что развернут текущий узел (полностью, не частично). Без учета состояния дочерних узлов. Если нет дочерних, то функция вернет True. '''
-        if not self.has_subitems():
+        if not self.is_expandable():
             return True
         return (self.get_pattern('ExpandCollapsePattern').CurrentExpandCollapseState == UIA.UIA_wrapper.ExpandCollapseState_Collapsed)
 
     def expand(self):
-        if self.has_subitems() and not self.is_expanded():
+        if self.is_expandable() and not self.is_expanded():
             self.get_pattern('ExpandCollapsePattern').Expand()
         if not self.is_expanded():
             raise Exception('pikuli.ui_element: can not expand TreeItem \'%s\'' % self.Name)
 
     def collapse(self):
-        if self.has_subitems() and not self.is_collapsed():
+        if self.is_expandable() and not self.is_collapsed():
             self.get_pattern('ExpandCollapsePattern').Collapse()
         if not self.is_collapsed():
             raise Exception('pikuli.ui_element: can not collapse TreeItem \'%s\'' % self.Name)
@@ -1568,10 +1568,15 @@ class TreeItem(_uielement_Control):
     def scroll_into_view(self):
         self.get_pattern('ScrollItemPattern').ScrollIntoView()
 
-    def list_current_subitems(self):
+    def list_current_subitems(self, force_expand=False):
         ''' Вернут список дочерних узелков (1 уровень вложенности), если текущий узел развернут. Вернет [], если узел свернут полностью или частично. Вернет None, если нет дочерних узелков. '''
-        if not self.has_subitems():
+        if not self.is_expandable():
             return None
+        if not self.is_expanded():
+            if force_expand:
+                self.expand()
+            else:
+                logger.warning('Node {} is collapsed, but force_expand = {}'.format(self, force_expand))
         if self.is_expanded():
             return self.find_all(exact_level=1)
         return []
@@ -1581,7 +1586,7 @@ class TreeItem(_uielement_Control):
             item_name -- Cписок строк-названий эелементов дерева, пречисленных по их вложенности один в другой. Последняя строка в списке -- искомый элемент.
             force_expand -- разворачивать ли свернутые элементы на пути поиска искового.
         '''
-        logger.info(CONSOLE_ERASE_LINE_SEQUENCE)
+        # logger.info(CONSOLE_ERASE_LINE_SEQUENCE)
         logger.info('pikuli.TreeItem.find_item: searching by criteria item_name = \'%s\', timeout = %s' % (str(item_name), str(timeout)))
 
         if isinstance(item_name, str):
@@ -1667,7 +1672,7 @@ class ANPropGrid_Table(_uielement_Control):
             elif len(rows) == 0:
                 raise FindFailed('pikuli.ANPropGrid_Table: row \'%s\' not found.\nSearch arguments:\n\trow_name = %s\n\tforce_expand = %s' % (str(nested_name), str(row_name), str(force_expand)))
             return rows[0]
-        logger.info(CONSOLE_ERASE_LINE_SEQUENCE)
+        # logger.info(CONSOLE_ERASE_LINE_SEQUENCE)
         logger.info('pikuli.ANPropGrid_Table.find_row: searching by criteria item_name = \'%s\'' % str(row_name))
         if isinstance(row_name, list):
             row = _find_row_precisely(self, row_name[0], 1)
