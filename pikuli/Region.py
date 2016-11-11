@@ -388,6 +388,10 @@ class Region(object):
     def center(self):
         return self.getCenter()
 
+    @property
+    def wh(self):
+        return (self.w, self.h)
+
     def __get_field_for_find(self):
         return self.get_raw_screenshot()
 

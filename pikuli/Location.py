@@ -46,7 +46,11 @@ class Location(object):
         return 'Location({}, {})'.format(self.x, self.y)
 
     def get_xy(self):
-        return self.x, self.y
+        return (self.x, self.y)
+
+    @property
+    def xy(self):
+        return self.get_xy()
 
     def getX(self):
         return self.x
