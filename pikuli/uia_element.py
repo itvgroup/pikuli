@@ -344,12 +344,31 @@ class UIAElement(object):
         raise AttributeError("Attribute not exist: %s\n  self: %s\n%s" % (name, repr(self), str(self)))
 
     def _short_info(self):
+        hwnd = getattr(self, 'NativeWindowHandle', '')
+        if hwnd:
+            try:
+                hwnd = hex(int(hwnd)).upper().replace('X', 'x')
+            except:
+                pass
+            hwnd = ', ' + str(hwnd)
+
         name = repr(self.Name)  #.encode('utf-8')
         if type(self).__name__ in CONTROLS_CLASSES:
-            return u'<%s \'%s\',\'%s\'>' % (type(self).__name__, name, getattr(self, 'AutomationId', ''))
+            return u'<%s \'%s\',\'%s\'%s>' % (
+                type(self).__name__,
+                name,
+                getattr(self, 'AutomationId', ''),
+                hwnd)
+
         control_type_id = self.get_property('ControlType')
         legacy_role_id = getattr(self.get_pattern('LegacyIAccessiblePattern'), 'CurrentRole', None)  # LegacyIAccessiblePattern will be None in case of CustomControl.
-        return u'<%s %s,%s,\'%s\',\'%s\'>' % (type(self).__name__, UIA.UIA_automation_control_type_identifiers_mapping_rev.get(control_type_id, control_type_id), ROLE_SYSTEM_rev.get(legacy_role_id, legacy_role_id), name, getattr(self, 'AutomationId', ''))
+        return u'<%s %s,%s,\'%s\',\'%s\'%s>' % (
+            type(self).__name__,
+            UIA.UIA_automation_control_type_identifiers_mapping_rev.get(control_type_id, control_type_id),
+            ROLE_SYSTEM_rev.get(legacy_role_id, legacy_role_id),
+            name,
+            getattr(self, 'AutomationId', ''),
+            hwnd)
 
     def _long_info(self):
         docstring = ""
@@ -481,8 +500,13 @@ class UIAElement(object):
         kwargs['_find_all'] = True
         return self.find(**kwargs)
 
-
     def find_nested(self, *args, **kwargs):
+        """
+        Поис вложенных один в другой котролов. Иными словами, по цепочке делает несколько `find`'ов:
+        `*args` -- это список словарей-критериев поиска. Очередной словарь -- очередная процедура
+        поиска `find`'ом относительно элменета, полученного как результат предыдущего поиска. Все
+        `kwargs` здесь применяются к притериям поиска на каждом шаге.
+        """
         elem = self
         for crit in args:
             # So that we don't mutate the original args.
@@ -494,7 +518,15 @@ class UIAElement(object):
         return elem
 
     def find_by_control(self, *names, **kwargs):
-        steps = [dict(exact_level=1, LocalizedControlType=n) for n in names]
+        """
+        Поиск кложенных один в другой контролов пои их 'LocalizedControlType' при жестком условии
+        на каждом шаге: {'exact_level': 1}.
+
+        :param names: Список LocalizedControlType, которые будут искаться как вложенные один в
+                      другой контролы (используется метод `find_nested`).
+        :param kwargs: Передаются как kwargs в `find_nested`.
+        """
+        steps = [{'exact_level': 1, 'LocalizedControlType': n} for n in names]
         return self.find_nested(*steps, **kwargs)
 
     #def find(self, _criteria, find_first_only=True, max_descend_level=None, exact_level=None, exception_on_find_fail=None):
@@ -927,6 +959,8 @@ class UIAElement(object):
         timeout = kwargs.pop('timeout', None)
         return wait_while(lambda: self.find(**dict(kwargs, exception_on_find_fail=False)), timeout)
 
+    def is_existed(self, **kwargs):
+        return self.find(**dict(kwargs, exception_on_find_fail=False, timeout=0))
 
     def _unavaulable_method_dummy(*args, **kwargs):
         raise Exception('_unavaulable_method_dummy: ' + str(args))
