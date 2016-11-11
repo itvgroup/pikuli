@@ -810,14 +810,14 @@ class UIAElement(object):
                         if exception_on_find_fail:
                             raise FindFailed('%s: no one elements was found\n\tself     = %s\n\tkwargs   = %s\n\tcriteria = %s\n\ttimeout  = %s'
                                              % (_func_name, repr(self), str(kwargs), str__criteria, str(timeout)))
-                        logger.info(CONSOLE_ERASE_LINE_SEQUENCE)
+                        # logger.info(CONSOLE_ERASE_LINE_SEQUENCE)
                         logger.info(txt_pikuli_search_pattern % 'has been found: None (%s)' % str(timeout))
                         return None
                     # t0 = datetime.datetime.today()
                     time.sleep(next_serach_iter_delya)
                 else:
                     found_elem = self.__create_instance_of_suitable_class(ex.winuiaelem)
-                    logger.info(CONSOLE_ERASE_LINE_SEQUENCE)
+                    # logger.info(CONSOLE_ERASE_LINE_SEQUENCE)
                     logger.info(txt_pikuli_search_pattern % ('has been found: %s (%s)' % (repr(found_elem), str(timeout))))
                     return found_elem
 
@@ -849,7 +849,7 @@ class UIAElement(object):
             if exception_on_find_fail:
                 raise FindFailed('%s: no one elements was found\n\tself = %s\n\tkwargs = %s\n\tcriteria = %s' % (_func_name, repr(self), str(kwargs), str__criteria))
             found_elem = []
-            logger.info(CONSOLE_ERASE_LINE_SEQUENCE)
+            # logger.info(CONSOLE_ERASE_LINE_SEQUENCE)
             logger.info(txt_pikuli_search_pattern % ('there has been found no one UI-elem (%s)' % (str(timeout))))
         else:
             found_elem = map(self.__create_instance_of_suitable_class, found_winuiaelem_arr)
@@ -866,7 +866,7 @@ class UIAElement(object):
                     s = ss
                 if 'ss' in locals() and len(s) != len(ss):
                     s = s[:-1] + ', ...]'
-            logger.info(CONSOLE_ERASE_LINE_SEQUENCE)
+            # logger.info(CONSOLE_ERASE_LINE_SEQUENCE)
             logger.info(txt_pikuli_search_pattern % ('there has been found %i UI-elems: %s (%s)' % (len(found_elem), s, str(timeout))))
         return found_elem
 
@@ -1440,7 +1440,7 @@ class Tree(_uielement_Control):
             item_name -- Cписок строк-названий эелементов дерева, пречисленных по их вложенности один в другой. Последняя строка в списке -- искомый элемент.
             force_expand -- разворачивать ли свернутые элементы на пути поиска искового.
         '''
-        logger.info(CONSOLE_ERASE_LINE_SEQUENCE)
+        # logger.info(CONSOLE_ERASE_LINE_SEQUENCE)
         logger.info('pikuli.Tree.find_item: searching by criteria item_name = \'%s\', timeout = %s' % (str(item_name), str(timeout)))
 
         if isinstance(item_name, str):
@@ -1547,7 +1547,7 @@ class TreeItem(_uielement_Control):
             item_name -- Cписок строк-названий эелементов дерева, пречисленных по их вложенности один в другой. Последняя строка в списке -- искомый элемент.
             force_expand -- разворачивать ли свернутые элементы на пути поиска искового.
         '''
-        logger.info(CONSOLE_ERASE_LINE_SEQUENCE)
+        # logger.info(CONSOLE_ERASE_LINE_SEQUENCE)
         logger.info('pikuli.TreeItem.find_item: searching by criteria item_name = \'%s\', timeout = %s' % (str(item_name), str(timeout)))
 
         if isinstance(item_name, str):
@@ -1633,7 +1633,7 @@ class ANPropGrid_Table(_uielement_Control):
             elif len(rows) == 0:
                 raise FindFailed('pikuli.ANPropGrid_Table: row \'%s\' not found.\nSearch arguments:\n\trow_name = %s\n\tforce_expand = %s' % (str(nested_name), str(row_name), str(force_expand)))
             return rows[0]
-        logger.info(CONSOLE_ERASE_LINE_SEQUENCE)
+        # logger.info(CONSOLE_ERASE_LINE_SEQUENCE)
         logger.info('pikuli.ANPropGrid_Table.find_row: searching by criteria item_name = \'%s\'' % str(row_name))
         if isinstance(row_name, list):
             row = _find_row_precisely(self, row_name[0], 1)
