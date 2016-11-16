@@ -62,12 +62,12 @@ if '_default_timeout' not in globals():
 
 def uia_set_default_timeout(timeout):
     global _default_timeout
-    logger.info('uia_set_default_timeout(): _default_timeout  %f -> %f' % (_default_timeout, timeout))
+    logger.debug('uia_set_default_timeout(): _default_timeout  %f -> %f' % (_default_timeout, timeout))
     _default_timeout = float(timeout)
 
 def uia_set_initial_default_timeout():
     global _default_timeout
-    logger.info('uia_set_initial_default_timeout(): _default_timeout  %f -> %f' % (_default_timeout, DEFAULT_FIND_TIMEOUT))
+    logger.debug('uia_set_initial_default_timeout(): _default_timeout  %f -> %f' % (_default_timeout, DEFAULT_FIND_TIMEOUT))
     _default_timeout = DEFAULT_FIND_TIMEOUT
 """
 
@@ -588,7 +588,7 @@ class UIAElement(object):
         next_serach_iter_delya = kwargs.pop('next_serach_iter_delya', NEXT_SEARCH_ITER_DELAY)
         _find_all              = kwargs.pop('_find_all', False)
 
-        # logger.info('find: timeout = %s; self._find_timeout = %s' % (str(timeout), str(self._find_timeout)))
+        # logger.debug('find: timeout = %s; self._find_timeout = %s' % (str(timeout), str(self._find_timeout)))
         if timeout is None:
             if DYNAMIC_FIND_TIMEOUT is not None:
                 timeout = DYNAMIC_FIND_TIMEOUT
@@ -790,7 +790,7 @@ class UIAElement(object):
         # - subroutines: end -
         txt_search_timeout        = 'searching with timeout = %s (call/class/module: %s/%s/%s) ...' % (str(timeout), str(_timeout), str(self._find_timeout), str(DEFAULT_FIND_TIMEOUT))
         txt_pikuli_search_pattern = '%s: by criteria %s %%s' % (_func_name, str__not_none_criteria)
-        logger.info(txt_pikuli_search_pattern % txt_search_timeout)
+        logger.debug(txt_pikuli_search_pattern % txt_search_timeout)
 
         walker = UIA.IUIAutomation_object.CreateTreeWalker(UIA.IUIAutomation_object.CreateTrueCondition())
         t0 = datetime.datetime.today()
@@ -842,21 +842,21 @@ class UIAElement(object):
                         if exception_on_find_fail:
                             raise FindFailed('%s: no one elements was found\n\tself     = %s\n\tkwargs   = %s\n\tcriteria = %s\n\ttimeout  = %s'
                                              % (_func_name, repr(self), str(kwargs), str__criteria, str(timeout)))
-                        # logger.info(CONSOLE_ERASE_LINE_SEQUENCE)
-                        logger.info(txt_pikuli_search_pattern % 'has been found: None (%s)' % str(timeout))
+                        # logger.debug(CONSOLE_ERASE_LINE_SEQUENCE)
+                        logger.debug(txt_pikuli_search_pattern % 'has been found: None (%s)' % str(timeout))
                         return None
                     # t0 = datetime.datetime.today()
                     time.sleep(next_serach_iter_delya)
                 else:
                     found_elem = self.__create_instance_of_suitable_class(ex.winuiaelem)
-                    # logger.info(CONSOLE_ERASE_LINE_SEQUENCE)
-                    logger.info(txt_pikuli_search_pattern % ('has been found: %s (%s)' % (repr(found_elem), str(timeout))))
+                    # logger.debug(CONSOLE_ERASE_LINE_SEQUENCE)
+                    logger.debug(txt_pikuli_search_pattern % ('has been found: %s (%s)' % (repr(found_elem), str(timeout))))
                     return found_elem
 
             except _ctypes.COMError as ex:
                 if ex.args[0] == COR_E_TIMEOUT or ex.args[0] == COR_E_SUBSCRIBERS_FAILED:
-                    logger.error('Cath %s exception: \"%s\". Checking timeout...' % (NAMES_of_COR_E[ex.args[0] ], str(ex)))
-                    logger.info(txt_pikuli_search_pattern % txt_search_timeout)
+                    logger.debug('Cath %s exception: \"%s\". Checking timeout...' % (NAMES_of_COR_E[ex.args[0] ], str(ex)))
+                    logger.debug(txt_pikuli_search_pattern % txt_search_timeout)
                     if (datetime.datetime.today()-t0).total_seconds() >= timeout:
                         raise FindFailed('%s: Timeout while looking for UIA element:\n\tself = %s\n\tkwargs = %s' % (_func_name, repr(self), str(kwargs)))
                     # t0 = datetime.datetime.today()
@@ -864,7 +864,7 @@ class UIAElement(object):
                 else:
                     tb_text = ''.join(traceback.format_list(traceback.extract_tb(sys.exc_info()[2])[1:]))
                     full_text = 'Traceback for error point:\n' + tb_text.rstrip() + '\nError message:\n  ' + type(ex).__name__ + ': ' + str(ex)
-                    logger.info(full_text)
+                    logger.error(full_text)
                     raise ex
 
             else:
@@ -881,8 +881,8 @@ class UIAElement(object):
             if exception_on_find_fail:
                 raise FindFailed('%s: no one elements was found\n\tself = %s\n\tkwargs = %s\n\tcriteria = %s' % (_func_name, repr(self), str(kwargs), str__criteria))
             found_elem = []
-            # logger.info(CONSOLE_ERASE_LINE_SEQUENCE)
-            logger.info(txt_pikuli_search_pattern % ('there has been found no one UI-elem (%s)' % (str(timeout))))
+            # logger.debug(CONSOLE_ERASE_LINE_SEQUENCE)
+            logger.debug(txt_pikuli_search_pattern % ('there has been found no one UI-elem (%s)' % (str(timeout))))
         else:
             found_elem = map(self.__create_instance_of_suitable_class, found_winuiaelem_arr)
 
@@ -898,8 +898,8 @@ class UIAElement(object):
                     s = ss
                 if 'ss' in locals() and len(s) != len(ss):
                     s = s[:-1] + ', ...]'
-            # logger.info(CONSOLE_ERASE_LINE_SEQUENCE)
-            logger.info(txt_pikuli_search_pattern % ('there has been found %i UI-elems: %s (%s)' % (len(found_elem), s, str(timeout))))
+            # logger.debug(CONSOLE_ERASE_LINE_SEQUENCE)
+            logger.debug(txt_pikuli_search_pattern % ('there has been found %i UI-elems: %s (%s)' % (len(found_elem), s, str(timeout))))
         return found_elem
 
 
@@ -1053,31 +1053,31 @@ class _uielement_Control(UIAElement):
 
 class _ValuePattern_methods(UIAElement):
 
-    REQUIRED_PATTERNS = {'ValuePattern': ['get_value', 'set_value', 'is_readoly']}
+    REQUIRED_PATTERNS = {'ValuePattern': ['get_value', 'set_value_api', 'is_readoly']}
 
     def get_value(self):
         return _None_of_str(self.get_pattern('ValuePattern').CurrentValue)
 
-    def set_value(self, text, check_timeout=CONTROL_CHECK_AFTER_CLICK_DELAY, p2c_notif=True):
+    def set_value_api(self, text, check_timeout=CONTROL_CHECK_AFTER_CLICK_DELAY, p2c_notif=True):
         '''
         Возвращает:
             -- True, если состяние контрола изменилось.
             -- False, если не пришлось менять состояние контрола.
-            -- None можнооставить на перспективу возникновения исключения и exception_on_find_fail=False
+            -- None можно оставить на перспективу возникновения исключения и exception_on_find_fail=False
         '''
         text = str(text)
         if self.get_pattern('ValuePattern').CurrentValue != text:
             self.get_pattern('ValuePattern').SetValue(text)
             if not wait_while_not(lambda: self.get_pattern('ValuePattern').CurrentValue == text, check_timeout):
-                raise Exception('_ValuePattern_methods.set_value(...): valur is still %s, not %s after %s seconds' % (str(self.get_pattern('ValuePattern').CurrentValue), text, str(check_timeout)))
+                raise Exception('_ValuePattern_methods.set_value_api(...): valur is still %s, not %s after %s seconds' % (str(self.get_pattern('ValuePattern').CurrentValue), text, str(check_timeout)))
             changed = True
         else:
             changed = False
         if p2c_notif:
             if changed:
-                logger.info('pikuli.%s.set_value(): set \'%s\' to %s (via ValuePattern)' % (type(self).__name__, repr(text), str(self)))
+                logger.info('pikuli.%s.set_value_api(): set \'%s\' to %s (via ValuePattern)' % (type(self).__name__, repr(text), str(self)))
             else:
-                logger.info('pikuli.%s.set_value(): \'%s\' is alredy in %s (via ValuePattern)' % (type(self).__name__, repr(text), str(self)))
+                logger.info('pikuli.%s.set_value_api(): \'%s\' is alredy in %s (via ValuePattern)' % (type(self).__name__, repr(text), str(self)))
         return changed
 
     def is_readoly(self):
@@ -1090,7 +1090,7 @@ class _LegacyIAccessiblePattern_value_methods(UIAElement):
     def get_value(self):
         return self.get_pattern('LegacyIAccessiblePattern').CurrentValue
 
-    def set_value(self, text, check_timeout=CONTROL_CHECK_AFTER_CLICK_DELAY, p2c_notif=True):
+    def set_value_api(self, text, check_timeout=CONTROL_CHECK_AFTER_CLICK_DELAY, p2c_notif=True):
         '''
         Возвращает:
             -- True, если состяние контрола изменилось.
@@ -1101,15 +1101,15 @@ class _LegacyIAccessiblePattern_value_methods(UIAElement):
         if self.get_pattern('LegacyIAccessiblePattern').CurrentValue != text:
             self.get_pattern('LegacyIAccessiblePattern').SetValue(text)
             if not wait_while_not(lambda: self.get_pattern('LegacyIAccessiblePattern').CurrentValue == text, check_timeout):
-                raise Exception('_LegacyIAccessiblePattern_value_methods.set_value(...): value is still %s, not %s after %s seconds' % (str(self.get_pattern('LegacyIAccessiblePattern').CurrentValue), text, str(check_timeout)))
+                raise Exception('_LegacyIAccessiblePattern_value_methods.set_value_api(...): value is still %s, not %s after %s seconds' % (str(self.get_pattern('LegacyIAccessiblePattern').CurrentValue), text, str(check_timeout)))
             changed = True
         else:
             changed = False
         if p2c_notif:
             if changed:
-                logger.info('pikuli.%s.set_value(): set \'%s\' to %s (via LegacyIAccessiblePattern)' % (type(self).__name__, repr(text), str(self)))
+                logger.info('pikuli.%s.set_value_api(): set \'%s\' to %s (via LegacyIAccessiblePattern)' % (type(self).__name__, repr(text), str(self)))
             else:
-                logger.info('pikuli.%s.set_value(): \'%s\' is alredy in %s (via LegacyIAccessiblePattern)' % (type(self).__name__, repr(text), str(self)))
+                logger.info('pikuli.%s.set_value_api(): \'%s\' is alredy in %s (via LegacyIAccessiblePattern)' % (type(self).__name__, repr(text), str(self)))
         return changed
 
 
@@ -1118,7 +1118,7 @@ TEXT_CLEAN_METHODS = ['uia_api', 'end&backspaces', 'home&deletes', 'single_backs
 
 class _Enter_Text_method(UIAElement):
 
-    REQUIRED_METHODS = {'get_value': ['type_text', 'enter_text'], 'set_value': ['type_text', 'enter_text']}
+    REQUIRED_METHODS = {'get_value': ['type_text', 'enter_text'], 'set_value_api': ['type_text', 'enter_text']}
     _type_text_click = {'click_method': 'click', 'click_location': ('getCenter', None, None), 'enter_text_clean_method': 'end&backspaces'}
 
 
@@ -1141,10 +1141,10 @@ class _Enter_Text_method(UIAElement):
             raise Exception('_Enter_Text_method.enter_text(...): clean_method = None, but self._type_text_click does not contain \'enter_text_clean_method\' field\n\tself._type_text_click = %s' % str(self._type_text_click))
 
         if clean_method == 'uia_api':
-            if hasattr(self, 'set_value'):
-                self.set_value('')
+            if hasattr(self, 'set_value_api'):
+                self.set_value_api('')
             else:
-                raise Exception('_Enter_Text_method.clear_text(...): clean_method = \'%s\', but control \'%s\' does not support \'set_value()\' method.' % str(clean_method, str(type(self))))
+                raise Exception('_Enter_Text_method.clear_text(...): clean_method = \'%s\', but control \'%s\' does not support \'set_value_api()\' method.' % str(clean_method, str(type(self))))
         elif clean_method == 'end&backspaces':
             self.type_text(Key.END + Key.BACKSPACE*(len(self.get_value())+1), chck_text=False, click=True, p2c_notif=False)
         elif clean_method == 'home&deletes':
@@ -1191,7 +1191,7 @@ class _Enter_Text_method(UIAElement):
         Перезапишет текст в контроле.
         В качестве значения method могут быть:
             -- click  - Кликнем мышкой по строке и введем новый текст c автоматическим нажания ENTER'a. Используется type_text().
-            -- invoke - Через UIA. Используется set_value().
+            -- invoke - Через UIA. Используется set_value_api().
         clean_method:
             -- None - использовать из структуры self._type_text_click
             -- Одно из значений TEXT_CLEAN_METHODS = ['uia_api', 'end&backspaces', 'home&deletes', 'single_backspace']
@@ -1214,7 +1214,7 @@ class _Enter_Text_method(UIAElement):
             else:
                 changed = False
         elif method == 'invoke':
-            changed = self.set_value(text, p2c_notif=False)
+            changed = self.set_value_api(text, p2c_notif=False)
         else:
             raise Exception('_Enter_Text_method.enter_text(...): unsupported method = \'%s\'' % str(method))
 
@@ -1343,6 +1343,13 @@ class Text(_uielement_Control, _ValuePattern_methods):
 
 
 class ComboBox(_uielement_Control, _ValuePattern_methods, _Enter_Text_method):
+
+    """
+    Методы:
+        select_item    --  Мышкой выбирает элемент из выпадающего меню.
+        set_value_api  --  Через UIA API выставить новое значение (метод из _ValuePattern_methods).
+        get_value      --  Переопредеялем метод из _ValuePattern_methods.
+    """
 
     CONTROL_TYPE = 'ComboBox'
     REQUIRED_PATTERNS = {}
@@ -1474,8 +1481,8 @@ class Tree(_uielement_Control):
             item_name -- Cписок строк-названий эелементов дерева, пречисленных по их вложенности один в другой. Последняя строка в списке -- искомый элемент.
             force_expand -- разворачивать ли свернутые элементы на пути поиска искового.
         '''
-        # logger.info(CONSOLE_ERASE_LINE_SEQUENCE)
-        logger.info('pikuli.Tree.find_item: searching by criteria item_name = \'%s\', timeout = %s' % (str(item_name), str(timeout)))
+        # logger.debug(CONSOLE_ERASE_LINE_SEQUENCE)
+        logger.debug('pikuli.Tree.find_item: searching by criteria item_name = \'%s\', timeout = %s' % (str(item_name), str(timeout)))
 
         if isinstance(item_name, str):
             item_name = [item_name]
@@ -1487,7 +1494,7 @@ class Tree(_uielement_Control):
         else:
             elem = self.find(Name=item_name[0], exact_level=1, timeout=timeout, exception_on_find_fail=exception_on_find_fail)
             if elem is None:
-                logger.info('pikuli.ui_element.Tree.find_item: %s has not been found. No exception -- returning None' % str(item_name))
+                logger.debug('pikuli.ui_element.Tree.find_item: %s has not been found. No exception -- returning None' % str(item_name))
                 return None
             if len(item_name) == 1:
                 found_elem = elem
@@ -1586,8 +1593,8 @@ class TreeItem(_uielement_Control):
             item_name -- Cписок строк-названий эелементов дерева, пречисленных по их вложенности один в другой. Последняя строка в списке -- искомый элемент.
             force_expand -- разворачивать ли свернутые элементы на пути поиска искового.
         '''
-        # logger.info(CONSOLE_ERASE_LINE_SEQUENCE)
-        logger.info('pikuli.TreeItem.find_item: searching by criteria item_name = \'%s\', timeout = %s' % (str(item_name), str(timeout)))
+        # logger.debug(CONSOLE_ERASE_LINE_SEQUENCE)
+        logger.debug('pikuli.TreeItem.find_item: searching by criteria item_name = \'%s\', timeout = %s' % (str(item_name), str(timeout)))
 
         if isinstance(item_name, str):
             item_name = [item_name]
@@ -1602,7 +1609,7 @@ class TreeItem(_uielement_Control):
 
         elem = self.find(Name=item_name[0], exact_level=1, timeout=timeout, exception_on_find_fail=exception_on_find_fail)
         if elem is None:
-            logger.info('pikuli.ui_element.TreeItem.find_item: %s has not been found. No exception -- returning None' % str(item_name))
+            logger.debug('pikuli.ui_element.TreeItem.find_item: %s has not been found. No exception -- returning None' % str(item_name))
             return None
         if len(item_name) == 1:
             found_elem = elem
@@ -1672,8 +1679,8 @@ class ANPropGrid_Table(_uielement_Control):
             elif len(rows) == 0:
                 raise FindFailed('pikuli.ANPropGrid_Table: row \'%s\' not found.\nSearch arguments:\n\trow_name = %s\n\tforce_expand = %s' % (str(nested_name), str(row_name), str(force_expand)))
             return rows[0]
-        # logger.info(CONSOLE_ERASE_LINE_SEQUENCE)
-        logger.info('pikuli.ANPropGrid_Table.find_row: searching by criteria item_name = \'%s\'' % str(row_name))
+        # logger.debug(CONSOLE_ERASE_LINE_SEQUENCE)
+        logger.debug('pikuli.ANPropGrid_Table.find_row: searching by criteria item_name = \'%s\'' % str(row_name))
         if isinstance(row_name, list):
             row = _find_row_precisely(self, row_name[0], 1)
             for nested_name in row_name[1:]:
@@ -1684,7 +1691,7 @@ class ANPropGrid_Table(_uielement_Control):
             found_elem = row
         else:
             found_elem = _find_row_precisely(self, row_name, 1)
-        # logger.info('pikuli.ANPropGrid_Table.find_row: \'%s\' has been found: %s' % (str(row_name), repr(found_elem)))
+        # logger.debug('pikuli.ANPropGrid_Table.find_row: \'%s\' has been found: %s' % (str(row_name), repr(found_elem)))
         return found_elem
 
 
