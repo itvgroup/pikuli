@@ -373,6 +373,35 @@ class Key(object):
     F12        = chr(0) + chr(win32con.VK_F12)
 
 
+def press_key(char, scancode):
+    win32api.keybd_event(char, scancode, win32con.KEYEVENTF_EXTENDEDKEY, 0)  # win32con.KEYEVENTF_EXTENDEDKEY   # TODO: is scan code needed?
+    time.sleep(DELAY_KBD_KEY_PRESS)
+
+
+def release_key(char, scancode):
+    win32api.keybd_event(char, scancode, win32con.KEYEVENTF_EXTENDEDKEY | win32con.KEYEVENTF_KEYUP, 0)  # win32con.KEYEVENTF_EXTENDEDKEY
+    time.sleep(DELAY_KBD_KEY_PRESS)
+
+
+def press_modifiers(modifiers):
+    if modifiers is not None:
+        for k in KeyModifier._rev:
+            if modifiers & k != 0:
+                press_key(_KeyCodes[KeyModifier._rev[k]][0], _KeyCodes[KeyModifier._rev[k]][1])
+
+
+def release_modifiers(modifiers):
+    if modifiers is not None:
+        for k in KeyModifier._rev:
+            if modifiers & k != 0:
+                release_key(_KeyCodes[KeyModifier._rev[k]][0], _KeyCodes[KeyModifier._rev[k]][1])
+
+
+def type_char(char):
+    press_key(char, 0)
+    release_key(char, 0)
+
+
 def type_text(s, modifiers=None, p2c_notif=True):
     '''
     Особенности:
@@ -386,26 +415,9 @@ def type_text(s, modifiers=None, p2c_notif=True):
     # https://ru.wikipedia.org/wiki/Скан-код
     # http://stackoverflow.com/questions/21197257/keybd-event-keyeventf-extendedkey-explanation-required
 
-    def press_key(char, scancode):
-        win32api.keybd_event(char, scancode, win32con.KEYEVENTF_EXTENDEDKEY, 0)  # win32con.KEYEVENTF_EXTENDEDKEY   # TODO: is scan code needed?
-        time.sleep(DELAY_KBD_KEY_PRESS)
-
-    def release_key(char, scancode):
-        win32api.keybd_event(char, scancode, win32con.KEYEVENTF_EXTENDEDKEY | win32con.KEYEVENTF_KEYUP, 0)  # win32con.KEYEVENTF_EXTENDEDKEY
-        time.sleep(DELAY_KBD_KEY_PRESS)
-
-    def type_char(char):
-        press_key(char, 0)
-        release_key(char, 0)
-
     s = str(s)
 
-    if modifiers is not None:
-        if not isinstance(modifiers, int):
-            raise FailExit('incorrect modifiers = \'%s\'' % str(modifiers))
-        for k in KeyModifier._rev:
-            if modifiers & k != 0:
-                press_key(_KeyCodes[KeyModifier._rev[k]][0], _KeyCodes[KeyModifier._rev[k]][1])
+    press_modifiers(modifiers)
 
     spec_key = False
     for c in s:
@@ -431,10 +443,7 @@ def type_text(s, modifiers=None, p2c_notif=True):
         else:
             raise FailExit('unknown symbol \'%s\' in \'%s\'' % (c, s))
 
-    if modifiers is not None:
-        for k in KeyModifier._rev:
-            if modifiers & k != 0:
-                release_key(_KeyCodes[KeyModifier._rev[k]][0], _KeyCodes[KeyModifier._rev[k]][1])
+    release_modifiers(modifiers)
 
     if p2c_notif:
         logger.info('pikuli._functions.type_text(): \'{}\' '
