@@ -10,7 +10,7 @@ from collections import namedtuple
 import win32api
 import win32con
 
-from _functions import KeyModifier, Key, type_text, FailExit, _take_screenshot
+from _functions import KeyModifier, Key, type_text, FailExit, _take_screenshot, press_modifiers, release_modifiers
 
 DELAY_AFTER_MOUSE_MOVEMENT = 0.500  # Время в [c]
 DELAY_IN_MOUSE_CLICK = 0.100        # Время в [c] между нажатием и отжатием кнопки (замерял сам и гуглил)
@@ -132,10 +132,12 @@ class Location(object):
         if p2c_notif:
             logger.info('pikuli.%s.doubleClick(): doubleClick on %s' % (type(self).__name__, str(self)))
 
-    def scroll(self, direction=1, count=1, click=True, p2c_notif=True):
+    def scroll(self, modifiers=None, direction=1, count=1, click=True, p2c_notif=True):
         # direction:
         #   1 - forward
         #  -1 - backward
+        if modifiers is not None:
+            press_modifiers(modifiers)
         self.mouseMove()
         if click:
             self.click(p2c_notif=False)
@@ -146,6 +148,8 @@ class Location(object):
             time.sleep(DELAY_IN_MOUSE_CLICK)
         if p2c_notif:
             logger.info('pikuli.%s.scroll(): scroll on %s; direction=%s, count=%s, click=%s' % (type(self).__name__, str(self), str(direction), str(count), str(click)))
+        if modifiers is not None:
+            release_modifiers(modifiers)
 
     def type(self, text, modifiers=None, click=True, press_enter=False,
              click_type_delay=DELAY_BETWEEN_CLICK_AND_TYPE,
