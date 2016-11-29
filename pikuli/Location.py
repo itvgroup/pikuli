@@ -98,15 +98,21 @@ class Location(object):
         if p2c_notif:
             logger.info('pikuli.%s.click(): click on %s' % (type(self).__name__, str(self)))
 
-    def mouseDown(self, p2c_notif=True):
+    def mouseDown(self, button='left', p2c_notif=True):
         self.mouseMove()
-        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, self.x, self.y, 0, 0)
+        if button == 'left':
+            win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, self.x, self.y, 0, 0)
+        else:
+            win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTDOWN, self.x, self.y, 0, 0)
         if p2c_notif:
             logger.info('pikuli.%s.mouseDown(): mouseDown on %s' % (type(self).__name__, str(self)))
 
-    def mouseUp(self, p2c_notif=True):
+    def mouseUp(self, button='left', p2c_notif=True):
         self.mouseMove()
-        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, self.x, self.y, 0, 0)
+        if button == 'left':
+            win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, self.x, self.y, 0, 0)
+        else:
+            win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTUP, self.x, self.y, 0, 0)
         if p2c_notif:
             logger.info('pikuli.%s.mouseUp(): mouseUp on %s' % (type(self).__name__, str(self)))
 
@@ -175,6 +181,43 @@ class Location(object):
 
         logger.warning('We need to eliminate all calls '
                             'of Location.enter_text() !!!!!')
+
+
+    def moveto(self, dest_location):
+        """
+        Функция двигает курсор по напрвлению к точке назначения по прямой
+        """
+        (dest_x, dest_y) = (None, None)
+        if hasattr(dest_location, 'x') and hasattr(dest_location, 'y'):
+            (dest_x, dest_y) = (dest_location.x, dest_location.y)
+            delay = DRAGnDROP_MOVE_DELAY
+        else:
+            assert len(dest_location) == 2
+            (dest_x, dest_y) = (dest_location[0], dest_location[1])
+            delay = DRAGnDROP_MOVE_DELAY
+        if dest_x is None or dest_y is None:
+            raise FailExit('')
+
+        if abs(dest_x - self.x) >= abs(dest_y - self.y):
+            (a1, b1, a2, b2) = (self.x, self.y, dest_x, dest_y)
+            f = lambda x, y: Location(x, y).mouseMove(delay)
+        else:
+            (a1, b1, a2, b2) = (self.y, self.x, dest_y, dest_x)
+            f = lambda x, y: Location(y, x).mouseMove(delay)
+
+        k = float(b2 - b1) / (a2 - a1)
+        a_sgn = (a2 - a1) / abs(a2 - a1)
+        la = 0
+        while abs(la) <= abs(a2 - a1):
+            a = a1 + la
+            b = int(k * la) + b1
+            f(a, b)
+            la += a_sgn * DRAGnDROP_MOVE_STEP
+
+        self.x = dest_x
+        self.y = dest_y
+        return self
+        
 
 
     def dragto(self, *dest_location, **kwargs):
