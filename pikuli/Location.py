@@ -138,7 +138,7 @@ class Location(object):
         if p2c_notif:
             logger.info('pikuli.%s.doubleClick(): doubleClick on %s' % (type(self).__name__, str(self)))
 
-    def scroll(self, modifiers=None, direction=1, count=1, click=True, p2c_notif=True):
+    def scroll(self, direction, count, click=True, modifiers=None, p2c_notif=True):
         # direction:
         #   1 - forward
         #  -1 - backward
@@ -217,7 +217,7 @@ class Location(object):
         self.x = dest_x
         self.y = dest_y
         return self
-        
+
 
 
     def dragto(self, *dest_location, **kwargs):

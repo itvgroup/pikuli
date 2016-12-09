@@ -753,8 +753,8 @@ class Region(object):
         if p2c_notif:
             logger.info('pikuli.%s.enter_text(): \'%s\' was entred in center of %s; click=%s, modifiers=%s' % (type(self).__name__, repr(text), str(self), str(click), str(modifiers)))
 
-    def scroll(self, modifiers=None, direction=1, count=1, click=True, p2c_notif=True):
-        self.getCenter().scroll(modifiers, direction, count, click)
+    def scroll(self, direction, count, click=True, modifiers=None, p2c_notif=True):
+        self.getCenter().scroll(direction, count, click=click, modifiers=modifiers)
         if p2c_notif:
             logger.info('pikuli.%s.scroll(): scroll in center of %s; direction=%s, count=%s, click=%s' % (type(self).__name__, str(self), str(direction), str(count), str(click)))
 

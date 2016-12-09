@@ -333,9 +333,10 @@ class KeyModifier(object):
         _rev  = {0x01: 'ALT', 0x02: 'CTRL', 0x04: 'SHIFT'}
     '''
     _rev = {}
-for (m, i) in (lambda l: zip(l, range(len(l))))(['ALT', 'CTRL', 'SHIFT']):
-    setattr(KeyModifier, m, 2**i)
-    KeyModifier._rev[getattr(KeyModifier, m)] = m
+for i, m in enumerate(['ALT', 'CTRL', 'SHIFT']):
+    code = 2**i
+    setattr(KeyModifier, m, code)
+    KeyModifier._rev[code] = m
 
 
 class Key(object):
