@@ -423,22 +423,36 @@ class Region(object):
             self._image_at_some_moment = img
         return (not eq)
 
-    def save_as_jpg(self, full_filename):
+    def _save_as_prep(self, full_filename, format_, msg, msg_loglevel):
+        if format_ not in ['jpg', 'png']:
+            logger.error('[INTERNAL] Unsupported format_={!r} at call of '
+                         'Region._save_as_prep(...). Assume \'jpg\''.format(format_))
+            format_ = 'jpg'
+        if msg_loglevel not in [logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR]:
+            logger.warning('[INTERNAL] Unavailable msg_loglevel={!r} at call of '
+                           'Region.save_as_{}(...). Assume INFO level.'.format(msg_loglevel, format_))
+            msg_loglevel = logging.INFO
+
         path = os.path.abspath(full_filename)
-        logger.info('pikuli.Region.save_as_jpg:\n\tinput:     %s\n\tfull path: [[f]]' % self, extra={'f': File(path)})
+
+        full_msg = 'pikuli.Region.save_as_{}:\n\tinput:     {}\n\tfull path: [[f]]'.format(format_, self)
+        if msg:
+            full_msg = msg + '\n' + full_msg
+        logger.log(msg_loglevel, full_msg, extra={'f': File(path)})
+
         dir_path = os.path.dirname(full_filename)
         if not os.path.exists(dir_path):
             os.makedirs(dir_path)
-        cv2.imwrite(full_filename, self.get_raw_screenshot(), [cv2.IMWRITE_JPEG_QUALITY, 70])
 
-    def save_as_png(self, full_filename):
-        path = os.path.abspath(full_filename)
-        logger.info('pikuli.Region.save_as_png:\n\tinput:      %s\n\tfull path: [[f]]' % self, extra={'f': File(path)})
+        return path
 
-        dir_path = os.path.dirname(full_filename)
-        if not os.path.exists(dir_path):
-            os.makedirs(dir_path)
-        cv2.imwrite(full_filename, self.get_raw_screenshot())
+    def save_as_jpg(self, full_filename, msg='', msg_loglevel=logging.INFO):
+        path = self._save_as_prep(full_filename, 'jpg', msg, msg_loglevel)
+        cv2.imwrite(path, self.get_raw_screenshot(), [cv2.IMWRITE_JPEG_QUALITY, 70])
+
+    def save_as_png(self, full_filename, msg='', msg_loglevel=logging.INFO):
+        path = self._save_as_prep(full_filename, 'png', msg, msg_loglevel)
+        cv2.imwrite(path, self.get_raw_screenshot())
 
     @property
     def geometry(self):

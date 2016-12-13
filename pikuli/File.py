@@ -22,7 +22,7 @@ class File(object):
 
             return ('<a href="#" class="PIKULI_pattern_file_name">{0}'
                     '<span class="PIKULI_pattern_preview">'
-                    '<img src="/pikuli-image?filename={0}">'
+                    '<img class="PIKULI_pattern_preview" src="/pikuli-image?filename={0}">'
                     '</span></a>'.format(temp_path))
         return '[NO FILE NAME]'
 
