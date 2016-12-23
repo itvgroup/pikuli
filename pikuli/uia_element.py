@@ -362,12 +362,13 @@ class UIAElement(object):
 
         control_type_id = self.get_property('ControlType')
         legacy_role_id = getattr(self.get_pattern('LegacyIAccessiblePattern'), 'CurrentRole', None)  # LegacyIAccessiblePattern will be None in case of CustomControl.
-        return u'<%s %s,%s,\'%s\',\'%s\'%s>' % (
+        return u'<%s %s, %s,\'%s\',\'%s\',\'%s\',%s>' % (
             type(self).__name__,
             UIA.UIA_automation_control_type_identifiers_mapping_rev.get(control_type_id, control_type_id),
             ROLE_SYSTEM_rev.get(legacy_role_id, legacy_role_id),
             name,
             getattr(self, 'AutomationId', ''),
+            getattr(self, 'LocalizedControlType', ''),
             hwnd)
 
     def _long_info(self):
