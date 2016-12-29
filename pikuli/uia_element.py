@@ -1026,7 +1026,7 @@ class _uielement_Control(UIAElement):
                 self.scroll_into_view()
 
             if hasattr(self, '_type_text_click'):
-                click_location = self._type_text_click['click_location']
+                click_location = self._type_text_click['click_location']  # к примеру, метод getTopLeft()
                 f = getattr(self.reg(), click_location[0], None)
                 if f is None:
                     raise Exception('_Enter_Text_method.type_text(...): [INTERNAL] wrong \'click_location\':\n\t_type_text_click = %s' % str(_type_text_click))
