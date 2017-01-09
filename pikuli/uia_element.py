@@ -1042,11 +1042,14 @@ class _uielement_Control(UIAElement):
                     raise Exception('_Enter_Text_method.type_text(...): [INTERNAL] wrong \'click_method\':\n\t_type_text_click = %s' % str(_type_text_click))
                 click_method(p2c_notif=False)
 
+                if p2c_notif:
+                    logger.info('pikuli.{}.click(): click on {} with method "{}" at location {} = {cl[0]}({cl[1]}, {cl[2]})'.format(
+                        type(self).__name__, self, self._type_text_click['click_method'], loc, cl=click_location))
+
             else:
                 self.reg().click(p2c_notif=False)
-
-            if p2c_notif:
-                logger.info('pikuli.%s.click(): click in center of %s' % (type(self).__name__, str(self)))
+                if p2c_notif:
+                    logger.info('pikuli.%s.click(): click in center of %s' % (type(self).__name__, str(self)))
         else:
             raise Exception('pikuli.%s.click(): unsupported method = \'%s\'' % (type(self).__name__, str(method)))
 
