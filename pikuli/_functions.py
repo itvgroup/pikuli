@@ -360,6 +360,7 @@ class Key(object):
     END        = chr(0) + chr(win32con.VK_END)
     BACKSPACE  = chr(0) + chr(win32con.VK_BACK)
     DELETE     = chr(0) + chr(win32con.VK_DELETE)
+    SPACEBAR   = chr(0) + chr(win32con.VK_SPACE)
     F1         = chr(0) + chr(win32con.VK_F1)
     F2         = chr(0) + chr(win32con.VK_F2)
     F3         = chr(0) + chr(win32con.VK_F3)
