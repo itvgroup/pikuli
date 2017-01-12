@@ -439,8 +439,8 @@ class Region(object):
     def _save_as_prep(self, full_filename, format_, msg, msg_loglevel):
         if format_ not in ['jpg', 'png']:
             logger.error('[INTERNAL] Unsupported format_={!r} at call of '
-                         'Region._save_as_prep(...). Assume \'jpg\''.format(format_))
-            format_ = 'jpg'
+                         'Region._save_as_prep(...). Assume \'png\''.format(format_))
+            format_ = 'png'
         if msg_loglevel not in [logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR]:
             logger.warning('[INTERNAL] Unavailable msg_loglevel={!r} at call of '
                            'Region.save_as_{}(...). Assume INFO level.'.format(msg_loglevel, format_))
@@ -466,6 +466,25 @@ class Region(object):
     def save_as_png(self, full_filename, msg='', msg_loglevel=logging.INFO):
         path = self._save_as_prep(full_filename, 'png', msg, msg_loglevel)
         cv2.imwrite(path, self.get_raw_screenshot())
+
+    def save_in_findfailed(self, format_='jpg', msg='', msg_loglevel=logging.INFO):
+        assert format_ in ['png', 'jpg']
+
+        file_name = os.path.join(
+            pikuli.Settings.getFindFailedDir(),
+            'ManuallyStored-{dt}-{reg}.{format}'.format(
+                dt=datetime.datetime.now().strftime('%Y_%m_%d-%H_%M_%S'),
+                reg='({},{},{},{})'.format(self._x, self._y, self._w, self._h),
+                format=format_))
+
+        if msg:
+            msg += ' ({} has been stored manually)'.format(self)
+        else:
+            msg = 'Mmanually storing of {}.'.format(self)
+        if format_ == 'jpg':
+            self.save_as_jpg(file_name, msg=msg, msg_loglevel=msg_loglevel)
+        else:
+            self.save_as_png(file_name, msg=msg, msg_loglevel=msg_loglevel)
 
     @property
     def geometry(self):
