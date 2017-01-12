@@ -63,6 +63,19 @@ class Region(object):
     def __ne__(self, other):
         return not self.__eq__(other)
 
+    def __contains__(self, is_contaned):
+        """
+        Точка или прямоугольник `is_contaned` полностью (всеми углами) внутри `self`.
+        """
+        if isinstance(is_contaned, Location):
+            return ((self.x <= is_contaned.x <= self.x + self.w) and
+                    (self.y <= is_contaned.y <= self.y + self.h))
+        elif isinstance(is_contaned, Region):
+            return (is_contaned.top_left in self) and (is_contaned.bottom_right in self)
+        else:
+            raise Exception('__contains__(): Unsupported is_contaned = {!r}. self = {!r}'.format(
+                is_contaned, self))
+
     def __init__(self, *args, **kwargs):  # relation='top-left', title=None):
         '''
         - Конструктор области. -
