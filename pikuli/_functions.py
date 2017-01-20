@@ -40,10 +40,13 @@ def verify_timeout_argument(timeout, allow_None=False, err_msg='pikuli.verify_ti
     return timeout
 
 
-def wait_while(f_logic, timeout):
+def wait_while(f_logic, timeout, warning_timeout=None):
     DELAY_BETWEEN_ATTEMTS = 0.5
     elaps_time = 0
+    warning_flag = False
     while f_logic():
+        if warning_timeout is not None and elaps_time > warning_timeout and not warning_flag:
+            logger.warning("Waiting time exceeded {}".format(warning_timeout))
         if timeout is not None and elaps_time > timeout:
             return False
         time.sleep(DELAY_BETWEEN_ATTEMTS)
@@ -51,10 +54,13 @@ def wait_while(f_logic, timeout):
     return True
 
 
-def wait_while_not(f_logic, timeout):
+def wait_while_not(f_logic, timeout, warning_timeout=None):
     DELAY_BETWEEN_ATTEMTS = 0.5
     elaps_time = 0
+    warning_flag = False
     while not f_logic():
+        if warning_timeout is not None and elaps_time > warning_timeout and not warning_flag:
+            logger.warning("Waiting time exceeded {}".format(warning_timeout))
         if timeout is not None and elaps_time > timeout:
             return False
         time.sleep(DELAY_BETWEEN_ATTEMTS)
