@@ -456,3 +456,9 @@ def type_text(s, modifiers=None, p2c_notif=True):
     if p2c_notif:
         logger.info('pikuli._functions.type_text(): \'{}\' '
                     'was typed; modifiers={}'.format(repr(s), str(modifiers)))
+
+def pixel_color_at(x, y):
+    hdc = win32gui.GetWindowDC(win32gui.GetDesktopWindow())
+    c = int(win32gui.GetPixel(hdc, x, y))
+    # (r, g, b)
+    return (c & 0xff), ((c >> 8) & 0xff), ((c >> 16) & 0xff)
