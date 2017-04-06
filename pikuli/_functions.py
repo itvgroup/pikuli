@@ -47,6 +47,7 @@ def wait_while(f_logic, timeout, warning_timeout=None):
     while f_logic():
         if warning_timeout is not None and elaps_time > warning_timeout and not warning_flag:
             logger.warning("Waiting time exceeded {}".format(warning_timeout))
+            warning_flag = True
         if timeout is not None and elaps_time > timeout:
             return False
         time.sleep(DELAY_BETWEEN_ATTEMTS)
@@ -61,6 +62,7 @@ def wait_while_not(f_logic, timeout, warning_timeout=None):
     while not f_logic():
         if warning_timeout is not None and elaps_time > warning_timeout and not warning_flag:
             logger.warning("Waiting time exceeded {}".format(warning_timeout))
+            warning_flag = True
         if timeout is not None and elaps_time > timeout:
             return False
         time.sleep(DELAY_BETWEEN_ATTEMTS)
