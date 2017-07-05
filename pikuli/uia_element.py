@@ -1259,6 +1259,7 @@ class Pane(_uielement_Control):
 
 
 
+
 class Button(_uielement_Control):
 
     CONTROL_TYPE = 'Button'
@@ -1268,6 +1269,8 @@ class Button(_uielement_Control):
 
     def is_unavaliable(self):
         return bool(self.get_pattern('LegacyIAccessiblePattern').CurrentState & STATE_SYSTEM['UNAVAILABLE'])
+
+
 
 
 
@@ -1756,10 +1759,16 @@ class List(_uielement_Control):
         return self.find_all(ControlType='ListItem', exact_level=1)
 
 
+
+
 class ListItem(_uielement_Control):
     ''' Элементы списка ListItem. '''
 
     CONTROL_TYPE = 'ListItem'
+
+    def select(self):
+        self.get_pattern('SelectionItemPattern').Select()
+
 
 
 
