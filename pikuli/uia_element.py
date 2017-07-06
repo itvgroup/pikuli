@@ -1790,7 +1790,17 @@ class MenuItem(_uielement_Control):
 
     CONTROL_TYPE = 'MenuItem'
 
+class UIAControlType(object):
+    '''
+    класс обертка над UIA_automation_control_type_identifiers_mapping
+    '''
 
+    class __metaclass__(type):
+        def __getattr__(cls, key):
+            controls = UIA.UIA_automation_control_type_identifiers_mapping
+            if key not in controls:
+                raise AttributeError(key)
+            return controls[key]
 
 
 locals_keys = locals().keys()
