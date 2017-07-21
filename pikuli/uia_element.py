@@ -1398,7 +1398,8 @@ class ComboBox(_uielement_Control, _ValuePattern_methods, _Enter_Text_method):
         if self.get_value() != item_name:
             if self.list_items() is None:
                 self.click()
-            self.get_item_by_name(item_name).click()
+            if wait_while_not(lambda: any(item_name in str(s) for s in self.list_items()), check_timeout):
+                self.get_item_by_name(item_name).click()
             if not wait_while_not(lambda: self.get_value() == item_name, check_timeout):
                 raise Exception('ComboBox.uncheck(...): Combobox does not take desired value \'%s\' after %s seconds -- it has \'%s\' till now' % (item_name, str(check_timeout), self.get_value()))
 
