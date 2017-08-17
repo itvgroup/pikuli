@@ -34,7 +34,7 @@ NAMES_of_COR_E = {
 
 NEXT_SEARCH_ITER_DELAY = 2  # Задержка между итерациями поиска, пока ещё не вышел timeout
 DEFAULT_FIND_TIMEOUT   = 11
-CONTROL_CHECK_TIMEOUT = 10
+CONTROL_CHECK_TIMEOUT = 20
 DYNAMIC_FIND_TIMEOUT = None
 
 CONSOLE_ERASE_LINE_SEQUENCE = '\033[F' + '\033[2K'
@@ -1387,6 +1387,8 @@ class ComboBox(_uielement_Control, _ValuePattern_methods, _Enter_Text_method):
             for i in self.list_items():
                 if i.Name == item_name:
                     return i
+        else:
+            raise FindFailed('ComboBox item %s was not show for timeout {}'.format(CONTROL_CHECK_TIMEOUT))
 
     def select_item(self, item_name):
         """
