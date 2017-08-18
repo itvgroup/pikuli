@@ -1384,9 +1384,9 @@ class ComboBox(_uielement_Control, _ValuePattern_methods, _Enter_Text_method):
         if self.list_items() is None:
             raise FindFailed('List of ComboBox %s was not found. Is this list collapsed?' % repr(self))
         if wait_while_not(lambda: any(item_name in str(s) for s in self.list_items()), CONTROL_CHECK_TIMEOUT):
-            for i in self.list_items():
-                if i.Name == item_name:
-                    return i
+            items = [i for i in self.list_items() if i.Name == item_name]
+            assert len(items) == 1  # Не меньше и не больше одного
+            return items[0]
         else:
             raise FindFailed('ComboBox item %s was not show for timeout {}'.format(CONTROL_CHECK_TIMEOUT))
 
