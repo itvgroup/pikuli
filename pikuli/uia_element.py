@@ -1769,7 +1769,13 @@ class ListItem(_uielement_Control):
     def select(self):
         self.get_pattern('SelectionItemPattern').Select()
 
+    @property
+    def is_selected(self):
+        return bool(self.get_pattern('SelectionItemPattern').CurrentIsSelected)
 
+    @property
+    def is_checked(self):
+        return self.get_pattern('TogglePattern').CurrentToggleState == UIA.UIA_wrapper.ToggleState_On
 
 
 class Menu(_uielement_Control):
