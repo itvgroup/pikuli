@@ -1388,7 +1388,7 @@ class ComboBox(_uielement_Control, _ValuePattern_methods, _Enter_Text_method):
             assert len(items) == 1  # Не меньше и не больше одного
             return items[0]
         else:
-            raise FindFailed('ComboBox item %s was not show for timeout {}'.format(CONTROL_CHECK_TIMEOUT))
+            raise FindFailed('ComboBox item was not show for timeout {}'.format(CONTROL_CHECK_TIMEOUT))
 
     def select_item(self, item_name):
         """
