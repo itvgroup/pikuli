@@ -11,6 +11,7 @@ import traceback
 import datetime
 import os
 import logging
+from collections import namedtuple
 
 import cv2
 import numpy as np
@@ -927,6 +928,43 @@ class Region(object):
     def highlight(self, delay=1.5):
         highlight_region(self._x, self._y, self._w, self._h, delay)
 
+    def rel2abs(self, x_rel, y_rel, inside=True):
+        """
+        Переводит координаты из абсолютной в относительную
+        по формуле:
+        x = x0 + x'/100*w
+        y = y0 + y'/100*h
+        :param x_rel: x'
+        :param y_rel: y'
+        :param inside: регулирует возможность выхода за пределы относительной координаты
+        :return: :class:`Location`
+        """
+        if not inside:
+            if 100 < x_rel < 0:
+                Exception('x_rel out of range')
+            if 100 < y_rel < 0:
+                Exception('y_rel out of range')
+        return Location(self.getX() + x_rel / 100.00 * self.w,  self.getY() + y_rel / 100.00 * self.h)
+
+    def abs2rel(self, x, y, inside=True):
+        """
+        Переводит координаты из относительной в абсолютную
+        по формуле:
+        x' = (x-x0)*100/w
+        y' = (y-y0)*100/h
+        :param x: x
+        :param y: y
+        :param inside: регулирует возможность выхода за пределы относительной координаты
+        :return: :class:`namedtuple` контейнер, который содержит в себе относительные координаты
+        """
+        x_rel = (x-self.getX()) * 100.00 / self.w
+        y_rel = (y-self.getY()) * 100.00 / self.h
+        if not inside:
+            if 100 < x_rel < 0:
+                Exception('x_rel out of range')
+            if 100 < y_rel < 0:
+                Exception('y_rel out of range')
+        return namedtuple('RelLocation', ['x_rel', 'y_rel'])(x_rel, y_rel)
 
     def find_all_solid_markers_by_piece(self, ps):
         '''
