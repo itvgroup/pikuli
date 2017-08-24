@@ -966,6 +966,31 @@ class Region(object):
                 Exception('y_rel out of range')
         return namedtuple('RelLocation', ['x_rel', 'y_rel'])(x_rel, y_rel)
 
+    def midpoint(self, x2, y2):
+        """
+        Считает координаты середины отрезка по формуле:
+        (x1 + x2)   (y1 + y2)
+        -------- ,   --------
+            2           2
+        :param x2: координата x второй точки
+        :param y2: координата y второй точки
+        :return: :class:`tuple` координата середины отрезка
+        """
+        x1 = self.getX()
+        y1 = self.getY()
+        return (x1 + x2) / 2, (y1 + y2) / 2
+
+    def distance_to_point(self, x2, y2):
+        """
+        Считает расстояние между точками с помощью теоремы Пифагора:
+        :param x2: координата x второй точки
+        :param y2: координата y второй точки
+        :return: расстояние между двумя точками
+        """
+        x1 = self.getX()
+        y1 = self.getY()
+        return ((x2 - x1)**2 + (y2 - y1)**2) * 0.5
+
     def find_all_solid_markers_by_piece(self, ps):
         '''
         Ищет все почти solid-color маркеры. Выделяется группа найденных как один маркер --
