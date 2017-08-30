@@ -295,3 +295,28 @@ class Location(object):
         return self
 
     drag_and_drop = dragndrop
+
+    def midpoint(self, x2, y2):
+        """
+        Считает координаты середины отрезка по формуле:
+        (x1 + x2)   (y1 + y2)
+        -------- ,   --------
+            2           2
+        :param x2: координата x второй точки
+        :param y2: координата y второй точки
+        :return: :class:`tuple` координата середины отрезка
+        """
+        x1 = self.getX()
+        y1 = self.getY()
+        return (x1 + x2) / 2, (y1 + y2) / 2
+
+    def distance_to_point(self, x2, y2):
+        """
+        Считает расстояние между точками с помощью теоремы Пифагора:
+        :param x2: координата x второй точки
+        :param y2: координата y второй точки
+        :return: расстояние между двумя точками
+        """
+        x1 = self.getX()
+        y1 = self.getY()
+        return ((x2 - x1)**2 + (y2 - y1)**2) * 0.5

@@ -21,6 +21,7 @@ from _functions import (wait_while,
                         set_text_to_clipboard, get_text_from_clipboard)
 from _exceptions import FindFailed, FailExit
 import hwnd_element
+from enum import Enum
 from oleacc_h import (STATE_SYSTEM, ROLE_SYSTEM, ROLE_SYSTEM_rev)
 
 # "A lot of HRESULT codes…" (https://blogs.msdn.microsoft.com/eldar/2007/04/03/a-lot-of-hresult-codes/)
@@ -613,11 +614,12 @@ class UIAElement(object):
             val = kwargs.pop(key, None)
             if val is not None:
                 not_none_criteria[key] = val
-                if isinstance(val, unicode):
+                if isinstance(val, re._pattern_type):
+                    pass
+                elif isinstance(val, list):
+                    val = map(str, val)
+                else:
                     val = str(val)
-                if isinstance(val, list) and not reduce(lambda r, t: r and isinstance(t, str), val, True) or \
-                   not isinstance(val, list) and not (isinstance(val, re._pattern_type) or isinstance(val, str)):
-                        raise Exception('%s: wrong kwargs[\'%s\'] = \'%s\'' % (_func_name, str(key), str(val)))
             criteria[key] = val
 
         val = kwargs.pop('ControlType', None)
