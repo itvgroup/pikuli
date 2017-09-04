@@ -34,7 +34,7 @@ NAMES_of_COR_E = {
 
 NEXT_SEARCH_ITER_DELAY = 2  # Задержка между итерациями поиска, пока ещё не вышел timeout
 DEFAULT_FIND_TIMEOUT   = 11
-CONTROL_CHECK_AFTER_CLICK_DELAY = 3
+CONTROL_CHECK_TIMEOUT = 20
 DYNAMIC_FIND_TIMEOUT = None
 
 CONSOLE_ERASE_LINE_SEQUENCE = '\033[F' + '\033[2K'
@@ -1062,7 +1062,7 @@ class _ValuePattern_methods(UIAElement):
     def get_value(self):
         return _None_of_str(self.get_pattern('ValuePattern').CurrentValue)
 
-    def set_value_api(self, text, check_timeout=CONTROL_CHECK_AFTER_CLICK_DELAY, p2c_notif=True):
+    def set_value_api(self, text, check_timeout=CONTROL_CHECK_TIMEOUT, p2c_notif=True):
         '''
         Возвращает:
             -- True, если состяние контрола изменилось.
@@ -1094,7 +1094,7 @@ class _LegacyIAccessiblePattern_value_methods(UIAElement):
     def get_value(self):
         return self.get_pattern('LegacyIAccessiblePattern').CurrentValue
 
-    def set_value_api(self, text, check_timeout=CONTROL_CHECK_AFTER_CLICK_DELAY, p2c_notif=True):
+    def set_value_api(self, text, check_timeout=CONTROL_CHECK_TIMEOUT, p2c_notif=True):
         '''
         Возвращает:
             -- True, если состяние контрола изменилось.
@@ -1126,7 +1126,7 @@ class _Enter_Text_method(UIAElement):
     _type_text_click = {'click_method': 'click', 'click_location': ('getCenter', None, None), 'enter_text_clean_method': 'end&backspaces'}
 
 
-    def paste_text(self, text, check_timeout=CONTROL_CHECK_AFTER_CLICK_DELAY, p2c_notif=True):
+    def paste_text(self, text, check_timeout=CONTROL_CHECK_TIMEOUT, p2c_notif=True):
         """ Обязательно кликнет, а затем сделат Ctrl+V. Удаления или выделения старого текста нет! """
         buff = get_text_from_clipboard()
         try:
@@ -1138,7 +1138,7 @@ class _Enter_Text_method(UIAElement):
         finally:
             set_text_to_clipboard(buff)
 
-    def clear_text(self, clean_method, check_timeout=CONTROL_CHECK_AFTER_CLICK_DELAY, p2c_notif=True):
+    def clear_text(self, clean_method, check_timeout=CONTROL_CHECK_TIMEOUT, p2c_notif=True):
         if clean_method is None:
             clean_method = self._type_text_click.get('enter_text_clean_method', None)
         if clean_method is None:
@@ -1160,7 +1160,7 @@ class _Enter_Text_method(UIAElement):
         else:
             raise Exception('_Enter_Text_method.clear_text(...): clean_method = {!r}'.format(clean_method))
 
-    def type_text(self, text, modifiers=None, chck_text=False, click=True, check_timeout=CONTROL_CHECK_AFTER_CLICK_DELAY, p2c_notif=True):
+    def type_text(self, text, modifiers=None, chck_text=False, click=True, check_timeout=CONTROL_CHECK_TIMEOUT, p2c_notif=True):
         '''
         Кликнем мышкой в _type_text_click, если click=True, и наберем новый текст без автоматического нажания ENTER'a.
         Результат набора текста по умолчанию проверяется -- за это ответчает агрумент chck_text:
@@ -1190,7 +1190,7 @@ class _Enter_Text_method(UIAElement):
             logger.info('pikuli.%s.type_text(): type \'%s\' in %s' % (type(self).__name__, repr(text), str(self)))
 
 
-    def enter_text(self, text, method='click', clean_method=None, check_timeout=CONTROL_CHECK_AFTER_CLICK_DELAY, p2c_notif=True):
+    def enter_text(self, text, method='click', clean_method=None, check_timeout=CONTROL_CHECK_TIMEOUT, p2c_notif=True):
         '''
         Перезапишет текст в контроле.
         В качестве значения method могут быть:
@@ -1284,7 +1284,7 @@ class CheckBox(_uielement_Control):
     def is_unchecked(self):
         return not bool(self.get_pattern('LegacyIAccessiblePattern').CurrentState & STATE_SYSTEM['CHECKED'])
 
-    def check(self, method='click', check_timeout=CONTROL_CHECK_AFTER_CLICK_DELAY):
+    def check(self, method='click', check_timeout=CONTROL_CHECK_TIMEOUT):
         '''
         Потенциально в качестве значения method могут быть click (подвести курсов мыши и кликнуть) или invoke (через UIA).
         Возвращает:
@@ -1302,7 +1302,7 @@ class CheckBox(_uielement_Control):
         else:
             return False
 
-    def uncheck(self, method='click', check_timeout=CONTROL_CHECK_AFTER_CLICK_DELAY):
+    def uncheck(self, method='click', check_timeout=CONTROL_CHECK_TIMEOUT):
         '''
         Потенциально в качестве значения method могут быть click (подвести курсов мыши и кликнуть) или invoke (через UIA).
         Возвращает:
@@ -1320,7 +1320,7 @@ class CheckBox(_uielement_Control):
         else:
             return False
 
-    def check_or_uncheck(self, check_bool, method='click', check_timeout=CONTROL_CHECK_AFTER_CLICK_DELAY):
+    def check_or_uncheck(self, check_bool, method='click', check_timeout=CONTROL_CHECK_TIMEOUT):
         '''
         Потенциально в качестве значения method могут быть click (подвести курсов мыши и кликнуть) или invoke (через UIA).
         Возвращает:
@@ -1376,31 +1376,30 @@ class ComboBox(_uielement_Control, _ValuePattern_methods, _Enter_Text_method):
         return self.find(ControlType='Text', exact_level=1).get_value()"""
 
     def get_item_by_name(self, item_name):
-        ''' Если список ракрыт, то вернут подходящий объект ListItem. Если объекта не нашлось в списке или список свернут, то будет исключение FindFailed. '''
+        """
+        Если список ракрыт, то вернут подходящий объект ListItem. Если объекта не нашлось в списке в течение timeout, то будет исключение
+        :param item_name: название поля
+        """
         item_name = str(item_name)
-        list_ = self.find(ControlType='List', exact_level=1, exception_on_find_fail=False)
-        if list_ is None:
+        if self.list_items() is None:
             raise FindFailed('List of ComboBox %s was not found. Is this list collapsed?' % repr(self))
-        items = list_.find_all(ControlType='ListItem', exact_level=1)
-        if len(items) == 0:
-            raise FindFailed('ComboBox.get_item_by_name(...): Item \'%s\' was not found in list of ComboBox %s. No one item exists in this list.' % (item_name, repr(self)))
-        for i in items:
-            if i.Name == item_name:
-                return i
-        raise FindFailed('ComboBox.get_item_by_name(...): Item \'%s\' was not found in list of ComboBox %s. Existing items:\n\t%s' % (item_name, repr(self), '\n\t'.join(map(str,items))))
+        if wait_while_not(lambda: any(item_name in str(s) for s in self.list_items()), CONTROL_CHECK_TIMEOUT):
+            items = [i for i in self.list_items() if i.Name == item_name]
+            assert len(items) == 1  # Не меньше и не больше одного
+            return items[0]
+        else:
+            raise FindFailed('ComboBox item was not show for timeout {}'.format(CONTROL_CHECK_TIMEOUT))
 
-    def select_item(self, item_name, check_timeout=CONTROL_CHECK_AFTER_CLICK_DELAY):
-        '''
+    def select_item(self, item_name):
+        """
         Выбрать пункт.
             item_name  --  строка, содержащая текст делаемого пункта выпалдающего меню.
-        '''
+        """
         item_name = str(item_name)
         if self.get_value() != item_name:
             if self.list_items() is None:
                 self.click()
             self.get_item_by_name(item_name).click()
-            if not wait_while_not(lambda: self.get_value() == item_name, check_timeout):
-                raise Exception('ComboBox.uncheck(...): Combobox does not take desired value \'%s\' after %s seconds -- it has \'%s\' till now' % (item_name, str(check_timeout), self.get_value()))
 
     def get_value(self):
         '''
