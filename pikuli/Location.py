@@ -315,7 +315,7 @@ class Location(object):
         y1 = self.getY()
         return (x1 + x2) / 2, (y1 + y2) / 2
 
-    def distance_to_(self, *args):
+    def distance_to(self, *args):
         """
         Считает расстояние между точками с помощью теоремы Пифагора:
         :param x2: координата x второй точки
