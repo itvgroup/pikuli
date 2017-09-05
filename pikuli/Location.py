@@ -296,27 +296,40 @@ class Location(object):
 
     drag_and_drop = dragndrop
 
-    def midpoint(self, x2, y2):
+    def midpoint_to(self, *args):
         """
-        Считает координаты середины отрезка по формуле:
-        (x1 + x2)   (y1 + y2)
-        -------- ,   --------
-            2           2
+        Считает координаты середины отрезка
         :param x2: координата x второй точки
         :param y2: координата y второй точки
         :return: :class:`tuple` координата середины отрезка
         """
+        if len(args) == 1 and isinstance(args[0], Location):
+            x2 = args[0].x
+            y2 = args[0].y
+        elif len(args) == 2:
+            x2 = args[0]
+            y2 = args[1]
+        else:
+            raise Exception()
         x1 = self.getX()
         y1 = self.getY()
         return (x1 + x2) / 2, (y1 + y2) / 2
 
-    def distance_to_point(self, x2, y2):
+    def distance_to_(self, *args):
         """
         Считает расстояние между точками с помощью теоремы Пифагора:
         :param x2: координата x второй точки
         :param y2: координата y второй точки
         :return: расстояние между двумя точками
         """
+        if len(args) == 1 and isinstance(args[0], Location):
+            x2 = args[0].x
+            y2 = args[0].y
+        elif len(args) == 2:
+            x2 = args[0]
+            y2 = args[1]
+        else:
+            raise Exception()
         x1 = self.getX()
         y1 = self.getY()
-        return ((x2 - x1)**2 + (y2 - y1)**2) * 0.5
+        return ((x2 - x1)**2 + (y2 - y1)**2) ** 0.5
