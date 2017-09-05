@@ -20,6 +20,8 @@ import win32gui
 from _functions import (_take_screenshot,
                         verify_timeout_argument,
                         highlight_region)
+from axxonnext.client_gui_wrapper.vmda_search.criteria import RelativeLoc
+
 from . import FindFailed, FailExit
 from Pattern import Pattern
 from Location import (Location,
@@ -934,19 +936,20 @@ class Region(object):
         по формуле:
         x = x0 + x'/100*w
         y = y0 + y'/100*h
-        :param x_rel: x'
-        :param y_rel: y'
+        (x0, y0) - абсолютные координаты в пикселях левого верхнего угла превью камеры
+        :param x_rel: x' в формуле
+        :param y_rel: y' в формуле
         :param inside: регулирует возможность выхода за пределы относительной координаты
         :return: :class:`Location`
         """
         if not inside:
-            if 100 < x_rel < 0:
+            if not 0 <= x_rel <= 100:
                 Exception('x_rel out of range')
-            if 100 < y_rel < 0:
+            if not 0 <= y_rel <= 100:
                 Exception('y_rel out of range')
         return Location(self.getX() + x_rel / 100.00 * self.w,  self.getY() + y_rel / 100.00 * self.h)
 
-    def abs2rel(self, x, y, inside=True):
+    def abs2rel(self, *args, **kwargs):
         """
         Переводит координаты из относительной в абсолютную
         по формуле:
@@ -957,14 +960,24 @@ class Region(object):
         :param inside: регулирует возможность выхода за пределы относительной координаты
         :return: :class:`namedtuple` контейнер, который содержит в себе относительные координаты
         """
+        inside = kwargs.pop('inside', True)
+        assert len(kwargs) == 0
+        if len(args) == 1 and isinstance(args[0], Location):
+            x = args[0].x
+            y = args[0].y
+        elif len(args) == 2:
+            x = args[0]
+            y = args[1]
+        else:
+            raise Exception()
         x_rel = (x-self.getX()) * 100.00 / self.w
         y_rel = (y-self.getY()) * 100.00 / self.h
         if not inside:
-            if 100 < x_rel < 0:
+            if not 0 <= x_rel <= 100:
                 Exception('x_rel out of range')
-            if 100 < y_rel < 0:
+            if not 0 <= y_rel <= 100:
                 Exception('y_rel out of range')
-        return namedtuple('RelLocation', ['x_rel', 'y_rel'])(x_rel, y_rel)
+        return RelativeLoc(x_rel, y_rel)
 
     def find_all_solid_markers_by_piece(self, ps):
         '''

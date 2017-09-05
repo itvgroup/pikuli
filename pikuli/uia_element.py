@@ -616,7 +616,7 @@ class UIAElement(object):
                 not_none_criteria[key] = val
                 if isinstance(val, re._pattern_type):
                     pass
-                elif isinstance(val, list):
+                elif isinstance(val, (list, tuple)):
                     val = map(str, val)
                 else:
                     val = str(val)
