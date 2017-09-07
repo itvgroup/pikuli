@@ -6,6 +6,7 @@
 import logging
 import time
 from collections import namedtuple
+from math import sqrt
 
 import win32api
 import win32con
@@ -27,14 +28,130 @@ Color = namedtuple('Color', 'r g b')
 
 logger = logging.getLogger('axxon.pikuli')
 
+"""
+TODO: Unit Test
 
-class Location(object):
+l1 = Location(3, 4)
+l2 = Location(1, 1)
 
-    def __init__(self, x, y, title=None):
-        self.x = int(x)
-        self.y = int(y)
-        self.title = title
+print 'l1, l2:  ', l1, l2
+print 'l1 + l2: ', l1 + l2
+print 'l1 - l2: ', l1 - l2
+print 'l1 * l2: ', l1 * l2
+print 'abs(l1): ', abs(l1)
+print 'l1 * 2.1:', l1 * 2.1
+print 'l1 / 2.1:', l1 / 2.1
+print 'abs(l1): ', abs(l1)
+print l1.midpoint_to(l2)
+print l1.distance_to(l2)
+
+"""
+
+
+class Vector(object):
+
+    def __init__(self, x, y):
+        """
+        Координаты -- вещественые числа.
+        """
+        self.x = float(x)
+        self.y = float(y)
+
+    def __add__(self, other):
+        """
+        Сложение двух векторов
+        """
+        assert isinstance(other, Vector)
+        return Vector(self.x + other.x, self.y + other.y)
+
+    def __sub__(self, other):
+        """
+        Разность двух векторов
+        """
+        assert isinstance(other, Vector)
+        return Vector(self.x - other.x, self.y - other.y)
+
+    def __mul__(self, other):
+        """
+        Скалярное произведение двух векторов или умножение на скаляр.
+        Скаляр приводится к `float`.
+        """
+        if isinstance(other, Vector):
+            return float(self.x * other.x + self.y * other.y)
+        else:
+            other = float(other)
+            return Vector(self.x * other, self.y * other)
+
+    def __div__(self, other):
+        """
+        Деление на скаляр. Скаляр приводится к `float`.
+        """
+        if isinstance(other, Vector):
+            raise Exception('Vector division is unsupported')
+        else:
+            other = float(other)
+            return Vector(self.x / other, self.y / other)
+
+    def __floordiv__(self, other):
+        """
+        Синоним :func:`Vector.__div__`
+        """
+        return self.__dev__(other)
+
+    def __neg__(self):
+        return Vector(-self.x, -self.y)
+
+    def __pos__(self):
+        return Vector(self.x, self.y)
+
+    def __abs__(self):
+        """
+        Модуль вектора.
+        """
+        return sqrt(self * self)
+
+
+class Location(Vector):
+
+    def __init__(self, *args, **kwargs):
+        """
+        Координаты, хранимые в классе, уже целочисленные.
+        :param args: Либо один кземпляр :class:`Vector` или :class:`Location`, либо пара коорлинат `x, y`.
+        :param kwargs: `title=None`
+        """
+        if len(args) == 1 and isinstance(args[0], Vector):
+            self.x = int(args[0].x)
+            self.y = int(args[0].y)
+        elif len(args) == 2:
+            self.x = int(args[0])
+            self.y = int(args[1])
+
+        self.title = kwargs.pop('title', None)
+        assert not kwargs
+
         self._is_mouse_down = False
+
+    def __add__(self, other):
+        return Location(super(Location, self).__add__(other))
+
+    def __sub__(self, other):
+        return Location(super(Location, self).__sub__(other))
+
+    def __mul__(self, other):
+        res = super(Location, self).__mul__(other)
+        if isinstance(res, Vector):
+            return Location(res)
+        else:
+            return res
+
+    def __div__(self, other):
+        return Location(super(Location, self).__div__(other))
+
+    def __neg__(self):
+        return Location(super(Location, self).__neg__())
+
+    def __pos__(self):
+        return Location(super(Location, self).__pos__())
 
     def get_color(self):
         arr = _take_screenshot(self.x, self.y, 1, 1)
@@ -218,8 +335,6 @@ class Location(object):
         self.y = dest_y
         return self
 
-
-
     def dragto(self, *dest_location, **kwargs):
         p2c_notif = kwargs.pop('p2c_notif', True)
         if len(kwargs) != 0:
@@ -298,36 +413,20 @@ class Location(object):
 
     def midpoint_to(self, *args):
         """
-        Считает координаты середины отрезка относительное относительно объекта, с которого вызывается метод
-        :param args: передается либо :class:`tuple` (x2, y2), либо :class:`Location` - координата второй точки
-        :return: :class:`tuple` координата середины отрезка
+        Считает координаты середины отрезка, соединяющего текущую точку и ту, что в указана  аргументах
+
+        :param args: экземпляр :class:`Location` или пара `x, y`
+        :return type: :class:`Location`
         """
-        if len(args) == 1 and isinstance(args[0], Location):
-            x2 = args[0].x
-            y2 = args[0].y
-        elif len(args) == 2:
-            x2 = args[0]
-            y2 = args[1]
-        else:
-            raise Exception()
-        x1 = self.getX()
-        y1 = self.getY()
-        return Location((x1 + x2) / 2, (y1 + y2) / 2)
+        loc = Location(*args)
+        return (self + loc) / 2
 
     def distance_to(self, *args):
         """
-        Считает расстояние между точками с помощью теоремы Пифагора:
-        :param args: передается либо :class:`tuple` (x2, y2), либо :class:`Location` - координата второй точки
-        :return: квадрат расстояния между двумя точками
+        Считает расстояние между текуей точкой и той, что в указана аргументах
+
+        :param args: экземпляр :class:`Location` или пара `x, y`
+        :return type: `float`
         """
-        if len(args) == 1 and isinstance(args[0], Location):
-            x2 = args[0].x
-            y2 = args[0].y
-        elif len(args) == 2:
-            x2 = args[0]
-            y2 = args[1]
-        else:
-            raise Exception()
-        x1 = self.getX()
-        y1 = self.getY()
-        return (x2 - x1)**2 + (y2 - y1)**2
+        loc = Location(*args)
+        return abs(self - loc)
