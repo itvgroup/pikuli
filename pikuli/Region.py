@@ -942,12 +942,10 @@ class Region(object):
         :param inside: регулирует возможность выхода за пределы относительной координаты
         :return: :class:`Location`
         """
-        if not inside:
-            if not 0 <= x_rel <= 100:
-                Exception('x_rel out of range')
-            if not 0 <= y_rel <= 100:
-                Exception('y_rel out of range')
-        return Location(self.getX() + x_rel / 100.00 * self.w,  self.getY() + y_rel / 100.00 * self.h)
+        if inside:
+            assert 0 <= x_rel <= 100, 'x_rel out of range'
+            assert 0 <= y_rel <= 100, 'y_rel out of range'
+        return Location(self.x() + x_rel / 100.00 * self.w,  self.y() + y_rel / 100.00 * self.h)
 
     def abs2rel(self, *args, **kwargs):
         """
@@ -972,11 +970,9 @@ class Region(object):
             raise Exception()
         x_rel = (x-self.getX()) * 100.00 / self.w
         y_rel = (y-self.getY()) * 100.00 / self.h
-        if not inside:
-            if not 0 <= x_rel <= 100:
-                Exception('x_rel out of range')
-            if not 0 <= y_rel <= 100:
-                Exception('y_rel out of range')
+        if inside:
+            assert 0 <= x_rel <= 100, 'x_rel out of range'
+            assert 0 <= y_rel <= 100, 'y_rel out of range'
         return RelativeLoc(x_rel, y_rel)
 
     def find_all_solid_markers_by_piece(self, ps):

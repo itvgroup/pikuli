@@ -298,9 +298,8 @@ class Location(object):
 
     def midpoint_to(self, *args):
         """
-        Считает координаты середины отрезка
-        :param x2: координата x второй точки
-        :param y2: координата y второй точки
+        Считает координаты середины отрезка относительное относительно объекта, с которого вызывается метод
+        :param args: передается либо :class:`tuple` (x2, y2), либо :class:`Location` - координата второй точки
         :return: :class:`tuple` координата середины отрезка
         """
         if len(args) == 1 and isinstance(args[0], Location):
@@ -313,13 +312,12 @@ class Location(object):
             raise Exception()
         x1 = self.getX()
         y1 = self.getY()
-        return (x1 + x2) / 2, (y1 + y2) / 2
+        return Location((x1 + x2) / 2, (y1 + y2) / 2)
 
-    def sqr_distance_to(self, *args):
+    def distance_to(self, *args):
         """
         Считает расстояние между точками с помощью теоремы Пифагора:
-        :param x2: координата x второй точки
-        :param y2: координата y второй точки
+        :param args: передается либо :class:`tuple` (x2, y2), либо :class:`Location` - координата второй точки
         :return: квадрат расстояния между двумя точками
         """
         if len(args) == 1 and isinstance(args[0], Location):
