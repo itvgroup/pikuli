@@ -6,12 +6,12 @@
 import logging
 import time
 from collections import namedtuple
-from math import sqrt
 
 import win32api
 import win32con
 
-from _functions import KeyModifier, Key, type_text, FailExit, _take_screenshot, press_modifiers, release_modifiers
+from ._functions import KeyModifier, Key, type_text, FailExit, _take_screenshot, press_modifiers, release_modifiers
+from .Vector import Vector
 
 DELAY_AFTER_MOUSE_MOVEMENT = 0.500  # Время в [c]
 DELAY_IN_MOUSE_CLICK = 0.100        # Время в [c] между нажатием и отжатием кнопки (замерял сам и гуглил)
@@ -48,69 +48,6 @@ print l1.distance_to(l2)
 """
 
 
-class Vector(object):
-
-    def __init__(self, x, y):
-        """
-        Координаты -- вещественые числа.
-        """
-        self.x = float(x)
-        self.y = float(y)
-
-    def __add__(self, other):
-        """
-        Сложение двух векторов
-        """
-        assert isinstance(other, Vector)
-        return Vector(self.x + other.x, self.y + other.y)
-
-    def __sub__(self, other):
-        """
-        Разность двух векторов
-        """
-        assert isinstance(other, Vector)
-        return Vector(self.x - other.x, self.y - other.y)
-
-    def __mul__(self, other):
-        """
-        Скалярное произведение двух векторов или умножение на скаляр.
-        Скаляр приводится к `float`.
-        """
-        if isinstance(other, Vector):
-            return float(self.x * other.x + self.y * other.y)
-        else:
-            other = float(other)
-            return Vector(self.x * other, self.y * other)
-
-    def __div__(self, other):
-        """
-        Деление на скаляр. Скаляр приводится к `float`.
-        """
-        if isinstance(other, Vector):
-            raise Exception('Vector division is unsupported')
-        else:
-            other = float(other)
-            return Vector(self.x / other, self.y / other)
-
-    def __floordiv__(self, other):
-        """
-        Синоним :func:`Vector.__div__`
-        """
-        return self.__dev__(other)
-
-    def __neg__(self):
-        return Vector(-self.x, -self.y)
-
-    def __pos__(self):
-        return Vector(self.x, self.y)
-
-    def __abs__(self):
-        """
-        Модуль вектора.
-        """
-        return sqrt(self * self)
-
-
 class Location(Vector):
 
     def __init__(self, *args, **kwargs):
@@ -119,17 +56,57 @@ class Location(Vector):
         :param args: Либо один кземпляр :class:`Vector` или :class:`Location`, либо пара коорлинат `x, y`.
         :param kwargs: `title=None`
         """
-        if len(args) == 1 and isinstance(args[0], Vector):
-            self.x = int(args[0].x)
-            self.y = int(args[0].y)
-        elif len(args) == 2:
-            self.x = int(args[0])
-            self.y = int(args[1])
+        super(Location, self).__init__(*args)
 
         self.title = kwargs.pop('title', None)
+        self.base_reg = kwargs.pop('base_reg', None)
         assert not kwargs
 
         self._is_mouse_down = False
+
+    @classmethod
+    def make_relative(cls, base_reg, *args):
+        """
+        :param args: "x, y" из [0.0; 100.0] относительно левого верхнего угла `base_reg`
+        :type args: Пара `x, y` или :class:`Vector` (включая наследников)
+        :param base_reg: Базовая область. Относительные координаты считаются на основе левого
+                         верхнего угла этого прямоугольника.
+        :type base_reg: :class:`Region`
+        """
+        rel_vec = Vector(*args)
+        abs_vec = base_reg.top_left + rel_vec.hadamard(Vector(base_reg.w, base_reg.h)) / 100
+        return cls(abs_vec, base_reg=base_reg)
+
+    @property
+    def x(self):
+        return int(self._x)
+
+    @property
+    def y(self):
+        return int(self._y)
+
+    @property
+    def xy(self):
+        return tupe(self)
+
+    @property
+    def rel(self):
+        assert self.base_reg
+        diff_vec = (self - self.base_reg.top_left)
+        rel_vec = diff_vec.hadamard(Vector(1./self.base_reg.w, 1./self.base_reg.h)) * 100
+        return rel_vec
+
+    @property
+    def rel_xy(self):
+        return tupe(self.rel)
+
+    @property
+    def rel_x(self):
+        return self.rel.x
+
+    @property
+    def rel_y(self):
+        return self.rel.y
 
     def __add__(self, other):
         return Location(super(Location, self).__add__(other))
@@ -154,20 +131,13 @@ class Location(Vector):
         return Location(super(Location, self).__pos__())
 
     def get_color(self):
-        arr = _take_screenshot(self.x, self.y, 1, 1)
+        arr = _take_screenshot(self._x, self._y, 1, 1)
         return Color(*arr.reshape(3)[::-1])
 
     getColor = get_color
 
-    def __repr__(self):
-        return 'Location({}, {})'.format(self.x, self.y)
-
     def get_xy(self):
-        return (self.x, self.y)
-
-    @property
-    def xy(self):
-        return self.get_xy()
+        return self.xy
 
     def getX(self):
         return self.x
@@ -183,27 +153,27 @@ class Location(Vector):
 
     def offset(self, dx, dy):
         if isinstance(dx, int) and isinstance(dy, int):
-            return Location(self.x + dx, self.y + dy)
+            return Location(self._x + dx, self._y + dy)
         raise FailExit('Location.offset: incorrect offset values')
 
     def above(self, dy):
         if isinstance(dy, int) and dy >= 0:
-            return Location(self.x, self.y - dy)
+            return Location(self._x, self._y - dy)
         raise FailExit('Location.above: incorrect value')
 
     def below(self, dy):
         if isinstance(dy, int) and dy >= 0:
-            return Location(self.x, self.y + dy)
+            return Location(self._x, self._y + dy)
         raise FailExit('Location.below: incorrect value')
 
     def left(self, dx):
         if isinstance(dx, int) and dx >= 0:
-            return Location(self.x - dx, self.y)
+            return Location(self._x - dx, self._y)
         raise FailExit('Location.left: incorrect value')
 
     def right(self, dx):
         if isinstance(dx, int) and dx >= 0:
-            return Location(self.x + dx, self.y)
+            return Location(self._x + dx, self._y)
         raise FailExit('Location.right: incorrect value')
 
     def click(self, after_cleck_delay=DEALY_AFTER_CLICK, p2c_notif=True):
@@ -331,8 +301,8 @@ class Location(Vector):
             f(a, b)
             la += a_sgn * DRAGnDROP_MOVE_STEP
 
-        self.x = dest_x
-        self.y = dest_y
+        self._x = dest_x
+        self._y = dest_y
         return self
 
     def dragto(self, *dest_location, **kwargs):
@@ -383,8 +353,8 @@ class Location(Vector):
 
         if p2c_notif:
             logger.info('pikuli.%s.dragto(): drag %s to (%i,%i)' % (type(self).__name__, str(self), self.x, self.y))
-        self.x = dest_x
-        self.y = dest_y
+        self._x = dest_x
+        self._y = dest_y
         return self
 
     def drop(self, p2c_notif=True):

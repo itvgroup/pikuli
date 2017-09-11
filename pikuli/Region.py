@@ -20,7 +20,6 @@ import win32gui
 from _functions import (_take_screenshot,
                         verify_timeout_argument,
                         highlight_region)
-from axxonnext.client_gui_wrapper.vmda_search.criteria import RelativeLoc
 
 from . import FindFailed, FailExit
 from Pattern import Pattern
