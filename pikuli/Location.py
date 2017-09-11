@@ -65,7 +65,7 @@ class Location(Vector):
         self._is_mouse_down = False
 
     @classmethod
-    def make_relative(cls, base_reg, *args):
+    def make_rel(cls, base_reg, *args):
         """
         :param args: "x, y" из [0.0; 100.0] относительно левого верхнего угла `base_reg`
         :type args: Пара `x, y` или :class:`Vector` (включая наследников)
@@ -74,7 +74,7 @@ class Location(Vector):
         :type base_reg: :class:`Region`
         """
         rel_vec = Vector(*args)
-        abs_vec = base_reg.top_left + rel_vec.hadamard(Vector(base_reg.w, base_reg.h)) / 100
+        abs_vec = base_reg.top_left + rel_vec.hprod(Vector(base_reg.w, base_reg.h)) / 100
         return cls(abs_vec, base_reg=base_reg)
 
     @property
@@ -91,9 +91,14 @@ class Location(Vector):
 
     @property
     def rel(self):
+        """
+        Возвращает :class:`Vector` относительных координат. Доступно для экземпляра :class:`Location`
+        просто под именем `rel` (переопределяет `@classmethod` :func:`Location.rel`).
+        :rtype: :class:`Vector`
+        """
         assert self.base_reg
         diff_vec = (self - self.base_reg.top_left)
-        rel_vec = diff_vec.hadamard(Vector(1./self.base_reg.w, 1./self.base_reg.h)) * 100
+        rel_vec = diff_vec.hprod(Vector(self.base_reg.w, self.base_reg.h).hinv) * 100
         return rel_vec
 
     @property
@@ -269,28 +274,27 @@ class Location(Vector):
         logger.warning('We need to eliminate all calls '
                             'of Location.enter_text() !!!!!')
 
-
     def moveto(self, dest_location):
         """
         Функция двигает курсор по напрвлению к точке назначения по прямой
+
+        :type dest_location: :class:`Location`
         """
         (dest_x, dest_y) = (None, None)
         if hasattr(dest_location, 'x') and hasattr(dest_location, 'y'):
             (dest_x, dest_y) = (dest_location.x, dest_location.y)
-            delay = DRAGnDROP_MOVE_DELAY
         else:
             assert len(dest_location) == 2
             (dest_x, dest_y) = (dest_location[0], dest_location[1])
-            delay = DRAGnDROP_MOVE_DELAY
         if dest_x is None or dest_y is None:
             raise FailExit('')
 
         if abs(dest_x - self.x) >= abs(dest_y - self.y):
             (a1, b1, a2, b2) = (self.x, self.y, dest_x, dest_y)
-            f = lambda x, y: Location(x, y).mouseMove(delay)
+            f = lambda x, y: Location(x, y).mouseMove(DRAGnDROP_MOVE_DELAY)
         else:
             (a1, b1, a2, b2) = (self.y, self.x, dest_y, dest_x)
-            f = lambda x, y: Location(y, x).mouseMove(delay)
+            f = lambda x, y: Location(y, x).mouseMove(DRAGnDROP_MOVE_DELAY)
 
         k = float(b2 - b1) / (a2 - a1)
         a_sgn = (a2 - a1) / abs(a2 - a1)
@@ -304,6 +308,16 @@ class Location(Vector):
         self._x = dest_x
         self._y = dest_y
         return self
+
+    def moveto_rel(self, *dest_location):
+        """
+        То же, что и :func:`Location.moveto`, но принимает относительные координаты. Работает, если
+        задано поле `Location.base_reg`.
+
+        :param dest_location: Относительные координаты в виде двух чисел `x` и `y`, `tuple`'а
+                              `(x,y)` или :class:`Vector`.
+        """
+        return self.moveto(Location.rel(self.base_reg, *dest_location))
 
     def dragto(self, *dest_location, **kwargs):
         p2c_notif = kwargs.pop('p2c_notif', True)
@@ -357,6 +371,16 @@ class Location(Vector):
         self._y = dest_y
         return self
 
+    def dragto_rel(self, *dest_location, **kwargs):
+        """
+        То же, что и :func:`Location.dragto`, но принимает относительные координаты. Работает, если
+        задано поле `Location.base_reg`.
+
+        :param dest_location: Относительные координаты в виде двух чисел `x` и `y`, `tuple`'а
+                              `(x,y)` или :class:`Vector`.
+        """
+        return self.dragto(Location.rel(self.base_reg, *dest_location), **kwargs)
+
     def drop(self, p2c_notif=True):
         if self._is_mouse_down:
             self.mouseUp(p2c_notif=False)
@@ -380,6 +404,16 @@ class Location(Vector):
         return self
 
     drag_and_drop = dragndrop
+
+    def dragndrop_rel(self, *dest_location, **kwargs):
+        """
+        То же, что и :func:`Location.dragndrop`, но принимает относительные координаты. Работает, если
+        задано поле `Location.base_reg`.
+
+        :param dest_location: Относительные координаты в виде двух чисел `x` и `y`, `tuple`'а
+                              `(x,y)` или :class:`Vector`.
+        """
+        return self.dragndrop(Location.rel(self.base_reg, *dest_location), **kwargs)
 
     def midpoint_to(self, *args):
         """
