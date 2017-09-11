@@ -74,8 +74,18 @@ class Vector(object):
         """
         return sqrt(self * self)
 
-    def hadamard(self, other):
-        return Vector(self.x * other.x, self.y * other.y)
+    def hprod(self, other):
+        """
+        Произведение Адамара
+        """
+        return Vector(self._x * other._x, self._y * other._y)
+
+    @property
+    def hinv(self):
+        """
+        Hadamard inverse vector
+        """
+        return Vector(1.0 / self._x, 1.0 / self._y)
 
     @property
     def x(self):
@@ -85,7 +95,14 @@ class Vector(object):
     def y(self):
         return self._y
 
+    def __repr__(self):
+        return '{}({}, {})'.format(self.__class__.__name__, self.x, self.y)
+
     def __getitem__(self, key):
+        """
+        Возвращается именно "self.x" и "self.y", как это определяют property-методы экземпляров
+        класса.
+        """
         if key not in [0, 1]:
             raise IndexError('index "{}" is out of set {0, 1}'.format(key))
         if key:
@@ -94,10 +111,11 @@ class Vector(object):
             return self.x
 
     def __iter__(self):
+        """
+        Возвращается именно "self.x" и "self.y", как это определяют property-методы экземпляров
+        класса.
+        """
         def targer():
             yield self.x
             yield self.y
         return targer()
-
-    def __repr__(self):
-        return '{}({}, {})'.format(self.__class__.__name__, self.x, self.y)
