@@ -26,14 +26,14 @@ class Vector(object):
         Сложение двух векторов
         """
         assert isinstance(other, Vector)
-        return Vector(self._x + other._x, self._y + other._y)
+        return self.__class__(self.x + other.x, self.y + other.y)
 
     def __sub__(self, other):
         """
         Разность двух векторов
         """
         assert isinstance(other, Vector)
-        return Vector(self._x - other._x, self._y - other._y)
+        return self.__class__(self.x - other.x, self.y - other.y)
 
     def __mul__(self, other):
         """
@@ -41,10 +41,10 @@ class Vector(object):
         Скаляр приводится к `float`.
         """
         if isinstance(other, Vector):
-            return float(self._x * other._x + self._y * other._y)
+            return float(self.x * other.x + self.y * other.y)
         else:
             other = float(other)
-            return Vector(self._x * other, self._y * other)
+            return self.__class__(self.x * other, self.y * other)
 
     def __div__(self, other):
         """
@@ -54,7 +54,7 @@ class Vector(object):
             raise Exception('Vector division is unsupported')
         else:
             other = float(other)
-            return Vector(self._x / other, self._y / other)
+            return self.__class__(self.x / other, self.y / other)
 
     def __floordiv__(self, other):
         """
@@ -63,10 +63,10 @@ class Vector(object):
         return self.__dev__(other)
 
     def __neg__(self):
-        return Vector(-self._x, -self._y)
+        return self.__class__(-self.x, -self.y)
 
     def __pos__(self):
-        return Vector(self._x, self._y)
+        return self.__class__(self.x, self.y)
 
     def __abs__(self):
         """
@@ -78,14 +78,14 @@ class Vector(object):
         """
         Произведение Адамара
         """
-        return Vector(self._x * other._x, self._y * other._y)
+        return self.__class__(self.x * other.x, self.y * other.y)
 
     @property
     def hinv(self):
         """
         Hadamard inverse vector
         """
-        return Vector(1.0 / self._x, 1.0 / self._y)
+        return self.__class__(1.0 / self.x, 1.0 / self.y)
 
     @property
     def x(self):
@@ -94,6 +94,10 @@ class Vector(object):
     @property
     def y(self):
         return self._y
+
+    @property
+    def xy(self):
+        return tupe(self)
 
     def __repr__(self):
         return '{}({}, {})'.format(self.__class__.__name__, self.x, self.y)

@@ -45,18 +45,21 @@ print 'abs(l1): ', abs(l1)
 print l1.midpoint_to(l2)
 print l1.distance_to(l2)
 
+rel_l = Location.from_rel(Region(0,0,50,50), 0.15, 0.15)
+print rel_l, rel_l.x, rel_l._x
+print rel_l.rel.x
+
 """
 
-
-class Location(Vector):
+class _LocationF(Vector):
 
     def __init__(self, *args, **kwargs):
         """
-        Координаты, хранимые в классе, уже целочисленные.
+        Координаты, хранимые в классе, ещё вещественные.
         :param args: Либо один кземпляр :class:`Vector` или :class:`Location`, либо пара коорлинат `x, y`.
         :param kwargs: `title=None`
         """
-        super(Location, self).__init__(*args)
+        super(_LocationF, self).__init__(*args)
 
         self.title = kwargs.pop('title', None)
         self.base_reg = kwargs.pop('base_reg', None)
@@ -65,7 +68,7 @@ class Location(Vector):
         self._is_mouse_down = False
 
     @classmethod
-    def make_rel(cls, base_reg, *args):
+    def from_rel(cls, base_reg, *args):
         """
         :param args: "x, y" из [0.0; 100.0] относительно левого верхнего угла `base_reg`
         :type args: Пара `x, y` или :class:`Vector` (включая наследников)
@@ -74,20 +77,8 @@ class Location(Vector):
         :type base_reg: :class:`Region`
         """
         rel_vec = Vector(*args)
-        abs_vec = base_reg.top_left + rel_vec.hprod(Vector(base_reg.w, base_reg.h)) / 100
+        abs_vec = Vector(base_reg.top_left) + rel_vec.hprod(Vector(base_reg.w, base_reg.h)) / 100
         return cls(abs_vec, base_reg=base_reg)
-
-    @property
-    def x(self):
-        return int(self._x)
-
-    @property
-    def y(self):
-        return int(self._y)
-
-    @property
-    def xy(self):
-        return tupe(self)
 
     @property
     def rel(self):
@@ -97,8 +88,9 @@ class Location(Vector):
         :rtype: :class:`Vector`
         """
         assert self.base_reg
-        diff_vec = (self - self.base_reg.top_left)
-        rel_vec = diff_vec.hprod(Vector(self.base_reg.w, self.base_reg.h).hinv) * 100
+        diff_vec = Vector(self - self.base_reg.top_left)
+        v = Vector(self.base_reg.w, self.base_reg.h).hinv
+        rel_vec = diff_vec.hprod(v) * 100
         return rel_vec
 
     @property
@@ -113,119 +105,85 @@ class Location(Vector):
     def rel_y(self):
         return self.rel.y
 
-    def __add__(self, other):
-        return Location(super(Location, self).__add__(other))
+    @property
+    def _x_int(self):
+        return int(round(self._x))
 
-    def __sub__(self, other):
-        return Location(super(Location, self).__sub__(other))
-
-    def __mul__(self, other):
-        res = super(Location, self).__mul__(other)
-        if isinstance(res, Vector):
-            return Location(res)
-        else:
-            return res
-
-    def __div__(self, other):
-        return Location(super(Location, self).__div__(other))
-
-    def __neg__(self):
-        return Location(super(Location, self).__neg__())
-
-    def __pos__(self):
-        return Location(super(Location, self).__pos__())
+    @property
+    def _y_int(self):
+        return int(round(self._y))
 
     def get_color(self):
-        arr = _take_screenshot(self._x, self._y, 1, 1)
+        arr = _take_screenshot(self._x_int, self._y_int, 1, 1)
         return Color(*arr.reshape(3)[::-1])
 
-    getColor = get_color
-
-    def get_xy(self):
-        return self.xy
-
-    def getX(self):
-        return self.x
-
-    def getY(self):
-        return self.y
-
-    def mouseMove(self, delay=DELAY_AFTER_MOUSE_MOVEMENT):
-        win32api.SetCursorPos((self.x, self.y))
+    def mouse_move(self, delay=DELAY_AFTER_MOUSE_MOVEMENT):
+        win32api.SetCursorPos((self._x_int, self._y_int))
         time.sleep(delay)
 
-    move_mouse = mouseMove
-
     def offset(self, dx, dy):
-        if isinstance(dx, int) and isinstance(dy, int):
-            return Location(self._x + dx, self._y + dy)
-        raise FailExit('Location.offset: incorrect offset values')
+        return self + Vector(dx, dy)
 
     def above(self, dy):
-        if isinstance(dy, int) and dy >= 0:
-            return Location(self._x, self._y - dy)
-        raise FailExit('Location.above: incorrect value')
+        return self - Vector(0, dy)
 
     def below(self, dy):
-        if isinstance(dy, int) and dy >= 0:
-            return Location(self._x, self._y + dy)
-        raise FailExit('Location.below: incorrect value')
+        return self + Vector(0, dy)
 
     def left(self, dx):
-        if isinstance(dx, int) and dx >= 0:
-            return Location(self._x - dx, self._y)
-        raise FailExit('Location.left: incorrect value')
+        return self - Vector(dx, 0)
 
     def right(self, dx):
-        if isinstance(dx, int) and dx >= 0:
-            return Location(self._x + dx, self._y)
-        raise FailExit('Location.right: incorrect value')
+        return self + Vector(dx, 0)
+
+    def _mouse_event(self, event, direction=0):
+        return win32api.mouse_event(event, self._x_int, self._y_int, direction, 0)
 
     def click(self, after_cleck_delay=DEALY_AFTER_CLICK, p2c_notif=True):
-        self.mouseMove()
-        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, self.x, self.y, 0, 0)
+        self.mouse_move()
+        self._mouse_event(win32con.MOUSEEVENTF_LEFTDOWN)
         time.sleep(DELAY_IN_MOUSE_CLICK)
-        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, self.x, self.y, 0, 0)
+        self._mouse_event(win32con.MOUSEEVENTF_LEFTUP)
         time.sleep(DEALY_AFTER_CLICK)
         if p2c_notif:
             logger.info('pikuli.%s.click(): click on %s' % (type(self).__name__, str(self)))
 
     def mouseDown(self, button='left', p2c_notif=True):
-        self.mouseMove()
+        self.mouse_move()
         if button == 'left':
-            win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, self.x, self.y, 0, 0)
+            self._mouse_event(win32con.MOUSEEVENTF_LEFTDOWN)
         else:
-            win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTDOWN, self.x, self.y, 0, 0)
+            self._mouse_event(win32con.MOUSEEVENTF_RIGHTDOWN)
         if p2c_notif:
             logger.info('pikuli.%s.mouseDown(): mouseDown on %s' % (type(self).__name__, str(self)))
 
     def mouseUp(self, button='left', p2c_notif=True):
-        self.mouseMove()
+        self.mouse_move()
         if button == 'left':
-            win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, self.x, self.y, 0, 0)
+            self._mouse_event(win32con.MOUSEEVENTF_LEFTUP)
         else:
-            win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTUP, self.x, self.y, 0, 0)
+            self._mouse_event(win32con.MOUSEEVENTF_RIGHTUP)
         if p2c_notif:
             logger.info('pikuli.%s.mouseUp(): mouseUp on %s' % (type(self).__name__, str(self)))
 
     def rightClick(self, after_cleck_delay=DEALY_AFTER_CLICK, p2c_notif=True):
-        self.mouseMove()
-        win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTDOWN, self.x, self.y, 0, 0)
+        self.mouse_move()
+        self._mouse_event(win32con.MOUSEEVENTF_RIGHTDOWN)
         time.sleep(DELAY_IN_MOUSE_CLICK)
-        win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTUP, self.x, self.y, 0, 0)
+        self._mouse_event(win32con.MOUSEEVENTF_RIGHTUP)
         time.sleep(DEALY_AFTER_CLICK)
         if p2c_notif:
             logger.info('pikuli.%s.rightClick(): rightClick on %s' % (type(self).__name__, str(self)))
 
     def doubleClick(self, after_cleck_delay=DEALY_AFTER_CLICK, p2c_notif=True):
-        self.mouseMove()
-        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, self.x, self.y, 0, 0)
+        self.mouse_move()
+        self._mouse_event(win32con.MOUSEEVENTF_LEFTDOWN)
         time.sleep(DELAY_IN_MOUSE_CLICK)
-        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, self.x, self.y, 0, 0)
+        self._mouse_event(win32con.MOUSEEVENTF_LEFTUP)
         time.sleep(DELAY_MOUSE_DOUBLE_CLICK)
-        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, self.x, self.y, 0, 0)
+        self._mouse_event(win32con.MOUSEEVENTF_LEFTDOWN)
         time.sleep(DELAY_IN_MOUSE_CLICK)
-        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, self.x, self.y, 0, 0)
+        self._mouse_event(win32con.MOUSEEVENTF_LEFTUP)
         time.sleep(DEALY_AFTER_CLICK)
         if p2c_notif:
             logger.info('pikuli.%s.doubleClick(): doubleClick on %s' % (type(self).__name__, str(self)))
@@ -236,13 +194,13 @@ class Location(Vector):
         #  -1 - backward
         if modifiers is not None:
             press_modifiers(modifiers)
-        self.mouseMove()
+        self.mouse_move()
         if click:
             self.click(p2c_notif=False)
         logger.info('{} scrolling: direction={}, '
                          'count={}...'.format(self, direction, count))
         for i in range(0, int(count)):
-            win32api.mouse_event(win32con.MOUSEEVENTF_WHEEL, self.x, self.y, int(direction), 0)
+            self._mouse_event(win32con.MOUSEEVENTF_WHEEL, direction=int(direction))
             time.sleep(DELAY_IN_MOUSE_CLICK)
         if p2c_notif:
             logger.info('pikuli.%s.scroll(): scroll on %s; direction=%s, count=%s, click=%s' % (type(self).__name__, str(self), str(direction), str(count), str(click)))
@@ -291,10 +249,10 @@ class Location(Vector):
 
         if abs(dest_x - self.x) >= abs(dest_y - self.y):
             (a1, b1, a2, b2) = (self.x, self.y, dest_x, dest_y)
-            f = lambda x, y: Location(x, y).mouseMove(DRAGnDROP_MOVE_DELAY)
+            f = lambda x, y: Location(x, y).mouse_move(DRAGnDROP_MOVE_DELAY)
         else:
             (a1, b1, a2, b2) = (self.y, self.x, dest_y, dest_x)
-            f = lambda x, y: Location(y, x).mouseMove(DRAGnDROP_MOVE_DELAY)
+            f = lambda x, y: Location(y, x).mouse_move(DRAGnDROP_MOVE_DELAY)
 
         k = float(b2 - b1) / (a2 - a1)
         a_sgn = (a2 - a1) / abs(a2 - a1)
@@ -351,10 +309,10 @@ class Location(Vector):
         # https://ru.wikipedia.org/wiki/%D0%90%D0%BB%D0%B3%D0%BE%D1%80%D0%B8%D1%82%D0%BC_%D0%91%D1%80%D0%B5%D0%B7%D0%B5%D0%BD%D1%85%D1%8D%D0%BC%D0%B0
         if abs(dest_x - self.x) >= abs(dest_y - self.y):
             (a1, b1, a2, b2) = (self.x, self.y, dest_x, dest_y)
-            f = lambda x, y: Location(x, y).mouseMove(delay)
+            f = lambda x, y: Location(x, y).mouse_move(delay)
         else:
             (a1, b1, a2, b2) = (self.y, self.x, dest_y, dest_x)
-            f = lambda x, y: Location(y, x).mouseMove(delay)
+            f = lambda x, y: Location(y, x).mouse_move(delay)
 
         k = float(b2 - b1) / (a2 - a1)
         a_sgn = (a2 - a1) / abs(a2 - a1)
@@ -434,3 +392,26 @@ class Location(Vector):
         """
         loc = Location(*args)
         return abs(self - loc)
+
+
+class Location(_LocationF):
+
+    def __init__(self, *args, **kwargs):
+        """
+        Координаты, хранимые в классе, уже целочисленные.
+        :param args: Либо один кземпляр :class:`Vector` или :class:`Location`, либо пара коорлинат `x, y`.
+        :param kwargs: `title=None`
+        """
+        super(Location, self).__init__(*args)
+        self._x, self._y = self._x_int, self._y_int
+
+    @property
+    def x(self):
+        return self._x_int
+
+    @property
+    def y(self):
+        return self._y_int
+
+
+class RelLocation(_LocationF)

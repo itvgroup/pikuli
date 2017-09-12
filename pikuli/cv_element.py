@@ -36,7 +36,7 @@ class CVElement(object):
         self._center = where_it_is
         if not hasattr(self, '_reg'):
             self._reg = Region(self._center.x, self._center.y, 1, 1)
-        if self._reg.getX() == 0 or self._reg.getY() == 0:
+        if self._reg.x == 0 or self._reg.y == 0:
             raise Exception(
                 'pikuli.cv_element.CVElement.__init__(): '
                 'you try to create \'%s\' with icvorrect width '

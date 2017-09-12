@@ -57,10 +57,7 @@ def _get_list_of_patterns(ps, failExitText):
 class Region(object):
 
     def __eq__(self, other):
-        return (
-            (self.x, self.y, self.w, self.h) ==
-            (other.x, other.y, other.w, other.h)
-        )
+        return (self.x, self.y, self.w, self.h) == (other.x, other.y, other.w, other.h)
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -77,6 +74,9 @@ class Region(object):
         else:
             raise Exception('__contains__(): Unsupported is_contaned = {!r}. self = {!r}'.format(
                 is_contaned, self))
+
+    def __str__(self):
+        return '<Region (%i, %i, %i, %i)>' % (self.x, self.y, self.w, self.h)
 
     def __init__(self, *args, **kwargs):  # relation='top-left', title=None):
         '''
@@ -126,8 +126,7 @@ class Region(object):
         self.drag_location = None
 
         # "Объявляем" переменные, которые будут заданы ниже через self.setRect(...):
-        (self.x, self.y, self._x, self._y) = (None, None, None, None)
-        (self.w, self.h, self._w, self._h) = (None, None, None, None)
+        (self._x, self._y, self._w, self._h) = (None, None, None, None)
         self._last_match = None
         self._image_at_some_moment = None
 
@@ -165,53 +164,43 @@ class Region(object):
     def winctrl(self):
         return self._winctrl
 
-
-    def __str__(self):
-        (self.x, self.y, self.w, self.h) = (self._x, self._y, self._w, self._h)
-        return '<Region (%i, %i, %i, %i)>' % (self._x, self._y, self._w, self._h)
-
-
-    def setX(self, x, relation='top-left'):
+    def set_x(self, x, relation='top-left'):
         ''' 'top-left' -- x - координата угла; 'center' -- x - координата цента '''
-        (self.y, self.w, self.h) = (self._y, self._w, self._h)
         if isinstance(x, int) and (relation is None or relation in RELATIONS):
             if relation is None or relation == 'top-left':
-                self._x = self.x = x
+                self._x = x
             elif relation == 'center':
-                self._x = self.x = x - self._w/2
+                self._x = x - self._w/2
         else:
-            raise FailExit('[error] Incorect Region.setX(...) method call:\n\tx = %s, %s\n\trelation = %s' % (str(x), type(x), str(relation)))
+            raise FailExit('[error] Incorect Region.set_x(...) method call:\n\tx = %s, %s\n\trelation = %s' % (str(x), type(x), str(relation)))
 
-    def setY(self, y, relation='top-left'):
+    def set_y(self, y, relation='top-left'):
         ''' 'top-left' -- y - координата угла; 'center' -- у - координата цента '''
-        (self.x, self.w, self.h) = (self._x, self._w, self._h)
         if isinstance(y, int) and (relation is None or relation in RELATIONS):
             if relation is None or relation == 'top-left':
-                self._y = self.y = y
+                self._y = y
             elif relation == 'center':
-                self._y = self.y = y - self._h/2
+                self._y = y - self._h/2
         else:
-            raise FailExit('[error] Incorect Region.setY(...) method call:\n\ty = %s, %s\n\trelation = %s' % (str(y), type(y), str(relation)))
+            raise FailExit('[error] Incorect Region.set_y(...) method call:\n\ty = %s, %s\n\trelation = %s' % (str(y), type(y), str(relation)))
 
-    def setW(self, w, relation='top-left'):
+    def set_w(self, w, relation='top-left'):
         ''' 'top-left' -- не надо менять x; 'center' --  не надо менять x '''
-        (self.x, self.y, self.h) = (self._x, self._y, self._h)
         if isinstance(w, int) and w > 0 and (relation is None or relation in RELATIONS):
             if relation == 'center':
-                self._x = self.x = self._x + (self._w - w)/2
-            self._w = self.w = w
+                self._x = self._x + (self._w - w)/2
+            self._w = w
         else:
-            raise FailExit('[error] Incorect Region.setW(...) method call:\n\tw = %s, %s\n\trelation = %s' % (str(w), type(w), str(relation)))
+            raise FailExit('[error] Incorect Region.set_w(...) method call:\n\tw = %s, %s\n\trelation = %s' % (str(w), type(w), str(relation)))
 
-    def setH(self, h, relation='top-left'):
+    def set_h(self, h, relation='top-left'):
         ''' 'top-left' -- не надо менять y; 'center' --  не надо менять y '''
-        (self.x, self.y, self.w) = (self._x, self._y, self._w)
         if isinstance(h, int) and h > 0 and (relation is None or relation in RELATIONS):
             if relation == 'center':
-                self._y = self.y = self._y + (self._h - h)/2
-            self._h = self.h = h
+                self._y = self._y + (self._h - h)/2
+            self._h = h
         else:
-            raise FailExit('[error] Incorect Region.setH(...) method call:\n\th = %s, %s\n\trelation = %s' % (str(h), type(h), str(relation)))
+            raise FailExit('[error] Incorect Region.set_h(...) method call:\n\th = %s, %s\n\trelation = %s' % (str(h), type(h), str(relation)))
 
 
     def setRect(self, *args, **kwargs):
@@ -235,14 +224,14 @@ class Region(object):
                 elif relation not in RELATIONS:
                     raise FailExit('#2')
 
-                self._w = self.w = args[2]
-                self._h = self.h = args[3]
+                self._w = args[2]
+                self._h = args[3]
                 if relation == 'top-left':
-                    self._x = self.x = args[0]
-                    self._y = self.y = args[1]
+                    self._x = args[0]
+                    self._y = args[1]
                 elif relation == 'center':
-                    self._x = self.x = args[0] - self._w/2
-                    self._y = self.y = args[1] - self._h/2
+                    self._x = args[0] - self._w/2
+                    self._y = args[1] - self._h/2
             else:
                 raise FailExit('#3')
 
@@ -250,29 +239,27 @@ class Region(object):
             raise FailExit('[error] Incorect \'setRect()\' method call:\n\targs = %s\n\tkwargs = %s\n\tadditional comment: %s' % (str(args), str(kwargs), str(e)))
 
     def __set_from_Region(self, reg):
-        self._x = self.x = reg.x
-        self._y = self.y = reg.y
-        self._w = self.w = reg.w
-        self._h = self.h = reg.h
+        self._x = reg.x
+        self._y = reg.y
+        self._w = reg.w
+        self._h = reg.h
         self._find_timeout = reg._find_timeout
 
-
-    def getX(self):
-        (self.x, self.y, self.w, self.h) = (self._x, self._y, self._w, self._h)
+    @property
+    def x(self):
         return self._x
 
-    def getY(self):
-        (self.x, self.y, self.w, self.h) = (self._x, self._y, self._w, self._h)
+    @property
+    def y(self):
         return self._y
 
-    def getW(self):
-        (self.x, self.y, self.w, self.h) = (self._x, self._y, self._w, self._h)
+    @property
+    def w(self):
         return self._w
 
-    def getH(self):
-        (self.x, self.y, self.w, self.h) = (self._x, self._y, self._w, self._h)
+    @property
+    def h(self):
         return self._h
-
 
     def offset(self, *args, **kwargs):
         '''
@@ -593,10 +580,10 @@ class Region(object):
         '''
         ps = _get_list_of_patterns(ps, 'bad \'ps\' argument; it should be a string (path to image file) or \'Pattern\' object: %s' % str(ps))
 
-        if self.getW() == 0:
-            raise FailExit('bad rectangular area: self.getW() == 0')
-        if self.getH() == 0:
-            raise FailExit('bad rectangular area: self.getH() == 0')
+        if self.w == 0:
+            raise FailExit('bad rectangular area: self.w == 0')
+        if self.h == 0:
+            raise FailExit('bad rectangular area: self.h == 0')
 
         if timeout is None:
             timeout = self._find_timeout
@@ -829,7 +816,6 @@ class Region(object):
             logger.info('pikuli.%s.dragto(): drag center of %s to (%i,%i)' % (type(self).__name__, str(self), self.x, self.y))
         self._x += self.drag_location.x - center.x
         self._y += self.drag_location.y - center.y
-        (self.x, self.y) = (self._x, self._y)
 
 
     def drop(self, p2c_notif=True):
@@ -874,10 +860,10 @@ class Region(object):
         # https://ru.wikipedia.org/wiki/%D0%90%D0%BB%D0%B3%D0%BE%D1%80%D0%B8%D1%82%D0%BC_%D0%91%D1%80%D0%B5%D0%B7%D0%B5%D0%BD%D1%85%D1%8D%D0%BC%D0%B0
         if abs(dest_location.x - src_location.x) >= abs(dest_location.y - src_location.y):
             (a1, b1, a2, b2) = (src_location.x, src_location.y, dest_location.x, dest_location.y)
-            f = lambda x, y: Location(x, y).mouseMove(DRAGnDROP_MOVE_DELAY)
+            f = lambda x, y: Location(x, y).mouse_move(DRAGnDROP_MOVE_DELAY)
         else:
             (a1, b1, a2, b2) = (src_location.y, src_location.x, dest_location.y, dest_location.x)
-            f = lambda x, y: Location(y, x).mouseMove(DRAGnDROP_MOVE_DELAY)
+            f = lambda x, y: Location(y, x).mouse_move(DRAGnDROP_MOVE_DELAY)
 
         k = float(b2 - b1) / (a2 - a1)
         a_sgn = (a2 - a1) / abs(a2 - a1)
@@ -906,10 +892,10 @@ class Region(object):
 
         if abs(dest_location.x - src_location.x) >= abs(dest_location.y - src_location.y):
             (a1, b1, a2, b2) = (src_location.x, src_location.y, dest_location.x, dest_location.y)
-            f = lambda x, y: Location(x, y).mouseMove(DRAGnDROP_MOVE_DELAY)
+            f = lambda x, y: Location(x, y).mouse_move(DRAGnDROP_MOVE_DELAY)
         else:
             (a1, b1, a2, b2) = (src_location.y, src_location.x, dest_location.y, dest_location.x)
-            f = lambda x, y: Location(y, x).mouseMove(DRAGnDROP_MOVE_DELAY)
+            f = lambda x, y: Location(y, x).mouse_move(DRAGnDROP_MOVE_DELAY)
 
         k = float(b2 - b1) / (a2 - a1)
         a_sgn = (a2 - a1) / abs(a2 - a1)
@@ -929,7 +915,7 @@ class Region(object):
     def highlight(self, delay=1.5):
         highlight_region(self._x, self._y, self._w, self._h, delay)
 
-    def rel2abs(self, x_rel, y_rel, inside=True):
+    def rel2abs(self, *args, **kwargs):
         """
         Переводит координаты из абсолютной в относительную
         по формуле:
@@ -941,10 +927,14 @@ class Region(object):
         :param inside: регулирует возможность выхода за пределы относительной координаты
         :return: :class:`Location`
         """
+        inside = kwargs.pop('inside', True)
+        assert len(kwargs) == 0
+
+        rel = Vector(*args)
         if inside:
-            assert 0 <= x_rel <= 100, 'x_rel out of range'
-            assert 0 <= y_rel <= 100, 'y_rel out of range'
-        return Location(self.x() + x_rel / 100.00 * self.w,  self.y() + y_rel / 100.00 * self.h)
+            assert (0 <= rel.x <= 100) and (0 <= rel.y <= 100), 'rel coordinates {} out of range'.format(rel)
+
+        return Location.from_rel(self, rel)
 
     def abs2rel(self, *args, **kwargs):
         """
@@ -959,20 +949,15 @@ class Region(object):
         """
         inside = kwargs.pop('inside', True)
         assert len(kwargs) == 0
-        if len(args) == 1 and isinstance(args[0], Location):
-            x = args[0].x
-            y = args[0].y
-        elif len(args) == 2:
-            x = args[0]
-            y = args[1]
-        else:
-            raise Exception()
-        x_rel = (x-self.getX()) * 100.00 / self.w
-        y_rel = (y-self.getY()) * 100.00 / self.h
+
+        loc = Location(*args)
+        loc.base_reg = self
+        rel = loc.rel
+
         if inside:
-            assert 0 <= x_rel <= 100, 'x_rel out of range'
-            assert 0 <= y_rel <= 100, 'y_rel out of range'
-        return RelativeLoc(x_rel, y_rel)
+            assert (0 <= rel.x <= 100) and (0 <= rel.y <= 100), 'rel coordinates {} out of range'.format(rel)
+
+        return rel
 
     def find_all_solid_markers_by_piece(self, ps):
         '''
@@ -1001,8 +986,8 @@ class Region(object):
                 logger.info(grouped_matches)
                 for g in grouped_matches:
                     for m in g:
-                        if abs(m.getX() - next_match.getX()) < next_match.getW() and \
-                           abs(m.getY() - next_match.getY()) < next_match.getH():
+                        if abs(m.x - next_match.x) < next_match.w and \
+                           abs(m.y - next_match.y) < next_match.h:
                             g.append(next_match)
                             next_match = None
                             break
@@ -1018,9 +1003,9 @@ class Region(object):
         # Замени группы совпадений на итоговые классы Match:
         for i in range(len(matches)):
             sum_score = sum( [m.getScore() for m in matches[i]] )
-            x = sum( [m.getX()*m.getScore() for m in matches[i]] ) / sum_score
-            y = sum( [m.getY()*m.getScore() for m in matches[i]] ) / sum_score
-            matches[i] = Match(x, y, matches[i][0].getW(), matches[i][0].getH(), matches[i][0].getPattern(), sum_score/len(matches[i]))
+            x = sum( [m.x*m.getScore() for m in matches[i]] ) / sum_score
+            y = sum( [m.y*m.getScore() for m in matches[i]] ) / sum_score
+            matches[i] = Match(x, y, matches[i][0].w, matches[i][0].h, matches[i][0].getPattern(), sum_score/len(matches[i]))
 
         return matches
 
