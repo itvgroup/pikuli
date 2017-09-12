@@ -17,21 +17,14 @@ import cv2
 import numpy as np
 import win32gui
 
-from _functions import (_take_screenshot,
-                        verify_timeout_argument,
-                        highlight_region)
-
-from . import FindFailed, FailExit
-from Pattern import Pattern
-from Location import (Location,
-                      DELAY_BETWEEN_CLICK_AND_TYPE,
-                      DRAGnDROP_MOVE_DELAY,
-                      DRAGnDROP_MOVE_STEP,
-                      DEALY_AFTER_CLICK)
-import hwnd_element
 import pikuli
+from .hwnd_element import _find_main_parent_window
+from ._functions import _take_screenshot, verify_timeout_argument, highlight_region
+from . import FindFailed, FailExit
+from .Pattern import Pattern
+from .Location import Location, DELAY_BETWEEN_CLICK_AND_TYPE, DEALY_AFTER_CLICK
+from .Vector import RelativeVec
 from .File import File
-
 
 
 RELATIONS = ['top-left', 'center']
@@ -152,7 +145,7 @@ class Region(object):
         if self._main_window_hwnd is None and len(args) == 1:
             self._main_window_hwnd = args[0]._main_window_hwnd
         if self._main_window_hwnd is None:
-            self._main_window_hwnd = hwnd_element._find_main_parent_window(win32gui.WindowFromPoint((self._x + self._w/2, self._y + self._h/2)))
+            self._main_window_hwnd = _find_main_parent_window(win32gui.WindowFromPoint((self._x + self._w/2, self._y + self._h/2)))
 
 
     def get_id(self):
@@ -830,126 +823,37 @@ class Region(object):
         if p2c_notif:
             logger.info('pikuli.%s.dragto(): drag center of %s to (%i,%i) and drop' % (type(self).__name__, str(self), self.x, self.y))
 
-    """
-    '''def dragto(self, *args):
-        if len(args) == 1 and isinstance(args[0], Location):
-            dest_location = args[0]
-        elif len(args) == 2:
-            try:
-                (dest_x, dest_y) = (int(args[0]), int(args[1]))
-            except Exception:
-                raise FailExit('')
-            dest_location = Location(dest_x, dest_y)
-        else:
-            raise FailExit('')
-
-        src_location = self.center
-        if not self._is_mouse_down:
-            src_location.mouseDown()
-            self._is_mouse_down = True
-
-        # Алгоритм Брезенхема
-        # https://ru.wikipedia.org/wiki/%D0%90%D0%BB%D0%B3%D0%BE%D1%80%D0%B8%D1%82%D0%BC_%D0%91%D1%80%D0%B5%D0%B7%D0%B5%D0%BD%D1%85%D1%8D%D0%BC%D0%B0
-        if abs(dest_location.x - src_location.x) >= abs(dest_location.y - src_location.y):
-            (a1, b1, a2, b2) = (src_location.x, src_location.y, dest_location.x, dest_location.y)
-            f = lambda x, y: Location(x, y).mouse_move(DRAGnDROP_MOVE_DELAY)
-        else:
-            (a1, b1, a2, b2) = (src_location.y, src_location.x, dest_location.y, dest_location.x)
-            f = lambda x, y: Location(y, x).mouse_move(DRAGnDROP_MOVE_DELAY)
-
-        k = float(b2 - b1) / (a2 - a1)
-        a_sgn = (a2 - a1) / abs(a2 - a1)
-        la = 0
-        while abs(la) <= abs(a2 - a1):
-            a = a1 + la
-            b = int(k * la) + b1
-            f(a, b)
-            la += a_sgn * DRAGnDROP_MOVE_STEP
-
-    def drop(self):
-        if self._is_mouse_down:
-            self.center.mouseUp()
-            self._is_mouse_down = False
-        else:
-            raise FailExit('You try drop <%s>, but it is not bragged before!' % str(self))
-
-    def dragndrop(self, *dest_location):
-        self.dragto(*dest_location)
-        self.drop()'''
-
-        '''# Алгоритм Брезенхема
-        # https://ru.wikipedia.org/wiki/%D0%90%D0%BB%D0%B3%D0%BE%D1%80%D0%B8%D1%82%D0%BC_%D0%91%D1%80%D0%B5%D0%B7%D0%B5%D0%BD%D1%85%D1%8D%D0%BC%D0%B0
-        src_location = self.center
-        src_location.mouseDown()
-
-        if abs(dest_location.x - src_location.x) >= abs(dest_location.y - src_location.y):
-            (a1, b1, a2, b2) = (src_location.x, src_location.y, dest_location.x, dest_location.y)
-            f = lambda x, y: Location(x, y).mouse_move(DRAGnDROP_MOVE_DELAY)
-        else:
-            (a1, b1, a2, b2) = (src_location.y, src_location.x, dest_location.y, dest_location.x)
-            f = lambda x, y: Location(y, x).mouse_move(DRAGnDROP_MOVE_DELAY)
-
-        k = float(b2 - b1) / (a2 - a1)
-        a_sgn = (a2 - a1) / abs(a2 - a1)
-        la = 0
-        while abs(la) <= abs(a2 - a1):
-            a = a1 + la
-            b = int(k * la) + b1
-            f(a, b)
-            la += a_sgn * DRAGnDROP_MOVE_STEP
-
-        src_location.mouseUp()'''
-
-    '''def is_button_checked():
-        return self.winctrl.is_button_checked()'''"""
-
-
     def highlight(self, delay=1.5):
         highlight_region(self._x, self._y, self._w, self._h, delay)
 
-    def rel2abs(self, *args, **kwargs):
+    def rel2abs(self, *args):
         """
-        Переводит координаты из абсолютной в относительную
-        по формуле:
-        x = x0 + x'/100*w
-        y = y0 + y'/100*h
-        (x0, y0) - абсолютные координаты в пикселях левого верхнего угла превью камеры
-        :param x_rel: x' в формуле
+        Переводит координаты из абсолютной в относительную по формуле:
+            x = x0  +  x' / 100 * w
+            y = y0  +  y' / 100 * h
+        (x0, y0) - абсолютные координаты в пикселях левого верхнего угла ограничивающего прмоугольника.
+
+        :param args: x' в формуле
         :param y_rel: y' в формуле
-        :param inside: регулирует возможность выхода за пределы относительной координаты
         :return: :class:`Location`
         """
-        inside = kwargs.pop('inside', True)
-        assert len(kwargs) == 0
-
-        rel = Vector(*args)
-        if inside:
-            assert (0 <= rel.x <= 100) and (0 <= rel.y <= 100), 'rel coordinates {} out of range'.format(rel)
-
+        rel = RelativeVec(*args)
         return Location.from_rel(self, rel)
 
-    def abs2rel(self, *args, **kwargs):
+    def abs2rel(self, *args):
         """
-        Переводит координаты из относительной в абсолютную
-        по формуле:
-        x' = (x-x0)*100/w
-        y' = (y-y0)*100/h
-        :param x: x
-        :param y: y
-        :param inside: регулирует возможность выхода за пределы относительной координаты
-        :return: :class:`namedtuple` контейнер, который содержит в себе относительные координаты
-        """
-        inside = kwargs.pop('inside', True)
-        assert len(kwargs) == 0
+        Переводит координаты из относительной в абсолютную по формуле:
+            x' = (x - x0) * 100 / w
+            y' = (y - y0) * 100 / h
+        (x0, y0) - абсолютные координаты в пикселях левого верхнего угла ограничивающего прмоугольника.
 
+        :param args: Что-то, из чего может быть создат экземпляр :class:`Location` (точка с
+                     абсолютными координатами в пикселях).
+        :return: :class:`RelativeVec` контейнер, который содержит в себе относительные координаты
+        """
         loc = Location(*args)
         loc.base_reg = self
-        rel = loc.rel
-
-        if inside:
-            assert (0 <= rel.x <= 100) and (0 <= rel.y <= 100), 'rel coordinates {} out of range'.format(rel)
-
-        return rel
+        return loc.rel
 
     def find_all_solid_markers_by_piece(self, ps):
         '''
