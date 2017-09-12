@@ -11,7 +11,7 @@ import win32api
 import win32con
 
 from ._functions import KeyModifier, Key, type_text, FailExit, _take_screenshot, press_modifiers, release_modifiers
-from .Vector import Vector
+from .Vector import Vector, RelativeVec
 
 DELAY_AFTER_MOUSE_MOVEMENT = 0.500  # Время в [c]
 DELAY_IN_MOUSE_CLICK = 0.100        # Время в [c] между нажатием и отжатием кнопки (замерял сам и гуглил)
@@ -51,7 +51,7 @@ print rel_l.rel.x
 
 """
 
-class _LocationF(Vector):
+class LocationF(Vector):
 
     def __init__(self, *args, **kwargs):
         """
@@ -59,11 +59,11 @@ class _LocationF(Vector):
         :param args: Либо один кземпляр :class:`Vector` или :class:`Location`, либо пара коорлинат `x, y`.
         :param kwargs: `title=None`
         """
-        super(_LocationF, self).__init__(*args)
+        super(LocationF, self).__init__(*args)
 
         self.title = kwargs.pop('title', None)
         self.base_reg = kwargs.pop('base_reg', None)
-        assert not kwargs
+        assert not kwargs, 'kwargs = {}'.format(kwargs)
 
         self._is_mouse_down = False
 
@@ -71,12 +71,12 @@ class _LocationF(Vector):
     def from_rel(cls, base_reg, *args):
         """
         :param args: "x, y" из [0.0; 100.0] относительно левого верхнего угла `base_reg`
-        :type args: Пара `x, y` или :class:`Vector` (включая наследников)
+        :type args: Пара `x, y` или :class:`RelativeVec`
         :param base_reg: Базовая область. Относительные координаты считаются на основе левого
                          верхнего угла этого прямоугольника.
         :type base_reg: :class:`Region`
         """
-        rel_vec = Vector(*args)
+        rel_vec = RelativeVec(*args)
         abs_vec = Vector(base_reg.top_left) + rel_vec.hprod(Vector(base_reg.w, base_reg.h)) / 100
         return cls(abs_vec, base_reg=base_reg)
 
@@ -89,9 +89,8 @@ class _LocationF(Vector):
         """
         assert self.base_reg
         diff_vec = Vector(self - self.base_reg.top_left)
-        v = Vector(self.base_reg.w, self.base_reg.h).hinv
-        rel_vec = diff_vec.hprod(v) * 100
-        return rel_vec
+        rel_vec = diff_vec.hprod(Vector(self.base_reg.w, self.base_reg.h).hinv) * 100
+        return RelativeVec(rel_vec)
 
     @property
     def rel_xy(self):
@@ -394,7 +393,7 @@ class _LocationF(Vector):
         return abs(self - loc)
 
 
-class Location(_LocationF):
+class Location(LocationF):
 
     def __init__(self, *args, **kwargs):
         """
@@ -402,7 +401,7 @@ class Location(_LocationF):
         :param args: Либо один кземпляр :class:`Vector` или :class:`Location`, либо пара коорлинат `x, y`.
         :param kwargs: `title=None`
         """
-        super(Location, self).__init__(*args)
+        super(Location, self).__init__(*args, **kwargs)
         self._x, self._y = self._x_int, self._y_int
 
     @property
@@ -412,6 +411,3 @@ class Location(_LocationF):
     @property
     def y(self):
         return self._y_int
-
-
-class RelLocation(_LocationF)

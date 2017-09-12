@@ -354,41 +354,33 @@ class Region(object):
             raise FailExit('\nNew stage of %s\n[error] Incorect \'nearby()\' method call:\n\tl = %s' % (traceback.format_exc(), str(l)))
         return reg
 
-
     def getTopLeft(self, x_offs=0, y_offs=0):
-        return Location(self._x + x_offs,                self._y + y_offs)
-
-    def getTopRight(self, x_offs=0, y_offs=0):
-        return Location(self._x + x_offs + self._w - 1,  self._y + y_offs)
-
-    def getBottomLeft(self, x_offs=0, y_offs=0):
-        return Location(self._x + x_offs,                self._y + y_offs + self._h - 1)
-
-    def getBottomRight(self, x_offs=0, y_offs=0):
-        return Location(self._x + x_offs + self._w - 1,  self._y + y_offs + self._h - 1)
+        """ Устарело """
+        return Location(self._x + x_offs, self._y + y_offs)
 
     def getCenter(self, x_offs=0, y_offs=0):
-        return Location(self._x + x_offs + self._w/2,    self._y + y_offs + self._h/2)
+        """ Устарело """
+        return Location(self._x + x_offs + self._w/2, self._y + y_offs + self._h/2)
 
     @property
     def top_left(self):
-        return self.getTopLeft()
+        return Location(self._x, self._y)
 
     @property
     def top_right(self):
-        return self.getTopRight()
+        return Location(self._x + self._w - 1, self._y)
 
     @property
     def bottom_left(self):
-        return self.getBottomLeft()
+        return Location(self._x, self._y + self._h - 1)
 
     @property
     def bottom_right(self):
-        return self.getBottomRight()
+        return Location(self._x + self._w - 1, self._y + self._h - 1)
 
     @property
     def center(self):
-        return self.getCenter()
+        return Location(self._x + self._w/2, self._y + self._h/2)
 
     @property
     def wh(self):
@@ -756,25 +748,25 @@ class Region(object):
 
 
     def click(self, after_cleck_delay=DEALY_AFTER_CLICK, p2c_notif=True):
-        self.getCenter().click(after_cleck_delay=DEALY_AFTER_CLICK, p2c_notif=False)
+        self.center.click(after_cleck_delay=DEALY_AFTER_CLICK, p2c_notif=False)
         if p2c_notif:
             logger.info('pikuli.%s.click(): click in center of %s' % (type(self).__name__, str(self)))
 
 
     def rightClick(self, after_cleck_delay=DEALY_AFTER_CLICK, p2c_notif=True):
-        self.getCenter().rightClick(after_cleck_delay=DEALY_AFTER_CLICK)
+        self.center.rightClick(after_cleck_delay=DEALY_AFTER_CLICK)
         if p2c_notif:
             logger.info('pikuli.%s.rightClick(): right click in center of %s' % (type(self).__name__, str(self)))
 
     def doubleClick(self, after_cleck_delay=DEALY_AFTER_CLICK, p2c_notif=True):
-        self.getCenter().doubleClick(after_cleck_delay=DEALY_AFTER_CLICK)
+        self.center.doubleClick(after_cleck_delay=DEALY_AFTER_CLICK)
         if p2c_notif:
             logger.info('pikuli.%s.doubleClick(): double click in center of %s' % (type(self).__name__, str(self)))
 
     def type(self, text, modifiers=None, click=True, press_enter=False,
              click_type_delay=DELAY_BETWEEN_CLICK_AND_TYPE, p2c_notif=True):
         ''' Не как в Sikuli '''
-        self.getCenter().type(text,
+        self.center.type(text,
                               modifiers=modifiers,
                               press_enter=press_enter,
                               click=click,
@@ -784,12 +776,12 @@ class Region(object):
 
     def enter_text(self, text, modifiers=None, click=True, click_type_delay=DELAY_BETWEEN_CLICK_AND_TYPE, p2c_notif=True):
         ''' Не как в Sikuli '''
-        self.getCenter().enter_text(text, modifiers=modifiers, click=click, p2c_notif=False)
+        self.center.enter_text(text, modifiers=modifiers, click=click, p2c_notif=False)
         if p2c_notif:
             logger.info('pikuli.%s.enter_text(): \'%s\' was entred in center of %s; click=%s, modifiers=%s' % (type(self).__name__, repr(text), str(self), str(click), str(modifiers)))
 
     def scroll(self, direction, count, click=True, modifiers=None, p2c_notif=True):
-        self.getCenter().scroll(direction, count, click=click, modifiers=modifiers)
+        self.center.scroll(direction, count, click=click, modifiers=modifiers)
         if p2c_notif:
             logger.info('pikuli.%s.scroll(): scroll in center of %s; direction=%s, count=%s, click=%s' % (type(self).__name__, str(self), str(direction), str(count), str(click)))
 
@@ -807,11 +799,11 @@ class Region(object):
             raise Exception('Illegal arguments of pikuli.Region.dragto(): %s' % str(kwargs))
 
         if self.drag_location is None:
-            self.drag_location = self.getCenter()
+            self.drag_location = self.center
         self.drag_location.dragto(*dest_location)
 
         # Изменим у текущего объект координаты, т.к. его передвинули:
-        center = self.getCenter()
+        center = self.center
         if p2c_notif:
             logger.info('pikuli.%s.dragto(): drag center of %s to (%i,%i)' % (type(self).__name__, str(self), self.x, self.y))
         self._x += self.drag_location.x - center.x
@@ -832,7 +824,7 @@ class Region(object):
             raise Exception('Illegal arguments of pikuli.Region.dragndrop(): %s' % str(kwargs))
 
         if self.drag_location is None:
-            self.drag_location = self.getCenter()
+            self.drag_location = self.center
         self.dragto(*dest_location)
         self.drop()
         if p2c_notif:
@@ -851,7 +843,7 @@ class Region(object):
         else:
             raise FailExit('')
 
-        src_location = self.getCenter()
+        src_location = self.center
         if not self._is_mouse_down:
             src_location.mouseDown()
             self._is_mouse_down = True
@@ -876,7 +868,7 @@ class Region(object):
 
     def drop(self):
         if self._is_mouse_down:
-            self.getCenter().mouseUp()
+            self.center.mouseUp()
             self._is_mouse_down = False
         else:
             raise FailExit('You try drop <%s>, but it is not bragged before!' % str(self))
@@ -887,7 +879,7 @@ class Region(object):
 
         '''# Алгоритм Брезенхема
         # https://ru.wikipedia.org/wiki/%D0%90%D0%BB%D0%B3%D0%BE%D1%80%D0%B8%D1%82%D0%BC_%D0%91%D1%80%D0%B5%D0%B7%D0%B5%D0%BD%D1%85%D1%8D%D0%BC%D0%B0
-        src_location = self.getCenter()
+        src_location = self.center
         src_location.mouseDown()
 
         if abs(dest_location.x - src_location.x) >= abs(dest_location.y - src_location.y):

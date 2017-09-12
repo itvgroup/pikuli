@@ -123,3 +123,24 @@ class Vector(object):
             yield self.x
             yield self.y
         return targer()
+
+
+
+class RelativeVec(Vector):
+    """
+    Вектор, координаты которого изменяются в интервале [0.0; 100.0].
+    """
+
+    def __init__(self, *args):
+        super(RelativeVec, self).__init__(*args)
+        assert (0 <= self._x <= 100) and (0 <= self._y <= 100), 'Bad RelativeVec = {}'.format(self)
+
+    @property
+    def x(self):
+        assert 0 <= self._x <= 100, 'Bad RelativeVec = {}'.format(self)
+        return self._x
+
+    @property
+    def y(self):
+        assert 0 <= self._y <= 100, 'Bad RelativeVec = {}'.format(self)
+        return self._y

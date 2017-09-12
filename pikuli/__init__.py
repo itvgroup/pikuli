@@ -24,7 +24,7 @@ from .Region import Region
 from .Match import Match
 from .Screen import Screen
 from .Location import Location
-from .Vector import Vector
+from .Vector import Vector, RelativeVec
 from .Pattern import Pattern
 from .hwnd_element import HWNDElement
 

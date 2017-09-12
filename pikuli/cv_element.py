@@ -26,7 +26,7 @@ class CVElement(object):
     def __init__(self, where_it_is):
         if isinstance(where_it_is, Region):
             self._reg = where_it_is
-            where_it_is = where_it_is.getCenter()
+            where_it_is = where_it_is.center
         if not isinstance(where_it_is, Location):
             raise Exception(
                 'pikuli.cv_element.CVElement.__init__(): '
