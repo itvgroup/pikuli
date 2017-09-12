@@ -100,7 +100,11 @@ class Vector(object):
         return tupe(self)
 
     def __repr__(self):
-        return '{}({}, {})'.format(self.__class__.__name__, self.x, self.y)
+        try:
+            x, y = self.x, self.y
+        except:
+            x, y = self._x, self._y
+        return '{}({}, {})'.format(self.__class__.__name__, x, y)
 
     def __getitem__(self, key):
         """
