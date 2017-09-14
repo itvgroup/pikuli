@@ -285,7 +285,7 @@ class HWNDElement(object):
         else:
             title = [title]
 
-        check_all_regexp = [isinstance(t, re._pattern_type) for t in title]
+        check_all_regexp = [isinstance(t, re._pattern_type) or hasattr(t, 'match') for t in title]
         check_all_str    = [isinstance(t, str) for t in title]
         if False in check_all_regexp and True in check_all_regexp or \
            False in check_all_str and True in check_all_str:

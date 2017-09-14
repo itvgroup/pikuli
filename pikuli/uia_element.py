@@ -614,7 +614,7 @@ class UIAElement(object):
             val = kwargs.pop(key, None)
             if val is not None:
                 not_none_criteria[key] = val
-                if isinstance(val, re._pattern_type):
+                if isinstance(val, re._pattern_type) or hasattr(val, 'match'):
                     pass
                 elif isinstance(val, (list, tuple)):
                     val = map(str, val)
@@ -693,7 +693,7 @@ class UIAElement(object):
                 elif isinstance(criteria[key], str):
                     if not (uielem_val == criteria[key]):
                         return False
-                elif isinstance(criteria[key], re._pattern_type):  # re.complile
+                elif isinstance(criteria[key], re._pattern_type) or hasattr(criteria[key], 'match'):  # re.complile
                     if not (criteria[key].match(uielem_val) is not None):
                         return False
                 else:
