@@ -118,9 +118,8 @@ class LocationF(Vector):
 
     def mouse_move(self, delay=DELAY_AFTER_MOUSE_MOVEMENT):
         """
-        :return: Положения курсора, где мышка действительно оказалаось или `None`, если перемещение
-                 не удалось
-        :rtype: :class:`Location` или `None`
+        :return: Положения курсора, где мышка действительно оказалась.
+        :rtype: :class:`Location`
         """
         win32api.SetCursorPos((self._x_int, self._y_int))
         time.sleep(delay)
