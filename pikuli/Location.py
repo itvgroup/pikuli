@@ -127,7 +127,6 @@ class LocationF(Vector):
         new_loc = self.__class__(win32api.GetCursorPos())
         if new_loc != self:
             logger.warning('{}.mouse_move: new_loc={} != {}=self'.format(self.__class__, new_loc, self))
-            print new_loc, self
         return new_loc
 
     def offset(self, dx, dy):
