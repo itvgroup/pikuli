@@ -120,6 +120,20 @@ class LocationF(Vector):
         win32api.SetCursorPos((self._x_int, self._y_int))
         time.sleep(delay)
 
+    def mouse_move(self, delay=DELAY_AFTER_MOUSE_MOVEMENT):
+        """
+        :return: Положения курсора, где мышка действительно оказалаось или `None`, если перемещение
+                 не удалось
+        :rtype: :class:`Location` или `None`
+        """
+        win32api.SetCursorPos((self._x_int, self._y_int))
+        time.sleep(delay)
+        new_loc = self.__class__(win32api.GetCursorPos())
+        if new_loc != self:
+            logger.warning('{}.mouse_move: new_loc={} != {}=self'.format(self.__class__, new_loc, self))
+            print new_loc, self
+        return new_loc
+
     def offset(self, dx, dy):
         return self + Vector(dx, dy)
 
@@ -412,3 +426,9 @@ class Location(LocationF):
     @property
     def y(self):
         return self._y_int
+
+    def __eq__(self, other):
+        return (self.x == other.x) and (self.y == other.y)
+
+    def __ne__(self, other):
+        return (self.x != other.x) and (self.y != other.y)
