@@ -423,7 +423,7 @@ class Location(LocationF):
         return self._y_int
 
     def __eq__(self, other):
-        return (self.x == other.x) and (self.y == other.y)
+        return self.xy == other.xy
 
     def __ne__(self, other):
-        return (self.x != other.x) and (self.y != other.y)
+        return self.xy != other.xy
