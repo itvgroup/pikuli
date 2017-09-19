@@ -117,10 +117,6 @@ class LocationF(Vector):
         return Color(*arr.reshape(3)[::-1])
 
     def mouse_move(self, delay=DELAY_AFTER_MOUSE_MOVEMENT):
-        win32api.SetCursorPos((self._x_int, self._y_int))
-        time.sleep(delay)
-
-    def mouse_move(self, delay=DELAY_AFTER_MOUSE_MOVEMENT):
         """
         :return: Положения курсора, где мышка действительно оказалаось или `None`, если перемещение
                  не удалось
