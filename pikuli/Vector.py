@@ -97,7 +97,7 @@ class Vector(object):
 
     @property
     def xy(self):
-        return tupe(self)
+        return tuple(self)
 
     def __repr__(self):
         try:
