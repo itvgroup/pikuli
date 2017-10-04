@@ -94,7 +94,7 @@ class LocationF(Vector):
 
     @property
     def rel_xy(self):
-        return tupe(self.rel)
+        return tuple(self.rel)
 
     @property
     def rel_x(self):
