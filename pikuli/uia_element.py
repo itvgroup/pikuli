@@ -1029,7 +1029,7 @@ class _uielement_Control(UIAElement):
 
             if hasattr(self, '_type_text_click'):
                 click_location = self._type_text_click['click_location']  # к примеру, метод getTopLeft()
-                f = getattr(self.reg(), click_location[0], None)
+                f = getattr(self.region, click_location[0], None)
                 if f is None:
                     raise Exception('_Enter_Text_method.type_text(...): [INTERNAL] wrong \'click_location\':\n\t_type_text_click = %s' % str(_type_text_click))
                 if click_location[1] is None:
@@ -1049,7 +1049,7 @@ class _uielement_Control(UIAElement):
                         type(self).__name__, self, self._type_text_click['click_method'], loc, cl=click_location))
 
             else:
-                self.reg().click(p2c_notif=False)
+                self.region.click(p2c_notif=False)
                 if p2c_notif:
                     logger.info('pikuli.%s.click(): click in center of %s' % (type(self).__name__, str(self)))
         else:
@@ -1172,7 +1172,7 @@ class _Enter_Text_method(UIAElement):
 
         При необходимости надо переопределять _type_text_click в дочерних класах, т.к. кликать, возможно, нужно будет не в центр.
         Структура _type_text_click:
-            - имя методоа у объекта, возвращаемого self.reg()
+            - имя метода у объекта, возвращаемого self.region
             - args как список (list) для этой функции или None
             - kwargs как словарь (dict) для этой функции или None
         '''
@@ -1294,7 +1294,8 @@ class CheckBox(_uielement_Control):
         :return: `True`, `False`, `None` (если `ToggleState_Indeterminate` через UIA)
         """
         if method in ['click', 'legacy']:
-            state = bool(self.get_pattern('LegacyIAccessiblePattern').CurrentState & STATE_SYSTEM['CHECKED'])
+            curr_state = self.get_pattern('LegacyIAccessiblePattern').CurrentState
+            state = bool(curr_state & STATE_SYSTEM['CHECKED'])
         elif method == 'uia':
             toog_state = self.get_pattern('TogglePattern').CurrentToggleState
             state = self.TOOGLE_STATES_TO_BOOL[toog_state]
@@ -1303,14 +1304,19 @@ class CheckBox(_uielement_Control):
         return state
 
     def _uia_toogle(self):
+        """
+        Вызывает метод Toogle из TogglePattern. Важно помнить, что может быть 2 или 3 состояния,
+        которые этим методом циклически переключаются
+        (см. https://msdn.microsoft.com/en-us/library/windows/desktop/ee671459(v=vs.85).aspx)
+        """
         res = self.get_pattern('TogglePattern').Toggle()
-        # TODO: assert res == UIA.UIA_wrapper.S_OK, 'Toggle res = {}'.format(res)
+        # TODO: assert res == UIA.UIA_wrapper.S_OK, 'Toggle res = {}'.format(res)  --  нужен код S_OK.
 
     def _check_state(self, expected_state, method):
         """
         Проверяем состояние CheckBox (установлена ли галочка).
 
-        :param bool expected_state: Ожидаемое состояние CheckBox (`True` -- галочка утсановлена)
+        :param bool expected_state: Ожидаемое состояние CheckBox (`True` -- галочка установлена)
         :param str method: Метод проверки: `legacy` -- через `LegacyIAccessiblePattern`, а `uia` --
                            через `TogglePattern`.
         """
@@ -1319,9 +1325,9 @@ class CheckBox(_uielement_Control):
 
     def _change_state_to(self, target_state, method, check_timeout):
         """
-        Изменением состояние CeckBox на желаемое.
+        Изменением состояние CheckBox на желаемое.
 
-        :param bool target_state: Желаемое состояние CheckBox (`True` -- галочка утсановлена)
+        :param bool target_state: Желаемое состояние CheckBox (`True` -- галочка установлена)
         :param str method: Метод проверки: `click` -- через клик в центр контрола, а `uia` --
                            через `TogglePattern`.
         """
@@ -1329,9 +1335,9 @@ class CheckBox(_uielement_Control):
         if self._check_state(target_state, method):
             return False
 
-        # Меянем состояние:
+        # Меняем состояние:
         if method == 'click':
-            self.reg().click()
+            self.region.click()
 
         else:  # Метод 'uia':
             init_state = self._state('uia')
@@ -1354,10 +1360,10 @@ class CheckBox(_uielement_Control):
         return True
 
     def is_checked(self):
-        return _check_state(True, 'legacy')
+        return self._check_state(True, 'legacy')
 
     def is_unchecked(self):
-        return _check_state(False, 'legacy')
+        return self._check_state(False, 'legacy')
 
     def check(self, method='click', check_timeout=CONTROL_CHECK_TIMEOUT):
         """
@@ -1528,7 +1534,7 @@ class Tree(_uielement_Control):
 
     def list_current_subitems(self):
         ''' Вернут список дочерних узелков (1 уровень вложенности). Вернет None, если нет дочерних узелков. '''
-        items = self.find_all(exact_level=1)
+        items = self.find_all(exact_level=1, ControlType='TreeItem')
         if len(items) == 0:
             return None
         return items
@@ -1549,7 +1555,7 @@ class Tree(_uielement_Control):
         if len(item_name) == 0:
             raise Exception('pikuli.ui_element.Tree: len(item_name) == 0')
         else:
-            elem = self.find(Name=item_name[0], exact_level=1, timeout=timeout, exception_on_find_fail=exception_on_find_fail)
+            elem = self.find(Name=item_name[0], exact_level=1, ControlType='TreeItem', timeout=timeout, exception_on_find_fail=exception_on_find_fail)
             if elem is None:
                 logger.debug('pikuli.ui_element.Tree.find_item: %s has not been found. No exception -- returning None' % str(item_name))
                 return None
@@ -1583,21 +1589,21 @@ class Tree(_uielement_Control):
                 found_elem = elem[0].find_item(item_name[1:], force_expand, timeout=timeout, exception_on_find_fail=exception_on_find_fail)
         """
 
-        if isinstance(self, TreeItem) and self.get_property('IsTogglePatternAvailable'):
-            return CheckableTreeItem(found_elem)
-        else:
-            return found_elem
+        return found_elem
 
 
-class TreeItem(CheckBox):
+class TreeItem(CheckBox, _uielement_Control):
+    """
+    Наследование от :class:`CheckBox` здесь чисто утилитарное -- нужные его методы.
+    """
 
     CONTROL_TYPE = 'TreeItem'
     REQUIRED_PATTERNS = {
         'SelectionItemPattern': ['is_selected'],
         'ExpandCollapsePattern': ['is_expandable', 'is_expanded', 'is_collapsed', 'expand', 'collapse'],
         'ScrollItemPattern': ['scroll_into_view'],
-        'TogglePattern': ['is_unchecked', 'is_checked', 'uncheck', 'check']
-        }
+        'TogglePattern': ['is_unchecked', 'is_checked', 'uncheck', 'check', 'check_or_uncheck']
+    }
 
     def is_selected(self):
         return bool(self.get_pattern('SelectionItemPattern').CurrentIsSelected)
@@ -1642,7 +1648,7 @@ class TreeItem(CheckBox):
             else:
                 logger.warning('Node {} is collapsed, but force_expand = {}'.format(self, force_expand))
         if self.is_expanded():
-            return self.find_all(exact_level=1)
+            return self.find_all(ControlType='TreeItem', exact_level=1)
         return []
 
     def find_item(self, item_name, force_expand=False, timeout=None, exception_on_find_fail=True):
@@ -1664,7 +1670,7 @@ class TreeItem(CheckBox):
 
         self.expand()
 
-        elem = self.find(Name=item_name[0], exact_level=1, timeout=timeout, exception_on_find_fail=exception_on_find_fail)
+        elem = self.find(Name=item_name[0], ControlType='TreeItem', exact_level=1, timeout=timeout, exception_on_find_fail=exception_on_find_fail)
         if elem is None:
             logger.debug('pikuli.ui_element.TreeItem.find_item: %s has not been found. No exception -- returning None' % str(item_name))
             return None
@@ -1697,10 +1703,7 @@ class TreeItem(CheckBox):
             found_elem = elem[0].find_item(item_name[1:], force_expand, timeout=timeout)
         """
 
-        if isinstance(self, TreeItem) and self.get_property('IsTogglePatternAvailable'):
-            return CheckableTreeItem(found_elem)
-        else:
-            return found_elem
+        return found_elem
 
 
 class ANPropGrid_Table(_uielement_Control):
@@ -1797,7 +1800,7 @@ class ANPropGrid_Row(_uielement_Control, _LegacyIAccessiblePattern_value_methods
     """def type_text(self, text):
         ''' Кликнем мышкой по строке и введем новый текст без автоматического нажания ENTER'a.
         Клик мышкой в область с захардкоженным смещением, к сожалению -- иначе можно попасть в вертикальный разделитель колонок. '''
-        self.reg().getTopLeft(30,1).click()
+        self.region.getTopLeft(30,1).click()
         type_text(text)"""
 
 
