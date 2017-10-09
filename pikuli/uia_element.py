@@ -1029,7 +1029,7 @@ class _uielement_Control(UIAElement):
 
             if hasattr(self, '_type_text_click'):
                 click_location = self._type_text_click['click_location']  # к примеру, метод getTopLeft()
-                f = getattr(self.reg(), click_location[0], None)
+                f = getattr(self.region, click_location[0], None)
                 if f is None:
                     raise Exception('_Enter_Text_method.type_text(...): [INTERNAL] wrong \'click_location\':\n\t_type_text_click = %s' % str(_type_text_click))
                 if click_location[1] is None:
@@ -1049,7 +1049,7 @@ class _uielement_Control(UIAElement):
                         type(self).__name__, self, self._type_text_click['click_method'], loc, cl=click_location))
 
             else:
-                self.reg().click(p2c_notif=False)
+                self.region.click(p2c_notif=False)
                 if p2c_notif:
                     logger.info('pikuli.%s.click(): click in center of %s' % (type(self).__name__, str(self)))
         else:
@@ -1172,7 +1172,7 @@ class _Enter_Text_method(UIAElement):
 
         При необходимости надо переопределять _type_text_click в дочерних класах, т.к. кликать, возможно, нужно будет не в центр.
         Структура _type_text_click:
-            - имя методоа у объекта, возвращаемого self.reg()
+            - имя метода у объекта, возвращаемого self.region
             - args как список (list) для этой функции или None
             - kwargs как словарь (dict) для этой функции или None
         '''
@@ -1279,57 +1279,112 @@ class Button(_uielement_Control):
 class CheckBox(_uielement_Control):
 
     CONTROL_TYPE = 'CheckBox'
+    REQUIRED_PATTERNS = {}
+
+    TOOGLE_STATES_TO_BOOL = {
+        UIA.UIA_wrapper.ToggleState_On: True,
+        UIA.UIA_wrapper.ToggleState_Off: False,
+        UIA.UIA_wrapper.ToggleState_Indeterminate: None
+    }
+
+    def _state(self, method):
+        """
+        Получаем состояние CheckBox (установлена ли галочка).
+
+        :return: `True`, `False`, `None` (если `ToggleState_Indeterminate` через UIA)
+        """
+        if method in ['click', 'legacy']:
+            curr_state = self.get_pattern('LegacyIAccessiblePattern').CurrentState
+            state = bool(curr_state & STATE_SYSTEM['CHECKED'])
+        elif method == 'uia':
+            toog_state = self.get_pattern('TogglePattern').CurrentToggleState
+            state = self.TOOGLE_STATES_TO_BOOL[toog_state]
+        else:
+            raise Exception('CheckBox.check(...): unsupported method = \'{}\''.format(method))
+        return state
+
+    def _uia_toogle(self):
+        """
+        Вызывает метод Toogle из TogglePattern. Важно помнить, что может быть 2 или 3 состояния,
+        которые этим методом циклически переключаются
+        (см. https://msdn.microsoft.com/en-us/library/windows/desktop/ee671459(v=vs.85).aspx)
+        """
+        res = self.get_pattern('TogglePattern').Toggle()
+        # TODO: assert res == UIA.UIA_wrapper.S_OK, 'Toggle res = {}'.format(res)  --  нужен код S_OK.
+
+    def _check_state(self, expected_state, method):
+        """
+        Проверяем состояние CheckBox (установлена ли галочка).
+
+        :param bool expected_state: Ожидаемое состояние CheckBox (`True` -- галочка установлена)
+        :param str method: Метод проверки: `legacy` -- через `LegacyIAccessiblePattern`, а `uia` --
+                           через `TogglePattern`.
+        """
+        state = self._state(method)
+        return expected_state is state
+
+    def _change_state_to(self, target_state, method, check_timeout):
+        """
+        Изменением состояние CheckBox на желаемое.
+
+        :param bool target_state: Желаемое состояние CheckBox (`True` -- галочка установлена)
+        :param str method: Метод проверки: `click` -- через клик в центр контрола, а `uia` --
+                           через `TogglePattern`.
+        """
+        # Если уже, где надо, то просто выходим:
+        if self._check_state(target_state, method):
+            return False
+
+        # Меняем состояние:
+        if method == 'click':
+            self.region.click()
+
+        else:  # Метод 'uia':
+            init_state = self._state('uia')
+            self._uia_toogle()
+
+            # Ждем смены состояния на новое:
+            if not wait_while(lambda: self._check_state(init_state, 'uia'), check_timeout):
+                raise Exception('CheckBox.uncheck(...): error change state to {}: init = {}, current = {} (timeout {})'.foramt(
+                    target_state, init_state, self._state('uia'), check_timeout))
+
+            # Если сменилось на новое, но не желаемое, значит состояний три и надо еще раз Toogle():
+            if not self._check_state(target_state, 'uia'):
+                self._uia_toogle()
+
+        # Дожидаемся жалаемого состояния:
+        if not wait_while_not(lambda: self._check_state(target_state, method), check_timeout):
+            raise Exception('CheckBox.uncheck(...): checkbox is still {} after {} seconds'.format(
+                self._state(method), check_timeout))
+
+        return True
 
     def is_checked(self):
-        return bool(self.get_pattern('LegacyIAccessiblePattern').CurrentState & STATE_SYSTEM['CHECKED'])
+        return self._check_state(True, 'legacy')
 
     def is_unchecked(self):
-        return not bool(self.get_pattern('LegacyIAccessiblePattern').CurrentState & STATE_SYSTEM['CHECKED'])
+        return self._check_state(False, 'legacy')
 
     def check(self, method='click', check_timeout=CONTROL_CHECK_TIMEOUT):
-        '''
+        """
         Потенциально в качестве значения method могут быть click (подвести курсов мыши и кликнуть) или invoke (через UIA).
         Возвращает:
             -- True, если состяние контрола изменилось.
             -- False, если не пришлось менять состояние контрола.
             -- None можнооставить на перспективу возникновения исключения и exception_on_find_fail=False
-        '''
-        if method not in ['click']:
-            raise Exception('CheckBox.check(...): unsupported method = \'%s\'' % str(method))
-        if not self.is_checked():
-            self.reg().click()
-            if not wait_while_not(self.is_checked, check_timeout):
-                raise Exception('CheckBox.uncheck(...): checkbox is still checked after %s seconds' % str(check_timeout))
-            return True
-        else:
-            return False
+        """
+        return self._change_state_to(True, method, check_timeout)
 
     def uncheck(self, method='click', check_timeout=CONTROL_CHECK_TIMEOUT):
-        '''
-        Потенциально в качестве значения method могут быть click (подвести курсов мыши и кликнуть) или invoke (через UIA).
-        Возвращает:
-            -- True, если состяние контрола изменилось.
-            -- False, если не пришлось менять состояние контрола.
-            -- None можнооставить на перспективу возникновения исключения и exception_on_find_fail=False
-        '''
-        if method not in ['click']:
-            raise Exception('CheckBox.uncheck(...): unsupported method = \'%s\'' % str(method))
-        if not self.is_unchecked():
-            self.reg().click()
-            if not wait_while_not(self.is_unchecked, check_timeout):
-                raise Exception('CheckBox.uncheck(...): checkbox is still checked after %s seconds' % str(check_timeout))
-            return True
-        else:
-            return False
+        """
+        см. описание :func:`CheckBox.check`.
+        """
+        return self._change_state_to(False, method, check_timeout)
 
     def check_or_uncheck(self, check_bool, method='click', check_timeout=CONTROL_CHECK_TIMEOUT):
-        '''
-        Потенциально в качестве значения method могут быть click (подвести курсов мыши и кликнуть) или invoke (через UIA).
-        Возвращает:
-            -- True, если состяние контрола изменилось.
-            -- False, если не пришлось менять состояние контрола.
-            -- None можнооставить на перспективу возникновения исключения и exception_on_find_fail=False
-        '''
+        """
+        см. описание :func:`CheckBox.check`.
+        """
         if check_bool:
             return self.check(method=method, check_timeout=check_timeout)
         else:
@@ -1479,7 +1534,7 @@ class Tree(_uielement_Control):
 
     def list_current_subitems(self):
         ''' Вернут список дочерних узелков (1 уровень вложенности). Вернет None, если нет дочерних узелков. '''
-        items = self.find_all(exact_level=1)
+        items = self.find_all(exact_level=1, ControlType='TreeItem')
         if len(items) == 0:
             return None
         return items
@@ -1500,7 +1555,7 @@ class Tree(_uielement_Control):
         if len(item_name) == 0:
             raise Exception('pikuli.ui_element.Tree: len(item_name) == 0')
         else:
-            elem = self.find(Name=item_name[0], exact_level=1, timeout=timeout, exception_on_find_fail=exception_on_find_fail)
+            elem = self.find(Name=item_name[0], exact_level=1, ControlType='TreeItem', timeout=timeout, exception_on_find_fail=exception_on_find_fail)
             if elem is None:
                 logger.debug('pikuli.ui_element.Tree.find_item: %s has not been found. No exception -- returning None' % str(item_name))
                 return None
@@ -1537,18 +1592,18 @@ class Tree(_uielement_Control):
         return found_elem
 
 
-
-
-
-
-class TreeItem(_uielement_Control):
+class TreeItem(CheckBox, _uielement_Control):
+    """
+    Наследование от :class:`CheckBox` здесь чисто утилитарное -- нужные его методы.
+    """
 
     CONTROL_TYPE = 'TreeItem'
     REQUIRED_PATTERNS = {
         'SelectionItemPattern': ['is_selected'],
         'ExpandCollapsePattern': ['is_expandable', 'is_expanded', 'is_collapsed', 'expand', 'collapse'],
-        'ScrollItemPattern': ['scroll_into_view']
-        }
+        'ScrollItemPattern': ['scroll_into_view'],
+        'TogglePattern': ['is_unchecked', 'is_checked', 'uncheck', 'check', 'check_or_uncheck']
+    }
 
     def is_selected(self):
         return bool(self.get_pattern('SelectionItemPattern').CurrentIsSelected)
@@ -1593,7 +1648,7 @@ class TreeItem(_uielement_Control):
             else:
                 logger.warning('Node {} is collapsed, but force_expand = {}'.format(self, force_expand))
         if self.is_expanded():
-            return self.find_all(exact_level=1)
+            return self.find_all(ControlType='TreeItem', exact_level=1)
         return []
 
     def find_item(self, item_name, force_expand=False, timeout=None, exception_on_find_fail=True):
@@ -1615,7 +1670,7 @@ class TreeItem(_uielement_Control):
 
         self.expand()
 
-        elem = self.find(Name=item_name[0], exact_level=1, timeout=timeout, exception_on_find_fail=exception_on_find_fail)
+        elem = self.find(Name=item_name[0], ControlType='TreeItem', exact_level=1, timeout=timeout, exception_on_find_fail=exception_on_find_fail)
         if elem is None:
             logger.debug('pikuli.ui_element.TreeItem.find_item: %s has not been found. No exception -- returning None' % str(item_name))
             return None
@@ -1649,7 +1704,6 @@ class TreeItem(_uielement_Control):
         """
 
         return found_elem
-
 
 
 class ANPropGrid_Table(_uielement_Control):
@@ -1746,7 +1800,7 @@ class ANPropGrid_Row(_uielement_Control, _LegacyIAccessiblePattern_value_methods
     """def type_text(self, text):
         ''' Кликнем мышкой по строке и введем новый текст без автоматического нажания ENTER'a.
         Клик мышкой в область с захардкоженным смещением, к сожалению -- иначе можно попасть в вертикальный разделитель колонок. '''
-        self.reg().getTopLeft(30,1).click()
+        self.region.getTopLeft(30,1).click()
         type_text(text)"""
 
     @property
@@ -1792,11 +1846,11 @@ class Menu(_uielement_Control):
         return self.find(Name=item_name, ControlType='MenuItem', exact_level=1, exception_on_find_fail=exception_on_find_fail)
 
 
-
 class MenuItem(_uielement_Control):
     ''' Контекстное меню, к примеру. '''
 
     CONTROL_TYPE = 'MenuItem'
+
 
 class UIAControlType(object):
     '''
