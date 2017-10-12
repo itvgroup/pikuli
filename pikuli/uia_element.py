@@ -1677,7 +1677,7 @@ class TreeItem(CheckBox, _uielement_Control):
         if len(item_name) == 1:
             found_elem = elem
         else:
-            found_elem = elem.find_item(item_name[1:], force_expand, timeout=timeout)
+            found_elem = elem.find_item(item_name[1:], force_expand, timeout=timeout, exception_on_find_fail=exception_on_find_fail)
 
         """
         TODO: не работает пауза: сразу содает несолкьо анализов ситацайии, не дожидаясь появления первого
