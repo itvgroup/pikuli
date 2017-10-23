@@ -1735,6 +1735,7 @@ class ANPropGrid_Table(_uielement_Control):
             force_expand -- разворачивать ли свернутые строки, если они обнаружены при поиске строки и являются для нее группирующими.
         '''
         def _find_row_precisely(obj, nested_name, exact_level):
+
             rows = [e for e in obj.find_all(Name=nested_name, exact_level=exact_level) if isinstance(e, ANPropGrid_Row)]
             if len(rows) > 1:
                 Exception('ANPropGrid_Table.find_row._find_row_precisely(...): len(rows) != 0\n\tlen(rows) = %i\n\trows = %s' % (len(rows), str(rows)))
@@ -1791,7 +1792,7 @@ class ANPropGrid_Row(_uielement_Control, _LegacyIAccessiblePattern_value_methods
         if not self.is_expanded():
             raise Exception('pikuli.ANPropGrid_Row.expand: string \'%s\' was not expanded.' % self.Name)
 
-    def collase(self):
+    def collapse(self):
         if self.is_expanded():
             self.get_pattern('LegacyIAccessiblePattern').DoDefaultAction()
         if not self.is_collapsed():
@@ -1807,10 +1808,8 @@ class ANPropGrid_Row(_uielement_Control, _LegacyIAccessiblePattern_value_methods
     def value(self):
         return self.get_pattern('LegacyIAccessiblePattern').CurrentValue
 
-    @property
-    def value(self):
-        return self.get_pattern('LegacyIAccessiblePattern').CurrentValue
-
+    def set_value(self, value):
+        self.get_pattern('LegacyIAccessiblePattern').SetValue(value)
 
 
 class List(_uielement_Control):
