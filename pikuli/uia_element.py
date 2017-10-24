@@ -1804,10 +1804,6 @@ class ANPropGrid_Row(_uielement_Control, _LegacyIAccessiblePattern_value_methods
         self.region.getTopLeft(30,1).click()
         type_text(text)"""
 
-    @property
-    def value(self):
-        return self.get_pattern('LegacyIAccessiblePattern').CurrentValue
-
     def set_value(self, value):
         self.get_pattern('LegacyIAccessiblePattern').SetValue(value)
 
@@ -1819,6 +1815,8 @@ class List(_uielement_Control):
 
     def list_items(self):
         return self.find_all(ControlType='ListItem', exact_level=1)
+
+
 
 
 class ListItem(_uielement_Control):
