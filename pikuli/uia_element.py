@@ -22,6 +22,7 @@ from _functions import (wait_while,
 from _exceptions import FindFailed, FailExit
 import hwnd_element
 from enum import Enum
+from itsdangerous import int_to_bytes
 from oleacc_h import (STATE_SYSTEM, ROLE_SYSTEM, ROLE_SYSTEM_rev)
 
 # "A lot of HRESULT codes…" (https://blogs.msdn.microsoft.com/eldar/2007/04/03/a-lot-of-hresult-codes/)
@@ -1766,9 +1767,13 @@ class ANPropGrid_Row(_uielement_Control, _LegacyIAccessiblePattern_value_methods
     LEGACYACC_ROLE = 'ROW'  # Идентификатор из ROLE_SYSTEM
     _type_text_click = {'click_method': 'click', 'click_location': ('getTopLeft', (30,1), None), 'enter_text_clean_method': 'single_backspace'}
 
-    def has_subrows(self):
+    def is_expandable(self):
         current_state = self.get_pattern('LegacyIAccessiblePattern').CurrentState
         return bool(current_state & STATE_SYSTEM['EXPANDED'] | current_state & STATE_SYSTEM['COLLAPSED'])
+
+    def is_selectable(self):
+        current_state = self.get_pattern('LegacyIAccessiblePattern').CurrentState
+        return bool(current_state & STATE_SYSTEM['SELECTABLE'])
 
     def is_expanded(self):
         ''' Если трока не имеет дочерних, то функция вернет False. '''
@@ -1781,7 +1786,7 @@ class ANPropGrid_Row(_uielement_Control, _LegacyIAccessiblePattern_value_methods
     """def list_current_subrows(self):
         ''' Вернут список дочерних строк (1 уровень вложенности), если текущая строка развернута. Вернет [], если строка свернута. Вернет None, если нет дочерних строк. '''
 
-        if not self.has_subrows():
+        if not self.is_expandable():
             return None
         return self.find_all(exact_level=1)"""
 
@@ -1802,6 +1807,9 @@ class ANPropGrid_Row(_uielement_Control, _LegacyIAccessiblePattern_value_methods
         Клик мышкой в область с захардкоженным смещением, к сожалению -- иначе можно попасть в вертикальный разделитель колонок. '''
         self.region.getTopLeft(30,1).click()
         type_text(text)"""
+
+    def value(self):
+        return self.get_pattern('ValuePattern').CurrentValue
 
 
 
