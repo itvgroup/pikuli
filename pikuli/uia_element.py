@@ -1803,6 +1803,8 @@ class ANPropGrid_Row(_uielement_Control, _LegacyIAccessiblePattern_value_methods
         self.region.getTopLeft(30,1).click()
         type_text(text)"""
 
+    def has_value_pattern(self):
+        return self.get_pattern('ValuePattern') is not None
 
 
 class List(_uielement_Control):
