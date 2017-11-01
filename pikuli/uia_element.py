@@ -1806,9 +1806,14 @@ class ANPropGrid_Row(_uielement_Control, _LegacyIAccessiblePattern_value_methods
         Клик мышкой в область с захардкоженным смещением, к сожалению -- иначе можно попасть в вертикальный разделитель колонок. '''
         self.region.getTopLeft(30,1).click()
         type_text(text)"""
+        
+    @property
+    def value(self):
+        return self.get_pattern('LegacyIAccessiblePattern').CurrentValue
 
+    @property
     def has_value_pattern(self):
-        return self.get_pattern('ValuePattern') is not None
+        return self.get_pattern('LegacyIAccessiblePattern') is not None
 
 
 class List(_uielement_Control):
