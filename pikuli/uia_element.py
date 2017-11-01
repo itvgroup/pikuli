@@ -1766,9 +1766,13 @@ class ANPropGrid_Row(_uielement_Control, _LegacyIAccessiblePattern_value_methods
     LEGACYACC_ROLE = 'ROW'  # Идентификатор из ROLE_SYSTEM
     _type_text_click = {'click_method': 'click', 'click_location': ('getTopLeft', (30,1), None), 'enter_text_clean_method': 'single_backspace'}
 
-    def has_subrows(self):
+    def is_expandable(self):
         current_state = self.get_pattern('LegacyIAccessiblePattern').CurrentState
         return bool(current_state & STATE_SYSTEM['EXPANDED'] | current_state & STATE_SYSTEM['COLLAPSED'])
+
+    def is_selectable(self):
+        current_state = self.get_pattern('LegacyIAccessiblePattern').CurrentState
+        return bool(current_state & STATE_SYSTEM['SELECTABLE'])
 
     def is_expanded(self):
         ''' Если трока не имеет дочерних, то функция вернет False. '''
@@ -1802,9 +1806,14 @@ class ANPropGrid_Row(_uielement_Control, _LegacyIAccessiblePattern_value_methods
         Клик мышкой в область с захардкоженным смещением, к сожалению -- иначе можно попасть в вертикальный разделитель колонок. '''
         self.region.getTopLeft(30,1).click()
         type_text(text)"""
+        
+    @property
+    def value(self):
+        return self.get_pattern('LegacyIAccessiblePattern').CurrentValue
 
+    @property
     def has_value_pattern(self):
-        return self.get_pattern('ValuePattern') is not None
+        return self.get_pattern('LegacyIAccessiblePattern') is not None
 
 
 class List(_uielement_Control):
