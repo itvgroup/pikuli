@@ -1810,9 +1810,14 @@ class ANPropGrid_Row(_uielement_Control, _LegacyIAccessiblePattern_value_methods
 
     def value(self):
         return self.get_pattern('ValuePattern').CurrentValue
+        
+    @property
+    def value(self):
+        return self.get_pattern('LegacyIAccessiblePattern').CurrentValue
 
+    @property
     def has_value_pattern(self):
-        return self.get_pattern('ValuePattern') is not None
+        return self.get_pattern('LegacyIAccessiblePattern') is not None
 
 
 class List(_uielement_Control):
