@@ -1812,13 +1812,6 @@ class ANPropGrid_Row(_uielement_Control, _LegacyIAccessiblePattern_value_methods
     def has_value_pattern(self):
         return self.get_pattern('ValuePattern') is not None
 
-    @property
-    def value(self):
-        return self.get_pattern('LegacyIAccessiblePattern').CurrentValue
-
-    def set_value(self, value):
-        self.get_pattern('LegacyIAccessiblePattern').SetValue(value)
-
 
 class List(_uielement_Control):
     ''' Некий список из ListItem'ов. '''
