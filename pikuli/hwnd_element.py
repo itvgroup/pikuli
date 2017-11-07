@@ -93,6 +93,11 @@ def _find_main_parent_window(child_hwnd, child_pid=None):
 
 
 def _find_all_windows_by_pid(pid):
+    '''
+    
+    Находит все окна по заданному PID
+    :return: list of handle
+    '''
 
     def EnumWindows_callback(hwnd, extra):                      # Callback на перебор всех окон. Вызывается для каждого окна.
         (_, processId) = GetWindowThreadProcessId(hwnd)  # По указателяю на окно получаем (threadId, processId)
