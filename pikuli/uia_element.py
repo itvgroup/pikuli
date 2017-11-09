@@ -22,6 +22,7 @@ from _functions import (wait_while,
 from _exceptions import FindFailed, FailExit
 import hwnd_element
 from enum import Enum
+from itsdangerous import int_to_bytes
 from oleacc_h import (STATE_SYSTEM, ROLE_SYSTEM, ROLE_SYSTEM_rev)
 
 # "A lot of HRESULT codes…" (https://blogs.msdn.microsoft.com/eldar/2007/04/03/a-lot-of-hresult-codes/)
@@ -1786,7 +1787,7 @@ class ANPropGrid_Row(_uielement_Control, _LegacyIAccessiblePattern_value_methods
     """def list_current_subrows(self):
         ''' Вернут список дочерних строк (1 уровень вложенности), если текущая строка развернута. Вернет [], если строка свернута. Вернет None, если нет дочерних строк. '''
 
-        if not self.has_subrows():
+        if not self.is_expandable():
             return None
         return self.find_all(exact_level=1)"""
 
@@ -1807,6 +1808,9 @@ class ANPropGrid_Row(_uielement_Control, _LegacyIAccessiblePattern_value_methods
         Клик мышкой в область с захардкоженным смещением, к сожалению -- иначе можно попасть в вертикальный разделитель колонок. '''
         self.region.getTopLeft(30,1).click()
         type_text(text)"""
+
+    def value(self):
+        return self.get_pattern('ValuePattern').CurrentValue
         
     @property
     def value(self):
