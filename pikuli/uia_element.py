@@ -1404,7 +1404,13 @@ class Text(_uielement_Control, _ValuePattern_methods):
     CONTROL_TYPE = 'Text'
     REQUIRED_PATTERNS = {}
 
+class Item(_uielement_Control):
+    CONTROL_TYPE = 'DataItem'
+    REQUIRED_PATTERNS = {}
 
+    @property
+    def value(self):
+        return self.get_pattern('LegacyIAccessiblePattern').CurrentValue
 
 class ComboBox(_uielement_Control, _ValuePattern_methods, _Enter_Text_method):
 
@@ -1806,7 +1812,7 @@ class ANPropGrid_Row(_uielement_Control, _LegacyIAccessiblePattern_value_methods
         Клик мышкой в область с захардкоженным смещением, к сожалению -- иначе можно попасть в вертикальный разделитель колонок. '''
         self.region.getTopLeft(30,1).click()
         type_text(text)"""
-        
+
     @property
     def value(self):
         return self.get_pattern('LegacyIAccessiblePattern').CurrentValue
