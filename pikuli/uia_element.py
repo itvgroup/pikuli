@@ -1405,7 +1405,13 @@ class Text(_uielement_Control, _ValuePattern_methods):
     CONTROL_TYPE = 'Text'
     REQUIRED_PATTERNS = {}
 
+class Item(_uielement_Control):
+    CONTROL_TYPE = 'DataItem'
+    REQUIRED_PATTERNS = {}
 
+    @property
+    def value(self):
+        return self.get_pattern('LegacyIAccessiblePattern').CurrentValue
 
 class ComboBox(_uielement_Control, _ValuePattern_methods, _Enter_Text_method):
 
@@ -1811,7 +1817,7 @@ class ANPropGrid_Row(_uielement_Control, _LegacyIAccessiblePattern_value_methods
 
     def value(self):
         return self.get_pattern('ValuePattern').CurrentValue
-        
+
     @property
     def value(self):
         return self.get_pattern('LegacyIAccessiblePattern').CurrentValue
