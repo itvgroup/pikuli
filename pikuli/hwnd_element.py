@@ -92,6 +92,33 @@ def _find_main_parent_window(child_hwnd, child_pid=None):
     return _fmpw(child_hwnd, child_pid)
 
 
+def _find_all_windows_by_pid(pid):
+    '''
+    
+    Находит все окна по заданному PID
+    :return: list of handle
+    '''
+
+    def EnumWindows_callback(hwnd, extra):                      # Callback на перебор всех окон. Вызывается для каждого окна.
+        (_, processId) = GetWindowThreadProcessId(hwnd)  # По указателяю на окно получаем (threadId, processId)
+        if processId == extra['pid']:
+            extra['hwnds'].append(long(hwnd))
+
+    for proc in psutil.process_iter():
+        try:
+            if proc.pid == pid:
+                break
+        except psutil.NoSuchProcess:
+            pass
+    else:
+        raise FindFailed('pikuli.HWNDElement: can not find process with PID={}'.format(pid))
+
+    extra = {'pid': pid, 'hwnds': []}
+
+    EnumWindows(EnumWindows_callback, extra)
+
+    return extra['hwnds']
+
 
 def _find_window_by_process_name_and_title(proc_name, in_title):
     ''' По имени exe-файла и текстут в заголовке (in_title -- список строк, искомых в заголовке) ищет окно. Это
