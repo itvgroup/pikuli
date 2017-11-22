@@ -321,15 +321,15 @@ class LocationF(Vector):
         else:
             (a1, b1, a2, b2) = (self.y, self.x, dest_y, dest_x)
             f = lambda x, y: Location(y, x).mouse_move(delay)
-
-        k = float(b2 - b1) / (a2 - a1)
-        a_sgn = (a2 - a1) / abs(a2 - a1)
-        la = 0
-        while abs(la) <= abs(a2 - a1):
-            a = a1 + la
-            b = int(k * la) + b1
-            f(a, b)
-            la += a_sgn * DRAGnDROP_MOVE_STEP
+        if a2 != a1:
+            k = float(b2 - b1) / (a2 - a1)
+            a_sgn = (a2 - a1) / abs(a2 - a1)
+            la = 0
+            while abs(la) <= abs(a2 - a1):
+                a = a1 + la
+                b = int(k * la) + b1
+                f(a, b)
+                la += a_sgn * DRAGnDROP_MOVE_STEP
 
         if p2c_notif:
             logger.info('pikuli.%s.dragto(): drag %s to (%i,%i)' % (type(self).__name__, str(self), self.x, self.y))
