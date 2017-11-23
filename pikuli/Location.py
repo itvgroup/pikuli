@@ -322,6 +322,7 @@ class LocationF(Vector):
             (a1, b1, a2, b2) = (self.y, self.x, dest_y, dest_x)
             f = lambda x, y: Location(y, x).mouse_move(delay)
         if a2 != a1:
+        if a2 != a1:
             k = float(b2 - b1) / (a2 - a1)
             a_sgn = (a2 - a1) / abs(a2 - a1)
             la = 0

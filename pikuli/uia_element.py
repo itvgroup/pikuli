@@ -1836,8 +1836,6 @@ class List(_uielement_Control):
         return self.find_all(ControlType='ListItem', exact_level=1)
 
 
-
-
 class ListItem(_uielement_Control):
     ''' Элементы списка ListItem. '''
 
