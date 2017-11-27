@@ -850,7 +850,7 @@ class UIAElement(object):
                         logger.debug(txt_pikuli_search_pattern % 'has been found: None (%s)' % str(timeout))
                         return None
                     # t0 = datetime.datetime.today()
-                    #time.sleep(next_serach_iter_delya)
+                    time.sleep(next_serach_iter_delya)
                 else:
                     found_elem = self.__create_instance_of_suitable_class(ex.winuiaelem)
                     # logger.debug(CONSOLE_ERASE_LINE_SEQUENCE)

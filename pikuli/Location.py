@@ -122,7 +122,7 @@ class LocationF(Vector):
         :rtype: :class:`Location`
         """
         win32api.SetCursorPos((self._x_int, self._y_int))
-        #time.sleep(delay)
+        time.sleep(delay)
         new_loc = self.__class__(win32api.GetCursorPos())
         if new_loc != self:
             logger.warning('{}.mouse_move: new_loc={} != {}=self'.format(self.__class__, new_loc, self))
