@@ -231,7 +231,7 @@ class LocationF(Vector):
         if click:
             self.click(after_cleck_delay=click_type_delay, p2c_notif=False)
         type_text('a', KeyModifier.CTRL, p2c_notif=False)
-        time.sleep(0.2)
+        time.sleep(0.5)
         type_text(str(text) + Key.ENTER, modifiers, p2c_notif=False)
         if p2c_notif:
             logger.info('pikuli.%s.enter_text(): enter_text on %s \'%s\'; modifiers=%s, click=%s' % (type(self).__name__, str(self), repr(text), str(modifiers), str(click)))
