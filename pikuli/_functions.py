@@ -74,6 +74,9 @@ def wait_while_not(f_logic, timeout, warning_timeout=None):
 def addImagePath(path):
     pikuli.Settings.addImagePath(path)
 
+def get_hwnd_by_location(x, y):
+    return win32gui.WindowFromPoint((x, y))
+
 def setFindFailedDir(path):
     pikuli.Settings.setFindFailedDir(path)
 
@@ -82,7 +85,6 @@ def get_hwnd_by_location(x, y):
     Вернет handle окна с координатами x, y
     '''
     return win32gui.WindowFromPoint((x, y))
-
 def _monitor_hndl_to_screen_n(m_hndl):
     ''' Экраны-мониторы нуменруются от 1. Нулевой экран -- это полный вирутальный. '''
     minfo = win32api.GetMonitorInfo(m_hndl)  # For example for primary monitor: {'Device': '\\\\.\\DISPLAY1', 'Work': (0, 0, 1920, 1040), 'Flags': 1, 'Monitor': (0, 0, 1920, 1080)}
