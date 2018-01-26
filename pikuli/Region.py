@@ -69,15 +69,31 @@ class Region(object):
                 is_contaned, self))
 
     def __lt__(self, other):
+        """
+        :param other: Второй прямоугольник
+        :return: Проверяет, является ли один прямоугольник строго меньше второго по "обоим измерениям"
+        """
         return self.w < other.w and self.h < other.h
 
     def __le__(self, other):
+        """
+        :param other: Второй прямоугольник
+        :return: Проверяет, является ли один прямоугольник меньше либо равно второго по "обоим измерениям"
+        """
         return self.w <= other.w and self.h <= other.h
 
     def __gt__(self, other):
+        """
+        :param other: Второй прямоугольник
+        :return: Проверяет, является ли один прямоугольник строго больше второго по "обоим измерениям"
+        """
         return self.w > other.w and self.h > other.h
 
     def __ge__(self, other):
+        """
+        :param other: Второй прямоугольник
+        :return: Проверяет, является ли один прямоугольник больше либо равно второго по "обоим измерениям"
+        """
         return self.w >= other.w and self.h >= other.h
 
     def __str__(self):
