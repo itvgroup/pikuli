@@ -68,6 +68,18 @@ class Region(object):
             raise Exception('__contains__(): Unsupported is_contaned = {!r}. self = {!r}'.format(
                 is_contaned, self))
 
+    def __lt__(self, other):
+        return self.w < other.w and self.h < other.h
+
+    def __le__(self, other):
+        return self.w <= other.w and self.h <= other.h
+
+    def __gt__(self, other):
+        return self.w > other.w and self.h > other.h
+
+    def __ge__(self, other):
+        return self.w >= other.w and self.h >= other.h
+
     def __str__(self):
         return '<Region (%i, %i, %i, %i)>' % (self.x, self.y, self.w, self.h)
 
