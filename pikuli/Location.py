@@ -225,16 +225,14 @@ class LocationF(Vector):
         if p2c_notif:
             logger.info('pikuli.%s.type(): type on %s \'%s\'; modifiers=%s, click=%s' % (type(self).__name__, str(self), repr(text), str(modifiers), str(click)))
 
-    def enter_text(self, text, modifiers=None, click=True, click_type_delay=DELAY_BETWEEN_CLICK_AND_TYPE, p2c_notif=True, press_enter=True):
+    def enter_text(self, text, modifiers=None, click=True, click_type_delay=DELAY_BETWEEN_CLICK_AND_TYPE, p2c_notif=True):
         ''' Не как в Sikuli
         TODO: не нужен тут Ctrl+a  --  не всегда и не везде работает'''
         if click:
             self.click(after_cleck_delay=click_type_delay, p2c_notif=False)
         type_text('a', KeyModifier.CTRL, p2c_notif=False)
         time.sleep(0.5)
-        if press_enter:
-            text = str(text)+Key.ENTER
-        type_text(str(text), modifiers, p2c_notif=False)
+        type_text(str(text) + Key.ENTER, modifiers, p2c_notif=False)
         if p2c_notif:
             logger.info('pikuli.%s.enter_text(): enter_text on %s \'%s\'; modifiers=%s, click=%s' % (type(self).__name__, str(self), repr(text), str(modifiers), str(click)))
 
