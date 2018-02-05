@@ -806,7 +806,6 @@ class Region(object):
         if p2c_notif:
             logger.info('pikuli.%s.scroll(): scroll in center of %s; direction=%s, count=%s, click=%s' % (type(self).__name__, str(self), str(direction), str(count), str(click)))
 
-
     def dragto(self, *dest_location, **kwargs):
         '''
         Перемащает регион, хватая мышкой его центр.
@@ -829,7 +828,6 @@ class Region(object):
             logger.info('pikuli.%s.dragto(): drag center of %s to (%i,%i)' % (type(self).__name__, str(self), self.x, self.y))
         self._x += self.drag_location.x - center.x
         self._y += self.drag_location.y - center.y
-
 
     def drop(self, p2c_notif=True):
         if self.drag_location is not None:
@@ -902,7 +900,7 @@ class Region(object):
         matches = []  # Список списков. В него будут помещаться
         for p in ps:
             unsorted_matches = self.findAll(p)  # Несгруппированные вхождения шаблона
-            grouped_matches  = []
+            grouped_matches = []
             while len(unsorted_matches) > 0:
                 next_match = unsorted_matches.pop(0)
 
