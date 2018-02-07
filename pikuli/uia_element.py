@@ -399,7 +399,13 @@ class UIAElement(object):
         return self._short_info()
 
     def get_help_text(self):
-        return json.loads(self.HelpText or {})
+        help_text = self.HelpText or {}
+        try:
+            help_text = json.loads(help_text)
+        except Exception:
+            return help_text
+        else:
+            return help_text
 
     def get_bounding_rectangle(self):
         return self.BoundingRectangle or {}
