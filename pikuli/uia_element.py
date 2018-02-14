@@ -1556,7 +1556,7 @@ class Tree(_uielement_Control):
 
         if isinstance(item_name, (basestring, re._pattern_type)):
             item_name = [item_name]
-        if not isinstance(item_name, list):
+        if not isinstance(item_name, (list, tuple)):
             raise Exception('pikuli.ui_element.Tree: not isinstance(item_name, list) and not isinstance(item_name, str)\n\titem_name = %s\n\ttimeout = %s' % (str(item_name), str(timeout)))
 
         if len(item_name) == 0:
@@ -1666,7 +1666,7 @@ class TreeItem(CheckBox, _uielement_Control):
         # logger.debug(CONSOLE_ERASE_LINE_SEQUENCE)
         logger.debug('pikuli.TreeItem.find_item: searching by criteria item_name = \'%s\', timeout = %s' % (str(item_name), str(timeout)))
 
-        if not isinstance(item_name, list):
+        if not isinstance(item_name, (list, tuple)):
             item_name = [item_name]
         if len(item_name) == 0:
             raise Exception('pikuli.ui_element.TreeItem: len(item_name) == 0')
