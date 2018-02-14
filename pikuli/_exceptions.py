@@ -3,11 +3,21 @@
 import traceback
 
 
-class FailExit(RuntimeError):
+
+
+class PikuliError(RuntimeError):
     pass
 
 
-class FindFailed(RuntimeError):
+class PostMoveCheck(PikuliError):
+    pass
+
+
+class FailExit(PikuliError):
+    pass
+
+
+class FindFailed(PikuliError):
     """ This exception is raised when an image pattern
         is not found on the screen.
     """
@@ -28,3 +38,4 @@ class FindFailed(RuntimeError):
         self.cause = cause
 
         self.raise_tb_str = ''.join(traceback.format_stack()[:-1]).rstrip()  # traceback к точке raise'а
+
