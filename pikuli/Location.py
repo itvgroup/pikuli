@@ -155,6 +155,7 @@ class LocationF(Vector):
         time.sleep(DELAY_IN_MOUSE_CLICK)
         self._mouse_event(win32con.MOUSEEVENTF_LEFTUP)
         time.sleep(DEALY_AFTER_CLICK)
+
         if p2c_notif:
             logger.info('pikuli.%s.click(): click on %s' % (type(self).__name__, str(self)))
 
