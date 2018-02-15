@@ -1136,6 +1136,7 @@ def get_property_by_id(UIAElement, property_identifier):
         logger.debug("This property identifier is not support: %s, cannot get it from UIA typelib" % property_identifier)
         return None
 
+
 def get_pattern_by_id(UIAElement, pattern_identifier):
     '''get UIA element pattern by identifier, return None if fail
 
