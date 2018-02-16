@@ -1633,8 +1633,6 @@ class TreeItem(CheckBox, _uielement_Control):
     def expand(self):
         if self.is_expandable() and not self.is_expanded():
             self.get_pattern('ExpandCollapsePattern').Expand()
-        if not self.is_expanded():
-            raise Exception('pikuli.ui_element: can not expand TreeItem \'%s\'' % self.Name)
 
     def collapse(self):
         if self.is_expandable() and not self.is_collapsed():
