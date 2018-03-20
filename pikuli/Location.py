@@ -154,7 +154,7 @@ class LocationF(Vector):
         self._mouse_event(win32con.MOUSEEVENTF_LEFTDOWN)
         time.sleep(DELAY_IN_MOUSE_CLICK)
         self._mouse_event(win32con.MOUSEEVENTF_LEFTUP)
-        time.sleep(DEALY_AFTER_CLICK)
+        time.sleep(after_cleck_delay)
 
         if p2c_notif:
             logger.info('pikuli.%s.click(): click on %s' % (type(self).__name__, str(self)))
@@ -177,12 +177,20 @@ class LocationF(Vector):
         if p2c_notif:
             logger.info('pikuli.%s.mouseUp(): mouseUp on %s' % (type(self).__name__, str(self)))
 
+    def click_and_hold(self, delay, p2c_notif=True):
+        self.mouse_move()
+        self._mouse_event(win32con.MOUSEEVENTF_LEFTDOWN)
+        time.sleep(delay)
+        self._mouse_event(win32con.MOUSEEVENTF_LEFTUP)
+        if p2c_notif:
+            logger.info('pikuli.%s.click_and_hold(): click_and_hold on %s' % (type(self).__name__, str(self)))
+
     def rightClick(self, after_cleck_delay=DEALY_AFTER_CLICK, p2c_notif=True):
         self.mouse_move()
         self._mouse_event(win32con.MOUSEEVENTF_RIGHTDOWN)
         time.sleep(DELAY_IN_MOUSE_CLICK)
         self._mouse_event(win32con.MOUSEEVENTF_RIGHTUP)
-        time.sleep(DEALY_AFTER_CLICK)
+        time.sleep(after_cleck_delay)
         if p2c_notif:
             logger.info('pikuli.%s.rightClick(): rightClick on %s' % (type(self).__name__, str(self)))
 
