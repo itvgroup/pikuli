@@ -6,7 +6,6 @@
 import logging
 import time
 from collections import namedtuple
-
 import win32api
 import win32con
 from pikuli._exceptions import PostMoveCheck
@@ -184,6 +183,25 @@ class LocationF(Vector):
         self._mouse_event(win32con.MOUSEEVENTF_LEFTUP)
         if p2c_notif:
             logger.info('pikuli.%s.click_and_hold(): click_and_hold on %s' % (type(self).__name__, str(self)))
+
+    def click_move_hold(self, to, delay, p2c_notif=True):
+        """
+        Нажимает левую кнопку мыши, перемещает курсор мыши в `to`, держит нажатым
+        `delay` времени, потом отпускает мышь
+        :param to:
+        :param delay: время в течении которого держим кнопку нажатой после перемещения мыши
+        :return: :class:`Location`
+        """
+        self.mouse_move()
+        self._mouse_event(win32con.MOUSEEVENTF_LEFTDOWN)
+        time.sleep(1)
+        screen_w = win32api.GetSystemMetrics(0)
+        screen_h = win32api.GetSystemMetrics(1)
+        to_x = to.x * (65535 / screen_w)
+        to_y = to.y * (65535 / screen_h)
+        win32api.mouse_event(win32con.MOUSEEVENTF_MOVE | win32con.MOUSEEVENTF_ABSOLUTE, to_x, to_y)
+        time.sleep(delay)
+        self._mouse_event(win32con.MOUSEEVENTF_LEFTUP)
 
     def rightClick(self, after_cleck_delay=DEALY_AFTER_CLICK, p2c_notif=True):
         self.mouse_move()
