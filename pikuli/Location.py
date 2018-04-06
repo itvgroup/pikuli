@@ -202,6 +202,8 @@ class LocationF(Vector):
         win32api.mouse_event(win32con.MOUSEEVENTF_MOVE | win32con.MOUSEEVENTF_ABSOLUTE, to_x, to_y)
         time.sleep(delay)
         self._mouse_event(win32con.MOUSEEVENTF_LEFTUP)
+        if p2c_notif:
+            logger.info('pikuli.{}.click_move_hold(): moved to x {}, y {}'.format(type(self).__name__, to_x, to_y))
 
     def rightClick(self, after_cleck_delay=DEALY_AFTER_CLICK, p2c_notif=True):
         self.mouse_move()
