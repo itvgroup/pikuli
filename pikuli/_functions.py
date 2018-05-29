@@ -3,14 +3,22 @@
 '''
    Файл содержит вспомогательные функции, используемые в pikuli.
 '''
+import os
 import time
 import logging
 
-import win32ui
-import win32api
-import win32gui
-import win32clipboard
-import win32con
+if os.name == "nt":
+    import win32ui
+    import win32api
+    import win32gui
+    import win32clipboard
+    import win32con
+else:
+    win32ui = None
+    win32api = None
+    win32gui = None
+    win32clipboard = None
+    win32con = None
 
 import numpy as np
 
