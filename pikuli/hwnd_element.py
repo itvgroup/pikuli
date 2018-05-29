@@ -22,11 +22,16 @@ else:
     oledll = None
 
 from ctypes import byref
-import comtypes
-import comtypes.client
 
-comtypes.client.GetModule('oleacc.dll')             # Что-то там нагенерирует ...
-from comtypes.gen.Accessibility import IAccessible  # ... и теперь чать этого импортируем
+if os.name == "nt":
+    import comtypes
+    import comtypes.client
+
+    comtypes.client.GetModule('oleacc.dll')             # Что-то там нагенерирует ...
+    from comtypes.gen.Accessibility import IAccessible  # ... и теперь чать этого импортируем
+else:
+    comtypes = None
+    IAccessible = None
 
 import Region
 from _functions import wait_while, wait_while_not
