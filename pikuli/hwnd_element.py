@@ -16,7 +16,11 @@ if os.name == "nt":
     from win32process import *
     from win32con import *
 
-from ctypes import oledll
+if os.name == "nt":
+    from ctypes import oledll
+else:
+    oledll = None
+
 from ctypes import byref
 import comtypes
 import comtypes.client
