@@ -13,12 +13,24 @@ if os.name == "nt":
     import win32gui
     import win32clipboard
     import win32con
+
+    _KeyCodes = {
+        ''' VirtualCode'ы клавиш клавиатуры, которые рассматриваются как модифкаторы нажатия других клавиш. '''
+        # (bVk, bScan_press, bScan_relaese) скан коды для XT-клавиатуры. Но они могут быть многобайтовыми. Поэтому мока пробуем передавать вместо них нули.
+        'ALT': (win32con.VK_MENU, 0, 0),
+        'CTRL': (win32con.VK_CONTROL, 0, 0),
+        'SHIFT': (win32con.VK_SHIFT, 0, 0),
+    }
+
 else:
     win32ui = None
     win32api = None
     win32gui = None
     win32clipboard = None
     win32con = None
+
+    _KeyCodes = {
+    }
 
 import numpy as np
 
@@ -331,18 +343,6 @@ def _take_screenshot_(*args):
     win32gui.SelectObject(mem_hdc, new_bitmap_h)  # Returns 'old_bitmap_h'. It will be deleted automatically.
     win32gui.BitBlt(mem_hdc, 0, 0, w, h, scr_hdc, 0, 0, win32con.SRCCOPY)
 """
-
-
-
-
-
-_KeyCodes = {
-    ''' VirtualCode'ы клавиш клавиатуры, которые рассматриваются как модифкаторы нажатия других клавиш. '''
-    # (bVk, bScan_press, bScan_relaese) скан коды для XT-клавиатуры. Но они могут быть многобайтовыми. Поэтому мока пробуем передавать вместо них нули.
-    'ALT':   (win32con.VK_MENU, 0, 0),
-    'CTRL':  (win32con.VK_CONTROL, 0, 0),
-    'SHIFT': (win32con.VK_SHIFT, 0, 0),
-}
 
 
 class KeyModifier(object):
