@@ -15,7 +15,10 @@ from collections import namedtuple
 
 import cv2
 import numpy as np
-import win32gui
+if os.name == "nt":
+    import win32gui
+else:
+    win32gui = None
 
 import pikuli
 from .hwnd_element import _find_main_parent_window

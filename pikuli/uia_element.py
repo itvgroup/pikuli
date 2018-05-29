@@ -1,4 +1,5 @@
 ﻿# -*- coding: utf-8 -*-
+import os
 
 import psutil
 from inspect import currentframe, getframeinfo, isclass
@@ -11,7 +12,10 @@ import logging
 import json
 
 import _ctypes
-import win32gui
+if os.name == "nt":
+    import win32gui
+else:
+    win32gui = None
 
 import UIA
 import Region

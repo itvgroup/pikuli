@@ -4,10 +4,15 @@
 '''
 
 import logging
+import os
 import time
 from collections import namedtuple
-import win32api
-import win32con
+if os.name == "nt":
+    import win32api
+    import win32con
+else:
+    win32api = None
+    win32con = None
 from pikuli._exceptions import PostMoveCheck
 
 from ._functions import KeyModifier, Key, type_text, FailExit, _take_screenshot, press_modifiers, release_modifiers
