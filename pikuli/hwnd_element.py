@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ''' Субмодуль работы с WinForms через win32api. '''
+import os
 
 import psutil
 import types
@@ -9,10 +10,11 @@ import re
 import time
 import logging
 
-from win32api import *
-from win32gui import *
-from win32process import *
-from win32con import *
+if os.name == "nt":
+    from win32api import *
+    from win32gui import *
+    from win32process import *
+    from win32con import *
 
 from ctypes import oledll
 from ctypes import byref
