@@ -16,18 +16,18 @@ import os
 import logging
 import sys
 
-from ._functions import *
+if os.name == "nt":
+    from ._functions import *
+    from .Screen import Screen
+    from .Location import Location
+    from .Vector import Vector, RelativeVec
+    from .Match import Match
+    from .Pattern import Pattern
+    from .hwnd_element import HWNDElement
+    from .Region import Region
+
 from ._exceptions import FailExit, FindFailed
 from ._SettingsClass import *
-
-from .Match import Match
-from .Screen import Screen
-from .Location import Location
-from .Vector import Vector, RelativeVec
-from .Pattern import Pattern
-
-from .hwnd_element import HWNDElement
-from .Region import Region
 
 Settings = SettingsClass()
 logger = logging.getLogger('axxon.pikuli')
