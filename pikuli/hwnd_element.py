@@ -1,45 +1,27 @@
 # -*- coding: utf-8 -*-
 
 ''' Субмодуль работы с WinForms через win32api. '''
+import logging
 import os
+import re
+import types
+from ctypes import byref
+from ctypes import oledll
+from win32api import *
+from win32gui import *
+from win32process import *
 
 import psutil
-import types
-import sys
-import re
-import time
-import logging
-
-if os.name == "nt":
-    from win32api import *
-    from win32gui import *
-    from win32process import *
-    from win32con import *
-
-if os.name == "nt":
-    from ctypes import oledll
-else:
-    oledll = None
-
-from ctypes import byref
-
-if os.name == "nt":
-    import comtypes
-    import comtypes.client
-    import uia_element
-
-    comtypes.client.GetModule('oleacc.dll')             # Что-то там нагенерирует ...
-    from comtypes.gen.Accessibility import IAccessible  # ... и теперь чать этого импортируем
-else:
-    comtypes = None
-    IAccessible = None
-    uia_element = None
+from win32con import *
+import comtypes
+import comtypes.client
+import uia_element
+comtypes.client.GetModule('oleacc.dll')             # Что-то там нагенерирует ...
+from comtypes.gen.Accessibility import IAccessible  # ... и теперь чать этого импортируем
 
 import Region
 from _functions import wait_while, wait_while_not
-from _exceptions import FindFailed, FailExit
-
-
+from _exceptions import FindFailed
 
 logger = logging.getLogger('axxon.pikuli')
 

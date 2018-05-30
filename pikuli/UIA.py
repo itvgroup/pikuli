@@ -17,16 +17,10 @@ Windows native UIA API:
     http://msdn.microsoft.com/en-us/library/windows/desktop/ee671216(v=vs.85).aspx
 '''
 
-import logging
-import os
-
-if os.name == "nt":
-    from comtypes.client import GetModule, CreateObject
-else:
-    GetModule = None
-    CreateObject = None
-
 import ctypes
+import logging
+
+from comtypes.client import GetModule, CreateObject
 
 logger = logging.getLogger('axxon.pikuli')
 

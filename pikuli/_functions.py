@@ -7,30 +7,22 @@ import os
 import time
 import logging
 
-if os.name == "nt":
-    import win32ui
-    import win32api
-    import win32gui
-    import win32clipboard
-    import win32con
 
-    _KeyCodes = {
-        ''' VirtualCode'ы клавиш клавиатуры, которые рассматриваются как модифкаторы нажатия других клавиш. '''
-        # (bVk, bScan_press, bScan_relaese) скан коды для XT-клавиатуры. Но они могут быть многобайтовыми. Поэтому мока пробуем передавать вместо них нули.
-        'ALT': (win32con.VK_MENU, 0, 0),
-        'CTRL': (win32con.VK_CONTROL, 0, 0),
-        'SHIFT': (win32con.VK_SHIFT, 0, 0),
-    }
+import win32ui
+import win32api
+import win32gui
+import win32clipboard
+import win32con
 
-else:
-    win32ui = None
-    win32api = None
-    win32gui = None
-    win32clipboard = None
-    win32con = None
+_KeyCodes = {
+    ''' VirtualCode'ы клавиш клавиатуры, которые рассматриваются как модифкаторы нажатия других клавиш. '''
+    # (bVk, bScan_press, bScan_relaese) скан коды для XT-клавиатуры. Но они могут быть многобайтовыми. Поэтому мока пробуем передавать вместо них нули.
+    'ALT': (win32con.VK_MENU, 0, 0),
+    'CTRL': (win32con.VK_CONTROL, 0, 0),
+    'SHIFT': (win32con.VK_SHIFT, 0, 0),
+}
 
-    _KeyCodes = {
-    }
+
 
 import numpy as np
 

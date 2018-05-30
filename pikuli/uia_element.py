@@ -12,11 +12,7 @@ import logging
 import json
 
 import _ctypes
-if os.name == "nt":
-    import win32gui
-else:
-    win32gui = None
-
+import win32gui
 import UIA
 import Region
 from _functions import (wait_while,
