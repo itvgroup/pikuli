@@ -26,17 +26,19 @@ from ctypes import byref
 if os.name == "nt":
     import comtypes
     import comtypes.client
+    import uia_element
 
     comtypes.client.GetModule('oleacc.dll')             # Что-то там нагенерирует ...
     from comtypes.gen.Accessibility import IAccessible  # ... и теперь чать этого импортируем
 else:
     comtypes = None
     IAccessible = None
+    uia_element = None
 
 import Region
 from _functions import wait_while, wait_while_not
 from _exceptions import FindFailed, FailExit
-import uia_element
+
 
 
 logger = logging.getLogger('axxon.pikuli')
