@@ -17,11 +17,14 @@ import cv2
 import numpy as np
 if os.name == "nt":
     import win32gui
+    from .hwnd_element import _find_main_parent_window
+
 else:
     win32gui = None
+    _find_main_parent_window = None
 
 import pikuli
-from .hwnd_element import _find_main_parent_window
+
 from ._functions import _take_screenshot, verify_timeout_argument, highlight_region
 from . import FindFailed, FailExit
 from .Pattern import Pattern
