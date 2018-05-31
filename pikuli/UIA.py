@@ -19,11 +19,14 @@ Windows native UIA API:
 
 import os
 import logging
+import ctypes
 
 logger = logging.getLogger('axxon.pikuli')
 
+
 class UIAException(Exception):
     pass
+
 
 if os.name == 'nt':
     from comtypes.client import GetModule, CreateObject
