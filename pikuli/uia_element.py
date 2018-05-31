@@ -18,7 +18,10 @@ from itsdangerous import int_to_bytes
 import _ctypes
 if os.name == 'nt':
     import win32gui
-from . import UIA, Region, hwnd_element
+import UIA
+import Region
+import hwnd_element
+
 from. _functions import (wait_while,
                          wait_while_not, Key, KeyModifier,
                          type_text, verify_timeout_argument,
