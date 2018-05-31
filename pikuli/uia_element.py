@@ -9,21 +9,22 @@ import sys
 import re
 import logging
 import json
+import os
 
-import _ctypes
-import win32gui
-
-import UIA
-import Region
-from _functions import (wait_while,
-                        wait_while_not, Key, KeyModifier,
-                        type_text, verify_timeout_argument,
-                        set_text_to_clipboard, get_text_from_clipboard)
-from _exceptions import FindFailed, FailExit
-import hwnd_element
+from oleacc_h import (STATE_SYSTEM, ROLE_SYSTEM, ROLE_SYSTEM_rev)
 from enum import Enum
 from itsdangerous import int_to_bytes
-from oleacc_h import (STATE_SYSTEM, ROLE_SYSTEM, ROLE_SYSTEM_rev)
+import _ctypes
+if os.name == 'nt':
+    import win32gui
+
+from . import UIA, Region, hwnd_element
+from. _functions import (wait_while,
+                         wait_while_not, Key, KeyModifier,
+                         type_text, verify_timeout_argument,
+                         set_text_to_clipboard, get_text_from_clipboard)
+from ._exceptions import FindFailed, FailExit
+
 
 # "A lot of HRESULT codes…" (https://blogs.msdn.microsoft.com/eldar/2007/04/03/a-lot-of-hresult-codes/)
 COR_E_TIMEOUT = -2146233083  # -2146233083 =<математически>= -0x80131505;   0x80131505 =<в разрядной сетке>= (-2146233083 & 0xFFFFFFFF)
@@ -1282,11 +1283,12 @@ class CheckBox(_uielement_Control):
     CONTROL_TYPE = 'CheckBox'
     REQUIRED_PATTERNS = {}
 
-    TOOGLE_STATES_TO_BOOL = {
-        UIA.UIA_wrapper.ToggleState_On: True,
-        UIA.UIA_wrapper.ToggleState_Off: False,
-        UIA.UIA_wrapper.ToggleState_Indeterminate: None
-    }
+    if os.name == 'nt':
+        TOOGLE_STATES_TO_BOOL = {
+            UIA.UIA_wrapper.ToggleState_On: True,
+            UIA.UIA_wrapper.ToggleState_Off: False,
+            UIA.UIA_wrapper.ToggleState_Indeterminate: None
+        }
 
     def _state(self, method):
         """
