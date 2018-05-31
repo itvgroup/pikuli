@@ -6,11 +6,14 @@
 import logging
 import os
 import time
+import os
 from collections import namedtuple
-import win32api
-import win32con
-from pikuli._exceptions import PostMoveCheck
 
+if os.name == 'nt':
+    import win32api
+    import win32con
+
+from ._exceptions import PostMoveCheck
 from ._functions import KeyModifier, Key, type_text, FailExit, _take_screenshot, press_modifiers, release_modifiers
 from .Vector import Vector, RelativeVec
 
