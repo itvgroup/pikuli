@@ -17,6 +17,8 @@ if os.name == 'nt':
 
 import numpy as np
 
+from tools import wait_while, wait_while_not
+
 import pikuli
 from ._exceptions import FailExit, FindFailed
 
@@ -42,36 +44,6 @@ def verify_timeout_argument(timeout, allow_None=False, err_msg='pikuli.verify_ti
         raise FailExit('%s: wrong timeout = \'%s\' (%s)' % (str(err_msg), str(timeout), str(ex)))
     return timeout
 
-
-def wait_while(f_logic, timeout, warning_timeout=None, warning_text=None):
-    DELAY_BETWEEN_ATTEMTS = 0.5
-    elaps_time = 0
-    warning_flag = False
-    while f_logic():
-        if warning_timeout is not None and elaps_time > warning_timeout and not warning_flag:
-            text_addon = '. {}'.format(warning_text) if warning_text  else ''
-            logger.warning("Waiting time exceeded {}{}".format(warning_timeout, text_addon))
-            warning_flag = True
-        if timeout is not None and elaps_time > timeout:
-            return False
-        time.sleep(DELAY_BETWEEN_ATTEMTS)
-        elaps_time += DELAY_BETWEEN_ATTEMTS
-    return True
-
-
-def wait_while_not(f_logic, timeout, warning_timeout=None):
-    DELAY_BETWEEN_ATTEMTS = 0.5
-    elaps_time = 0
-    warning_flag = False
-    while not f_logic():
-        if warning_timeout is not None and elaps_time > warning_timeout and not warning_flag:
-            logger.warning("Waiting time exceeded {}".format(warning_timeout))
-            warning_flag = True
-        if timeout is not None and elaps_time > timeout:
-            return False
-        time.sleep(DELAY_BETWEEN_ATTEMTS)
-        elaps_time += DELAY_BETWEEN_ATTEMTS
-    return True
 
 def addImagePath(path):
     pikuli.Settings.addImagePath(path)
