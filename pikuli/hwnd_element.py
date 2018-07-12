@@ -3,6 +3,11 @@
 ''' Субмодуль работы с WinForms через win32api. '''
 import logging
 import os
+import re
+import types
+
+import psutil
+
 if os.name == 'nt':
     from win32api import *
     from win32gui import *
