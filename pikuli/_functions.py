@@ -5,14 +5,18 @@
 '''
 import time
 import logging
+import os
 
-import win32ui
-import win32api
-import win32gui
-import win32clipboard
-import win32con
+if os.name == 'nt':
+    import win32ui
+    import win32api
+    import win32gui
+    import win32clipboard
+    import win32con
 
 import numpy as np
+
+from tools import wait_while, wait_while_not
 
 import pikuli
 from ._exceptions import FailExit, FindFailed
@@ -39,36 +43,6 @@ def verify_timeout_argument(timeout, allow_None=False, err_msg='pikuli.verify_ti
         raise FailExit('%s: wrong timeout = \'%s\' (%s)' % (str(err_msg), str(timeout), str(ex)))
     return timeout
 
-
-def wait_while(f_logic, timeout, warning_timeout=None, warning_text=None):
-    DELAY_BETWEEN_ATTEMTS = 0.5
-    elaps_time = 0
-    warning_flag = False
-    while f_logic():
-        if warning_timeout is not None and elaps_time > warning_timeout and not warning_flag:
-            text_addon = '. {}'.format(warning_text) if warning_text  else ''
-            logger.warning("Waiting time exceeded {}{}".format(warning_timeout, text_addon))
-            warning_flag = True
-        if timeout is not None and elaps_time > timeout:
-            return False
-        time.sleep(DELAY_BETWEEN_ATTEMTS)
-        elaps_time += DELAY_BETWEEN_ATTEMTS
-    return True
-
-
-def wait_while_not(f_logic, timeout, warning_timeout=None):
-    DELAY_BETWEEN_ATTEMTS = 0.5
-    elaps_time = 0
-    warning_flag = False
-    while not f_logic():
-        if warning_timeout is not None and elaps_time > warning_timeout and not warning_flag:
-            logger.warning("Waiting time exceeded {}".format(warning_timeout))
-            warning_flag = True
-        if timeout is not None and elaps_time > timeout:
-            return False
-        time.sleep(DELAY_BETWEEN_ATTEMTS)
-        elaps_time += DELAY_BETWEEN_ATTEMTS
-    return True
 
 def addImagePath(path):
     pikuli.Settings.addImagePath(path)
@@ -327,14 +301,16 @@ def _take_screenshot_(*args):
 
 
 
-
-_KeyCodes = {
-    ''' VirtualCode'ы клавиш клавиатуры, которые рассматриваются как модифкаторы нажатия других клавиш. '''
-    # (bVk, bScan_press, bScan_relaese) скан коды для XT-клавиатуры. Но они могут быть многобайтовыми. Поэтому мока пробуем передавать вместо них нули.
-    'ALT':   (win32con.VK_MENU, 0, 0),
-    'CTRL':  (win32con.VK_CONTROL, 0, 0),
-    'SHIFT': (win32con.VK_SHIFT, 0, 0),
-}
+if os.name == 'nt':
+    _KeyCodes = {
+        ''' VirtualCode'ы клавиш клавиатуры, которые рассматриваются как модифкаторы нажатия других клавиш. '''
+        # (bVk, bScan_press, bScan_relaese) скан коды для XT-клавиатуры. Но они могут быть многобайтовыми. Поэтому мока пробуем передавать вместо них нули.
+        'ALT':   (win32con.VK_MENU, 0, 0),
+        'CTRL':  (win32con.VK_CONTROL, 0, 0),
+        'SHIFT': (win32con.VK_SHIFT, 0, 0),
+    }
+else:
+    _KeyCodes = {}
 
 
 class KeyModifier(object):
@@ -352,41 +328,45 @@ for i, m in enumerate(['ALT', 'CTRL', 'SHIFT']):
     KeyModifier._rev[code] = m
 
 
-class Key(object):
-    '''
-    Ноль-символ и VirtualCode специальных клавиш. Именно такую пару можно вставлять прямо в текстовую
-    строку, подаваемую на вход type_text(). Ноль-символ говорит о том, что за ним идет не литера, а коды
-    специальной клавиши.
+if os.name == 'nt':
+    class Key(object):
+        '''
+        Ноль-символ и VirtualCode специальных клавиш. Именно такую пару можно вставлять прямо в текстовую
+        строку, подаваемую на вход type_text(). Ноль-символ говорит о том, что за ним идет не литера, а коды
+        специальной клавиши.
 
-    https://msdn.microsoft.com/en-us/library/windows/desktop/dd375731(v=vs.85).aspx ("MSDN: Virtual-Key Codes")
-    '''
-    ENTER      = chr(0) + chr(win32con.VK_RETURN)
-    ESC        = chr(0) + chr(win32con.VK_ESCAPE)
-    TAB        = chr(0) + chr(win32con.VK_TAB)
-    LEFT       = chr(0) + chr(win32con.VK_LEFT)
-    UP         = chr(0) + chr(win32con.VK_UP)
-    RIGHT      = chr(0) + chr(win32con.VK_RIGHT)
-    DOWN       = chr(0) + chr(win32con.VK_DOWN)
-    PAGE_UP    = chr(0) + chr(win32con.VK_PRIOR)
-    PAGE_DOWN  = chr(0) + chr(win32con.VK_NEXT)
-    HOME       = chr(0) + chr(win32con.VK_HOME)
-    END        = chr(0) + chr(win32con.VK_END)
-    BACKSPACE  = chr(0) + chr(win32con.VK_BACK)
-    DELETE     = chr(0) + chr(win32con.VK_DELETE)
-    SPACEBAR   = chr(0) + chr(win32con.VK_SPACE)
-    F1         = chr(0) + chr(win32con.VK_F1)
-    F2         = chr(0) + chr(win32con.VK_F2)
-    F3         = chr(0) + chr(win32con.VK_F3)
-    F4         = chr(0) + chr(win32con.VK_F4)
-    F5         = chr(0) + chr(win32con.VK_F5)
-    F6         = chr(0) + chr(win32con.VK_F6)
-    F7         = chr(0) + chr(win32con.VK_F7)
-    F8         = chr(0) + chr(win32con.VK_F8)
-    F9         = chr(0) + chr(win32con.VK_F9)
-    F10        = chr(0) + chr(win32con.VK_F10)
-    F11        = chr(0) + chr(win32con.VK_F11)
-    F12        = chr(0) + chr(win32con.VK_F12)
+        https://msdn.microsoft.com/en-us/library/windows/desktop/dd375731(v=vs.85).aspx ("MSDN: Virtual-Key Codes")
+        '''
 
+        ENTER      = chr(0) + chr(win32con.VK_RETURN)
+        ESC        = chr(0) + chr(win32con.VK_ESCAPE)
+        TAB        = chr(0) + chr(win32con.VK_TAB)
+        LEFT       = chr(0) + chr(win32con.VK_LEFT)
+        UP         = chr(0) + chr(win32con.VK_UP)
+        RIGHT      = chr(0) + chr(win32con.VK_RIGHT)
+        DOWN       = chr(0) + chr(win32con.VK_DOWN)
+        PAGE_UP    = chr(0) + chr(win32con.VK_PRIOR)
+        PAGE_DOWN  = chr(0) + chr(win32con.VK_NEXT)
+        HOME       = chr(0) + chr(win32con.VK_HOME)
+        END        = chr(0) + chr(win32con.VK_END)
+        BACKSPACE  = chr(0) + chr(win32con.VK_BACK)
+        DELETE     = chr(0) + chr(win32con.VK_DELETE)
+        SPACEBAR   = chr(0) + chr(win32con.VK_SPACE)
+        F1         = chr(0) + chr(win32con.VK_F1)
+        F2         = chr(0) + chr(win32con.VK_F2)
+        F3         = chr(0) + chr(win32con.VK_F3)
+        F4         = chr(0) + chr(win32con.VK_F4)
+        F5         = chr(0) + chr(win32con.VK_F5)
+        F6         = chr(0) + chr(win32con.VK_F6)
+        F7         = chr(0) + chr(win32con.VK_F7)
+        F8         = chr(0) + chr(win32con.VK_F8)
+        F9         = chr(0) + chr(win32con.VK_F9)
+        F10        = chr(0) + chr(win32con.VK_F10)
+        F11        = chr(0) + chr(win32con.VK_F11)
+        F12        = chr(0) + chr(win32con.VK_F12)
+else:
+    class Key(object):
+        pass
 
 def press_key(char, scancode):
     win32api.keybd_event(char, scancode, win32con.KEYEVENTF_EXTENDEDKEY, 0)  # win32con.KEYEVENTF_EXTENDEDKEY   # TODO: is scan code needed?
