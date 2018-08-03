@@ -17,9 +17,8 @@ Windows native UIA API:
     http://msdn.microsoft.com/en-us/library/windows/desktop/ee671216(v=vs.85).aspx
 '''
 
+import os
 import logging
-
-from comtypes.client import GetModule, CreateObject
 import ctypes
 
 logger = logging.getLogger('axxon.pikuli')
@@ -28,32 +27,38 @@ logger = logging.getLogger('axxon.pikuli')
 class UIAException(Exception):
     pass
 
-UIA_type_lib_IID = '{944DE083-8FB8-45CF-BCB7-C477ACB2F897}'
-#generate UIA python wrapper
-UIA_wrapper = GetModule((UIA_type_lib_IID, 1, 0))
-#create object of IUIAutomation interface
-IUIAutomation_object = None
-for interface_id in [("IUIAutomation2", "CUIAutomation8"), ("IUIAutomation", "CUIAutomation")]:
-    IUIAutomation = getattr(UIA_wrapper, interface_id[0], None)
-    CUIAutomation = getattr(UIA_wrapper, interface_id[1], None)
-    if IUIAutomation is not None:
-        IUIAutomation_object = CreateObject(CUIAutomation, None, None, IUIAutomation)
-        break
 
-type_IUIAutomationElement = getattr(UIA_wrapper, 'IUIAutomationElement', None)
+if os.name == 'nt':
+    from comtypes.client import GetModule, CreateObject
 
-if IUIAutomation_object is None:
-    raise Exception('pikuli.UIA: can not create instance \'IUIAutomation_object\'')
-if type_IUIAutomationElement is None:
-    raise Exception('pikuli.UIA: can not obtain class \'IUIAutomationElement\'')
+    UIA_type_lib_IID = '{944DE083-8FB8-45CF-BCB7-C477ACB2F897}'
+    #generate UIA python wrapper
+    UIA_wrapper = GetModule((UIA_type_lib_IID, 1, 0))
+    #create object of IUIAutomation interface
+    IUIAutomation_object = None
+    for interface_id in [("IUIAutomation2", "CUIAutomation8"), ("IUIAutomation", "CUIAutomation")]:
+        IUIAutomation = getattr(UIA_wrapper, interface_id[0], None)
+        CUIAutomation = getattr(UIA_wrapper, interface_id[1], None)
+        if IUIAutomation is not None:
+            IUIAutomation_object = CreateObject(CUIAutomation, None, None, IUIAutomation)
+            break
 
-# Проверим, что доступны методы работы с событиями:
-IUIAutomation_methods_events = \
-    ['AddFocusChangedEventHandler', 'AddPropertyChangedEventHandler', 'AddPropertyChangedEventHandlerNativeArray', 'AddStructureChangedEventHandler',
-     'RemoveAutomationEventHandler', 'RemoveFocusChangedEventHandler', 'RemovePropertyChangedEventHandler', 'RemoveStructureChangedEventHandler', 'RemoveAllEventHandlers']
-for method in IUIAutomation_methods_events:
-    if not hasattr(IUIAutomation_object, method):
-        Exception('pikuli.UIA: \'IUIAutomation_object\' does not support \'%s\' method to deal with events.' % method)
+    type_IUIAutomationElement = getattr(UIA_wrapper, 'IUIAutomationElement', None)
+
+    if IUIAutomation_object is None:
+        raise Exception('pikuli.UIA: can not create instance \'IUIAutomation_object\'')
+    if type_IUIAutomationElement is None:
+        raise Exception('pikuli.UIA: can not obtain class \'IUIAutomationElement\'')
+
+    # Проверим, что доступны методы работы с событиями:
+    IUIAutomation_methods_events = \
+        ['AddFocusChangedEventHandler', 'AddPropertyChangedEventHandler', 'AddPropertyChangedEventHandlerNativeArray', 'AddStructureChangedEventHandler',
+         'RemoveAutomationEventHandler', 'RemoveFocusChangedEventHandler', 'RemovePropertyChangedEventHandler', 'RemoveStructureChangedEventHandler', 'RemoveAllEventHandlers']
+    for method in IUIAutomation_methods_events:
+        if not hasattr(IUIAutomation_object, method):
+            Exception('pikuli.UIA: \'IUIAutomation_object\' does not support \'%s\' method to deal with events.' % method)
+else:
+    UIA_wrapper = object()
 
 ##############################
 #UI Automation Enumerations

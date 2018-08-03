@@ -3,6 +3,7 @@
 '''
    Файл содержит вспомогательные функции, используемые в pikuli.
 '''
+import os
 import time
 import logging
 import os

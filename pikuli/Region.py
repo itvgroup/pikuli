@@ -15,10 +15,12 @@ from collections import namedtuple
 
 import cv2
 import numpy as np
-import win32gui
 
-import pikuli
+if os.name == 'nt':
+    import win32gui
 from .hwnd_element import _find_main_parent_window
+import pikuli
+
 from ._functions import _take_screenshot, verify_timeout_argument, highlight_region
 from . import FindFailed, FailExit
 from .Pattern import Pattern
