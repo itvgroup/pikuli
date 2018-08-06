@@ -13,7 +13,7 @@ import psutil
 from ctypes import oledll
 if os.name == 'nt':
     from win32api import *
-from win32con import *
+    from win32con import *
     from win32gui import *
     from win32process import *
     from win32con import *
