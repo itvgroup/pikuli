@@ -40,7 +40,7 @@ logger = logging.getLogger('axxon.pikuli')
 '''
 
 # Тип объекта для запроса AccessibleObjectFromWindow(...):
-OBJID_CLIENT   = 0xFFFFFFFC  # + Определяет и даже позволяет переклчюать чекбокс через accDoDefaultAction() +
+OBJID_CLIENT = 0xFFFFFFFC  # + Определяет и даже позволяет переклчюать чекбокс через accDoDefaultAction() +
 
 # Состояние WinForms-checkbox:
 #   Обычно само значание:
