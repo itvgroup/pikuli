@@ -689,6 +689,10 @@ class UIAElement(object):
                     continue
                 try:
                     uielem_val = winuiaelem.GetCurrentPropertyValue(UIA.UIA_automation_element_property_identifers_mapping[key])
+
+                    if uielem_val is None:
+                        return False
+
                 except Exception as ex:
                     raise ex
                 if isinstance(criteria[key], list):
