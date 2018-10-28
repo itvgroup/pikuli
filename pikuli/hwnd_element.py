@@ -6,11 +6,8 @@ import os
 import re
 import types
 
-import comtypes
-import comtypes.client
 import logging
 import psutil
-from ctypes import oledll
 if os.name == 'nt':
     from win32api import *
     from win32con import *
