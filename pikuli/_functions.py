@@ -242,6 +242,7 @@ def get_text_from_clipboard(p2c_notif=True):
     win32clipboard.CloseClipboard()
     return data
 
+
 def set_text_to_clipboard(data, p2c_notif=True):
     if p2c_notif:
         logger.info('pikuli._functions.set_text_to_clipboard(): data = \'{}\''.format(data))
