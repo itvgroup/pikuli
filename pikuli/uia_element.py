@@ -341,12 +341,19 @@ class UIAElement(object):
         '''
         we also support direct use name to get object
         '''
-        attr = self.get_property(name)
-        if attr is not None:
-            return attr
-        attr = self.get_pattern(name)
-        if attr is not None:
-            return attr
+        for attempt in range(1, 11):
+            try:
+                attr = self.get_property(name)
+                if attr is not None:
+                    return attr
+                attr = self.get_pattern(name)
+                if attr is not None:
+                    return attr
+            except _ctypes.COMError as ex:
+                logger.exception("Can't get attr {}. Attempt {}".format(name, attempt))
+                logger.exception("{}".format(ex))
+                time.sleep(1)
+
         raise AttributeError("Attribute not exist: %s\n  self: %s\n%s" % (name, repr(self), str(self)))
 
     def _short_info(self):
