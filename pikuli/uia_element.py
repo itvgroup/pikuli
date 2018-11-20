@@ -870,7 +870,7 @@ class UIAElement(object):
                     logger.debug('Cath %s exception: \"%s\". Checking timeout...' % (NAMES_of_COR_E[ex.args[0] ], str(ex)))
                     logger.debug(txt_pikuli_search_pattern % txt_search_timeout)
                     if (datetime.datetime.today()-t0).total_seconds() >= timeout:
-                        raise FindFailed('%s: Timeout while looking for UIA element:\n\tself = %s\n\tkwargs = %s' % (_func_name, repr(self), str(kwargs)))
+                        raise FindFailed('{}: Timeout while looking for UIA element:{}'.format(_func_name, ex))
                     # t0 = datetime.datetime.today()
                     time.sleep(next_serach_iter_delya)
                 else:
