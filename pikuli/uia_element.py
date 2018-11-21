@@ -341,19 +341,12 @@ class UIAElement(object):
         '''
         we also support direct use name to get object
         '''
-        for attempt in range(1, 11):
-            try:
-                attr = self.get_property(name)
-                if attr is not None:
-                    return attr
-                attr = self.get_pattern(name)
-                if attr is not None:
-                    return attr
-            except _ctypes.COMError as ex:
-                logger.exception("Can't get attr {}. Attempt {}".format(name, attempt))
-                logger.exception("{}".format(ex))
-                time.sleep(1)
-
+        attr = self.get_property(name)
+        if attr is not None:
+            return attr
+        attr = self.get_pattern(name)
+        if attr is not None:
+            return attr
         raise AttributeError("Attribute not exist: %s\n  self: %s\n%s" % (name, repr(self), str(self)))
 
     def _short_info(self):
@@ -877,7 +870,7 @@ class UIAElement(object):
                     logger.debug('Cath %s exception: \"%s\". Checking timeout...' % (NAMES_of_COR_E[ex.args[0] ], str(ex)))
                     logger.debug(txt_pikuli_search_pattern % txt_search_timeout)
                     if (datetime.datetime.today()-t0).total_seconds() >= timeout:
-                        raise FindFailed('{}: Timeout while looking for UIA element:{}'.format(_func_name, ex))
+                        raise FindFailed('%s: Timeout while looking for UIA element:\n\tself = %s\n\tkwargs = %s' % (_func_name, repr(self), str(kwargs)))
                     # t0 = datetime.datetime.today()
                     time.sleep(next_serach_iter_delya)
                 else:
