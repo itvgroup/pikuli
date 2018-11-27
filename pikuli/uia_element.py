@@ -1059,8 +1059,8 @@ class _uielement_Control(UIAElement):
 
             else:
                 self.region.click(p2c_notif=False)
-                if p2c_notif:
-                    logger.info('pikuli.%s.click(): click in center of %s' % (type(self).__name__, str(self)))
+                # if p2c_notif:
+                #     logger.info('pikuli.%s.click(): click in center of %s' % (type(self).__name__, str(self)))
         else:
             raise Exception('pikuli.%s.click(): unsupported method = \'%s\'' % (type(self).__name__, str(method)))
 
