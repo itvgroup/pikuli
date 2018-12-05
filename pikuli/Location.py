@@ -150,10 +150,8 @@ class LocationF(Vector):
     def _mouse_event(self, event, direction=0):
         return win32api.mouse_event(event, self._x_int, self._y_int, direction, 0)
 
-    def click(self, after_cleck_delay=DEALY_AFTER_CLICK, p2c_notif=True, post_move_check=None):
+    def click(self, after_cleck_delay=DEALY_AFTER_CLICK, p2c_notif=True):
         self.mouse_move()
-        if post_move_check and not post_move_check():
-            raise PostMoveCheck("")
         self._mouse_event(win32con.MOUSEEVENTF_LEFTDOWN)
         time.sleep(DELAY_IN_MOUSE_CLICK)
         self._mouse_event(win32con.MOUSEEVENTF_LEFTUP)
