@@ -7,7 +7,7 @@
 
 import traceback
 from . import FailExit
-from Region import Region
+from . import Region
 
 
 class Match(Region):

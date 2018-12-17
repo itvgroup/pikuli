@@ -18,15 +18,18 @@ import numpy as np
 
 if os.name == 'nt':
     import win32gui
-    from .hwnd_element import _find_main_parent_window
-import pikuli
+    from pikuli import hwnd
 
-from ._functions import _take_screenshot, verify_timeout_argument, highlight_region
-from . import FindFailed, FailExit
-from .Pattern import Pattern
-from .Location import Location, DELAY_BETWEEN_CLICK_AND_TYPE, DEALY_AFTER_CLICK
-from .Vector import RelativeVec
-from .File import File
+from pikuli import Settings, FindFailed, FailExit, File
+
+from pikuli._functions import _take_screenshot, verify_timeout_argument, highlight_region
+from pikuli.Pattern import Pattern
+
+from .vector import RelativeVec
+from .location import Location
+
+#from Match import *
+#from Screen import *
 
 
 RELATIONS = ['top-left', 'center']
@@ -171,12 +174,15 @@ class Region(object):
             raise FailExit('\nNew stage of %s\n[error] Incorect \'Region\' class constructor call:\n\targs = %s\n\tkwargs = %s' % (traceback.format_exc(), str(args), str(kwargs)))
         self._find_timeout = verify_timeout_argument(kwargs.get('find_timeout', DEFAULT_FIND_TIMEOUT), err_msg='pikuli.%s.__init__()' % type(self).__name__)  # Перезапишет, если создавали объект на основе существующего Region
 
-        self._main_window_hwnd = kwargs.get('main_window_hwnd', None)
-        if self._main_window_hwnd is None and len(args) == 1:
-            self._main_window_hwnd = args[0]._main_window_hwnd
-        if self._main_window_hwnd is None:
-            self._main_window_hwnd = _find_main_parent_window(win32gui.WindowFromPoint((self._x + self._w/2, self._y + self._h/2)))
-
+        if os.name == 'nt':
+            self._main_window_hwnd = kwargs.get('main_window_hwnd', None)
+            if self._main_window_hwnd is None and len(args) == 1:
+                self._main_window_hwnd = args[0]._main_window_hwnd
+            if self._main_window_hwnd is None :
+                w = win32gui.WindowFromPoint((self._x + self._w/2, self._y + self._h/2))
+                self._main_window_hwnd = hwnd.hwnd_element._find_main_parent_window(w)
+        else:
+            self._main_window_hwnd = None
 
     def get_id(self):
         return self._id
@@ -770,24 +776,23 @@ class Region(object):
         return self._find_timeout
 
 
-    def click(self, after_cleck_delay=DEALY_AFTER_CLICK, p2c_notif=True, post_move_check=None):
-        self.center.click(after_cleck_delay=DEALY_AFTER_CLICK, p2c_notif=False, post_move_check=post_move_check)
+    def click(self, after_cleck_delay=0, p2c_notif=True, post_move_check=None):
+        self.center.click(after_cleck_delay=after_cleck_delay, p2c_notif=False, post_move_check=post_move_check)
         if p2c_notif:
             logger.info('pikuli.%s.click(): click in center of %s' % (type(self).__name__, str(self)))
 
 
-    def rightClick(self, after_cleck_delay=DEALY_AFTER_CLICK, p2c_notif=True):
-        self.center.rightClick(after_cleck_delay=DEALY_AFTER_CLICK)
+    def rightClick(self, after_cleck_delay=0, p2c_notif=True):
+        self.center.rightClick(after_cleck_delay=after_cleck_delay)
         if p2c_notif:
             logger.info('pikuli.%s.rightClick(): right click in center of %s' % (type(self).__name__, str(self)))
 
-    def doubleClick(self, after_cleck_delay=DEALY_AFTER_CLICK, p2c_notif=True):
-        self.center.doubleClick(after_cleck_delay=DEALY_AFTER_CLICK)
+    def doubleClick(self, after_cleck_delay=0, p2c_notif=True):
+        self.center.doubleClick(after_cleck_delay=after_cleck_delay)
         if p2c_notif:
             logger.info('pikuli.%s.doubleClick(): double click in center of %s' % (type(self).__name__, str(self)))
 
-    def type(self, text, modifiers=None, click=True, press_enter=False,
-             click_type_delay=DELAY_BETWEEN_CLICK_AND_TYPE, p2c_notif=True):
+    def type(self, text, modifiers=None, click=True, press_enter=False, p2c_notif=True):
         ''' Не как в Sikuli '''
         self.center.type(text,
                               modifiers=modifiers,
@@ -797,7 +802,7 @@ class Region(object):
         if p2c_notif:
             logger.info('pikuli.%s.type(): \'%s\' was typed in center of %s; click=%s, modifiers=%s' % (type(self).__name__, repr(text), str(self), str(click), str(modifiers)))
 
-    def enter_text(self, text, modifiers=None, click=True, click_type_delay=DELAY_BETWEEN_CLICK_AND_TYPE, p2c_notif=True):
+    def enter_text(self, text, modifiers=None, click=True, p2c_notif=True):
         ''' Не как в Sikuli '''
         self.center.enter_text(text, modifiers=modifiers, click=click, p2c_notif=False)
         if p2c_notif:
@@ -933,6 +938,3 @@ class Region(object):
 
         return matches
 
-
-from Match import *
-from Screen import *

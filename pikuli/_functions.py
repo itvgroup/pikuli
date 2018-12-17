@@ -12,7 +12,6 @@ if os.name == 'nt':
     import win32ui
     import win32api
     import win32gui
-    import win32clipboard
     import win32con
 
 import numpy as np
@@ -28,9 +27,6 @@ logger = logging.getLogger('axxon.pikuli')
 
 # Константа отсутствует в win32con, но есть в http://userpages.umbc.edu/~squire/download/WinGDI.h:
 CAPTUREBLT = 0x40000000
-
-
-DELAY_KBD_KEY_PRESS = 0.020
 
 
 def verify_timeout_argument(timeout, allow_None=False, err_msg='pikuli.verify_timeout_argument()'):
@@ -228,34 +224,6 @@ def _take_screenshot(x, y, w, h, hwnd=None):
         raise FailExit('top-left corner of the Region is out of visible area of sreens (%s, %s)' % (str(x), str(y)))
     return _monitor_hndl_to_screen_n(m_tl)"""
 
-
-def get_text_from_clipboard(p2c_notif=True):
-    win32clipboard.OpenClipboard()
-    try:
-        data = str(win32clipboard.GetClipboardData(win32clipboard.CF_UNICODETEXT))
-        # it may be CF_TEXT, CF_UNICODETEXT or others (http://docs.activestate.com/activepython/3.1/pywin32/win32clipboard__GetClipboardData_meth.html)
-        if p2c_notif:
-            logger.info('pikuli._functions.get_text_from_clipboard(): data = \'{}\''.format(data))
-    except Exception as ex:
-        logger.error(ex)
-        raise
-    win32clipboard.CloseClipboard()
-    return data
-
-
-def set_text_to_clipboard(data, p2c_notif=True):
-    if p2c_notif:
-        logger.info('pikuli._functions.set_text_to_clipboard(): data = \'{}\''.format(data))
-    win32clipboard.OpenClipboard()
-    try:
-        win32clipboard.EmptyClipboard()
-        win32clipboard.SetClipboardText(str(data))  # А еще есть SetClipboardData (http://docs.activestate.com/activepython/2.4/pywin32/win32clipboard.html)
-    except Exception as ex:
-        logger.error(ex)
-        raise
-    win32clipboard.CloseClipboard()
-
-
 """
 def __check_reg_in_single_screen(self):
     ''' Проверяем, что Region целиком на одном экране. Экран -- это просто один из мониторав, которые существуют по мнению Windows. '''
@@ -299,152 +267,6 @@ def _take_screenshot_(*args):
     win32gui.SelectObject(mem_hdc, new_bitmap_h)  # Returns 'old_bitmap_h'. It will be deleted automatically.
     win32gui.BitBlt(mem_hdc, 0, 0, w, h, scr_hdc, 0, 0, win32con.SRCCOPY)
 """
-
-
-
-
-if os.name == 'nt':
-    _KeyCodes = {
-        ''' VirtualCode'ы клавиш клавиатуры, которые рассматриваются как модифкаторы нажатия других клавиш. '''
-        # (bVk, bScan_press, bScan_relaese) скан коды для XT-клавиатуры. Но они могут быть многобайтовыми. Поэтому мока пробуем передавать вместо них нули.
-        'ALT':   (win32con.VK_MENU, 0, 0),
-        'CTRL':  (win32con.VK_CONTROL, 0, 0),
-        'SHIFT': (win32con.VK_SHIFT, 0, 0),
-    }
-else:
-    _KeyCodes = {}
-
-
-class KeyModifier(object):
-    '''
-    Битовые маски модификаторов. С их помощью будет парсится аргумент modifiers функции type_text()
-        ALT   = 0x01
-        CTRL  = 0x02
-        SHIFT = 0x04
-        _rev  = {0x01: 'ALT', 0x02: 'CTRL', 0x04: 'SHIFT'}
-    '''
-    _rev = {}
-for i, m in enumerate(['ALT', 'CTRL', 'SHIFT']):
-    code = 2**i
-    setattr(KeyModifier, m, code)
-    KeyModifier._rev[code] = m
-
-
-if os.name == 'nt':
-    class Key(object):
-        '''
-        Ноль-символ и VirtualCode специальных клавиш. Именно такую пару можно вставлять прямо в текстовую
-        строку, подаваемую на вход type_text(). Ноль-символ говорит о том, что за ним идет не литера, а коды
-        специальной клавиши.
-
-        https://msdn.microsoft.com/en-us/library/windows/desktop/dd375731(v=vs.85).aspx ("MSDN: Virtual-Key Codes")
-        '''
-
-        ENTER      = chr(0) + chr(win32con.VK_RETURN)
-        ESC        = chr(0) + chr(win32con.VK_ESCAPE)
-        TAB        = chr(0) + chr(win32con.VK_TAB)
-        LEFT       = chr(0) + chr(win32con.VK_LEFT)
-        UP         = chr(0) + chr(win32con.VK_UP)
-        RIGHT      = chr(0) + chr(win32con.VK_RIGHT)
-        DOWN       = chr(0) + chr(win32con.VK_DOWN)
-        PAGE_UP    = chr(0) + chr(win32con.VK_PRIOR)
-        PAGE_DOWN  = chr(0) + chr(win32con.VK_NEXT)
-        HOME       = chr(0) + chr(win32con.VK_HOME)
-        END        = chr(0) + chr(win32con.VK_END)
-        BACKSPACE  = chr(0) + chr(win32con.VK_BACK)
-        DELETE     = chr(0) + chr(win32con.VK_DELETE)
-        SPACEBAR   = chr(0) + chr(win32con.VK_SPACE)
-        F1         = chr(0) + chr(win32con.VK_F1)
-        F2         = chr(0) + chr(win32con.VK_F2)
-        F3         = chr(0) + chr(win32con.VK_F3)
-        F4         = chr(0) + chr(win32con.VK_F4)
-        F5         = chr(0) + chr(win32con.VK_F5)
-        F6         = chr(0) + chr(win32con.VK_F6)
-        F7         = chr(0) + chr(win32con.VK_F7)
-        F8         = chr(0) + chr(win32con.VK_F8)
-        F9         = chr(0) + chr(win32con.VK_F9)
-        F10        = chr(0) + chr(win32con.VK_F10)
-        F11        = chr(0) + chr(win32con.VK_F11)
-        F12        = chr(0) + chr(win32con.VK_F12)
-else:
-    class Key(object):
-        pass
-
-def press_key(char, scancode):
-    win32api.keybd_event(char, scancode, win32con.KEYEVENTF_EXTENDEDKEY, 0)  # win32con.KEYEVENTF_EXTENDEDKEY   # TODO: is scan code needed?
-    time.sleep(DELAY_KBD_KEY_PRESS)
-
-
-def release_key(char, scancode):
-    win32api.keybd_event(char, scancode, win32con.KEYEVENTF_EXTENDEDKEY | win32con.KEYEVENTF_KEYUP, 0)  # win32con.KEYEVENTF_EXTENDEDKEY
-    time.sleep(DELAY_KBD_KEY_PRESS)
-
-
-def press_modifiers(modifiers):
-    if modifiers is not None:
-        for k in KeyModifier._rev:
-            if modifiers & k != 0:
-                press_key(_KeyCodes[KeyModifier._rev[k]][0], _KeyCodes[KeyModifier._rev[k]][1])
-
-
-def release_modifiers(modifiers):
-    if modifiers is not None:
-        for k in KeyModifier._rev:
-            if modifiers & k != 0:
-                release_key(_KeyCodes[KeyModifier._rev[k]][0], _KeyCodes[KeyModifier._rev[k]][1])
-
-
-def type_char(char):
-    press_key(char, 0)
-    release_key(char, 0)
-
-
-def type_text(s, modifiers=None, p2c_notif=True):
-    '''
-    Особенности:
-        -- Если установлены modifiers, то не будет различия между строчными и загалавными буквами.
-           Т.е., будет если в строке "s" есть заглавные буквы, то Shift нажиматься не будет.
-    '''
-    # https://mail.python.org/pipermail/python-win32/2013-July/012862.html
-    # https://msdn.microsoft.com/ru-ru/library/windows/desktop/ms646304(v=vs.85).aspx ("MSDN: keybd_event function")
-    # http://stackoverflow.com/questions/4790268/how-to-generate-keystroke-combination-in-win32-api
-    # http://stackoverflow.com/questions/11906925/python-simulate-keydown
-    # https://ru.wikipedia.org/wiki/Скан-код
-    # http://stackoverflow.com/questions/21197257/keybd-event-keyeventf-extendedkey-explanation-required
-
-    s = str(s)
-
-    press_modifiers(modifiers)
-
-    spec_key = False
-    for c in s:
-        a = ord(c)
-        if spec_key:
-            spec_key = False
-            type_char(a)
-
-        elif a == 0:
-            spec_key = True
-            continue
-
-        elif a >= 0x20 and a <= 0x7E:
-            code = win32api.VkKeyScan(c)
-            if code & 0x100 != 0 and modifiers is None:
-                press_key(_KeyCodes['SHIFT'][0], _KeyCodes['SHIFT'][1])
-
-            type_char(code)
-
-            if code & 0x100 != 0 and modifiers is None:
-                release_key(_KeyCodes['SHIFT'][0], _KeyCodes['SHIFT'][1])
-
-        else:
-            raise FailExit('unknown symbol \'%s\' in \'%s\'' % (c, s))
-
-    release_modifiers(modifiers)
-
-    if p2c_notif:
-        logger.info('pikuli._functions.type_text(): \'{}\' '
-                    'was typed; modifiers={}'.format(repr(s), str(modifiers)))
 
 def pixel_color_at(x, y):
     hdc = win32gui.GetWindowDC(win32gui.GetDesktopWindow())

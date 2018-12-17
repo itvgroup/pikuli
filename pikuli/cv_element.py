@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from Region import Region
-from Location import Location
+from . import Region
+from . import Location
 
 
 class CVElement(object):
