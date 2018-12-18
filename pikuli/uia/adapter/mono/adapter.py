@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-'''
 import clr
 clr.AddReference("System.Runtime")
 clr.AddReference("UIAutomationTypes")  # System.Windows.Automation
@@ -41,7 +40,7 @@ from System.Windows.Automation.Provider import (
     NavigateDirection,
     ProviderOptions,
 )
-'''
+
 
 from pikuli import logger
 from pikuli.utils import class_property

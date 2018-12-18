@@ -12,7 +12,7 @@ Doc pywin32:
 
 '''
 
-SUPPORT_UIA = True
+#SUPPORT_UIA = True
 
 import os
 import logging
@@ -37,10 +37,10 @@ from .Pattern import Pattern
 if os.name == 'nt':
     from .hwnd.hwnd_element import HWNDElement
 
-if SUPPORT_UIA:
-    from .uia import UIAElement  # , AutomationElement
-    from .uia.control_wrappers import RegistredControlClasses
-    RegistredControlClasses._register_all()
+#if SUPPORT_UIA:
+#    from .uia import UIAElement  # , AutomationElement
+#    from .uia.control_wrappers import RegistredControlClasses
+#    RegistredControlClasses._register_all()
 
 try:
     Settings.addImagePath(

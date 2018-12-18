@@ -22,15 +22,15 @@ else:
     ROLE_SYSTEM_rev = {}
     class COMError(Exception): pass
 
-from . import AutomationElement, TreeWalker, Condition, DriverException
-from .adapter import Adapter, PatternFactory, PropertyValueConverter
-from .control_wrappers import RegistredControlClasses
+import pikuli.uia
+
+from pikuli.geom import Region
+from pikuli._functions import wait_while, wait_while_not, verify_timeout_argument
+from pikuli._exceptions import FindFailed, FailExit
+
+from .exceptions import DriverException
+from .adapter import Adapter, PatternFactory, PropertyValueConverter, AutomationElement, Condition, Enums, TreeWalker
 from .pattern import UiaPattern
-
-from .. import hwnd, geom
-
-from .._functions import wait_while, wait_while_not, verify_timeout_argument
-from .._exceptions import FindFailed, FailExit
 
 
 # "A lot of HRESULT codes…" (https://blogs.msdn.microsoft.com/eldar/2007/04/03/a-lot-of-hresult-codes/)
@@ -109,7 +109,6 @@ class UIAElement(object):
              3. Если по какой-то причние пункты 1 и 2 выше не позволили подобрать класс, то испульзуется родительский UIAElement.
              4. Если нашлось несколько подходящих классов, то генерируется исключение.
         '''
-        self._reg = None
         self._find_timeout = verify_timeout_argument(find_timeout, err_msg='pikuli.UIAElement.__init__()')
         self._proc_name = None  # Кеш для proc_name
 
@@ -175,7 +174,7 @@ class UIAElement(object):
         attr = self.get_pattern(name)
         if attr is not None:
             return attr
-        raise AttributeError("Attribute not exist: {}".format(name))
+        raise AttributeError("Attribute {!r} not exist in {}".format(name, type(self)))
 
     def _short_info(self):
         hwnd = getattr(self, 'NativeWindowHandle', '')
@@ -187,7 +186,7 @@ class UIAElement(object):
             hwnd = ', ' + str(hwnd)
 
         name = repr(getattr(self, 'Name', '<no Name>'))  #.encode('utf-8')
-        if RegistredControlClasses.is_class_registred(self):
+        if pikuli.uia.control_wrappers.RegistredControlClasses.is_class_registred(self):
             return u'<%s \'%s\',\'%s\'%s>' % (
                 type(self).__name__,
                 name,
@@ -218,18 +217,18 @@ class UIAElement(object):
         docstring = ""
         # generate UIA automation element properties
         docstring += "+ UIA automation element properties: +\n"
-        for identifier in sorted(UIA.UIA_automation_element_property_identifers_mapping):
+        for identifier in Adapter.get_api_property_names():
             value = self.get_property(identifier)
             if value is not None:
                 docstring += "  %-24s:\t%s\n" % (identifier, repr(value))
 
-        docstring += "\n"
+        """docstring += "\n"
         # generate UIA control pattern availability properties (from "Control Pattern Identifiers")
         docstring += "+ UIA control pattern availability properties: +\n"
         for identifier in sorted(UIA.UIA_control_pattern_availability_property_identifiers_mapping):
             value = self.get_property(identifier)
             if value is not None:
-                docstring += "  %-35s:\t%s\n" % (identifier, repr(value))
+                docstring += "  %-35s:\t%s\n" % (identifier, repr(value))"""
 
         return docstring
 
@@ -278,14 +277,14 @@ class UIAElement(object):
         tmp_uia_element = UIAElement(automation_element, find_timeout=find_timeout)
 
         cotrol_type = tmp_uia_element.ControlType
-        class_by_controltype = RegistredControlClasses.get_class_by_control_type(cotrol_type)
+        class_by_controltype = pikuli.uia.control_wrappers.RegistredControlClasses.get_class_by_control_type(cotrol_type)
 
         # .Net (not just Mono) doesn't support `LegacyIAccessiblePattern`.
         legacy_support = getattr(tmp_uia_element, 'IsLegacyIAccessiblePatternAvailable', None)
 
         if legacy_support:
             legacy_role = tmp_uia_element.LegacyIAccessiblePattern.CurrentRole
-            class_by_legacyrole = RegistredControlClasses.try_get_by_legacy_role(legacy_role)
+            class_by_legacyrole = pikuli.uia.control_wrappers.RegistredControlClasses.try_get_by_legacy_role(legacy_role)
         else:
             class_by_legacyrole = None
 
@@ -438,7 +437,7 @@ class UIAElement(object):
 
         val = kwargs.pop('ProcessId', None)
         if val is not None:
-            if isinstance(val, str):
+            if isinstance(val, basestring):
                 not_none_criteria['ProcessId'] = val
                 for proc in psutil.process_iter():
                     try:
@@ -481,21 +480,22 @@ class UIAElement(object):
             if criteria['ProcessId'] is not None and criteria['ProcessId'] != automation_element.CurrentProcessId:
                 return False
 
-            if criteria['ControlType'] is not None and \
-               criteria['ControlType'] != automation_element.GetCurrentPropertyValue(UIA.UIA_automation_element_property_identifers_mapping['ControlType']):
+            if (criteria['ControlType'] is not None and
+                criteria['ControlType'] != automation_element.GetCurrentPropertyValue(Adapter.try_get_property_id('ControlType'))):
                 return False
 
             for key in ['AutomationId', 'ClassName', 'Name', 'LocalizedControlType']:
                 if criteria[key] is None:
                     continue
-                try:
-                    uielem_val = automation_element.GetCurrentPropertyValue(UIA.UIA_automation_element_property_identifers_mapping[key])
 
+                try:
+                    prop_id = Adapter.try_get_property_id(key)
+                    uielem_val = automation_element.GetCurrentPropertyValue(prop_id)
                     if uielem_val is None:
                         return False
-
                 except Exception as ex:
                     raise ex
+
                 if isinstance(criteria[key], list):
                     for substr in criteria[key]:
                         if uielem_val is None or not (substr in uielem_val):
@@ -730,30 +730,26 @@ class UIAElement(object):
             (_, _, wc, hc) = win32gui.GetClientRect(self.hwnd)
             # получение координат левого верхнего угла клиенской области осносительно угла экрана
             (xc, yc) = win32gui.ClientToScreen(self.hwnd, (0, 0) )
-            self._reg = geom.Region(xc, yc, wc, hc, winctrl=self, title=self.Name, find_timeout=self._find_timeout)
+            reg = Region(xc, yc, wc, hc, winctrl=self, title=self.Name, find_timeout=self._find_timeout)
         else:
-            rect = self._automation_element.GetCurrentPropertyValue(UIA.UIA_automation_element_property_identifers_mapping['BoundingRectangle'])
-            try:
-                rect = map(int, rect)
-            except ValueError:
-                raise FailExit('pikuli.UIElemen.reg(...): can not round numbers in rect = %s' % str(rect))
-            self._reg = geom.Region(*rect, winctrl=self, title=self.Name, find_timeout=self._find_timeout)
+            rect = map(int, self.get_bounding_rectangle())
+            reg = Region(*rect, winctrl=self, title=self.Name, find_timeout=self._find_timeout)
 
-        return self._reg
+        return reg
 
     @property
     def region(self):
         return self.reg()
 
     def wait_prop_chage(self, prop_name, timeout=None):
-        prop_id = UIA.UIA_automation_element_property_identifers_mapping.get(prop_name, None)
+        prop_id = Adapter.try_get_property_id(prop_name)
         if prop_id is None:
             raise FailExit('...')
         self.__wait_chages__prev_prop = self._automation_element.GetCurrentPropertyValue(prop_id)
         wait_while(lambda: self.__wait_chages__prev_prop == self._automation_element.GetCurrentPropertyValue(prop_id), timeout)
 
     def wait_prop_chage_to(self, prop_name, new_val, timeout=None):
-        prop_id = UIA.UIA_automation_element_property_identifers_mapping.get(prop_name, None)
+        prop_id = Adapter.try_get_property_id(prop_name)
         if prop_id is None:
             raise FailExit('...')
         wait_while(lambda: new_val != self._automation_element.GetCurrentPropertyValue(prop_id), timeout)

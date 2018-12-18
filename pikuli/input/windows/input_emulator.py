@@ -100,7 +100,6 @@ class WinMouseMixin(object):
         return win32api.GetCursorPos()
 
     @classmethod
-    def _do_scroll(cls, direction):
-        x, y = win32api.GetCursorPos()
-        print x, y, direction, int(direction)
-        win32api.mouse_event(win32con.MOUSEEVENTF_WHEEL, x, y, 1, 0)
+    def _do_scroll(cls, direction, step=1):
+        x, y = cls._get_mouse_pos()
+        win32api.mouse_event(win32con.MOUSEEVENTF_WHEEL, x, y, int(direction) * step, 0)

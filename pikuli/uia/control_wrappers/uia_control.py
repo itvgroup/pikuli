@@ -1,12 +1,9 @@
 # -*- coding: utf-8 -*-
 
 from ..uia_element import UIAElement
-from .registred_control_classes import RegistredControlMeta
 
 
 class UIAControl(UIAElement):
-
-    __metaclass__ = RegistredControlMeta
 
     CONTROL_TYPE = None
     LEGACYACC_ROLE = None

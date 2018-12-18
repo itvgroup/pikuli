@@ -18,8 +18,8 @@ import numpy as np
 
 if os.name == 'nt':
     import win32gui
-    from pikuli import hwnd
 
+import pikuli
 from pikuli import Settings, FindFailed, FailExit, File
 
 from pikuli._functions import _take_screenshot, verify_timeout_argument, highlight_region
@@ -180,7 +180,7 @@ class Region(object):
                 self._main_window_hwnd = args[0]._main_window_hwnd
             if self._main_window_hwnd is None :
                 w = win32gui.WindowFromPoint((self._x + self._w/2, self._y + self._h/2))
-                self._main_window_hwnd = hwnd.hwnd_element._find_main_parent_window(w)
+                self._main_window_hwnd = pikuli.hwnd.hwnd_element._find_main_parent_window(w)
         else:
             self._main_window_hwnd = None
 

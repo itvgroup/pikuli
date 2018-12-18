@@ -100,6 +100,13 @@ class AdapterBase(object):
     """
 
     @classmethod
+    def get_api_property_names():
+        """
+        Returns all Propoperty names are known in current API.
+        """
+        return sorted(cls._element_properties_map.names())
+
+    @classmethod
     def _build_map(cls, get_attr_from, name_format, err_msg_preamble, names):
         """
         Is used in derived classes :class:`mono.Adapter` and :class:`windows.Adapter`.

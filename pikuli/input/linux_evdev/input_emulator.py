@@ -146,8 +146,7 @@ class EvdevMouseMixin(EvdevBase):
         cls._uinput_dev.syn()
 
     @classmethod
-    def _do_scroll(cls, direction):
-
-        cls._uinput_dev.write(ecodes.EV_REL, ecodes.REL_WHEEL, direction)
+    def _do_scroll(cls, direction, step=1):
+        cls._uinput_dev.write(ecodes.EV_REL, ecodes.REL_WHEEL, direction * step)
         cls._uinput_dev.syn()
 

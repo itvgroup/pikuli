@@ -22,10 +22,10 @@ import comtypes.client
 comtypes.client.GetModule('oleacc.dll')             # Что-то там нагенерирует ...
 from comtypes.gen.Accessibility import IAccessible  # ... и теперь чать этого импортируем
 
-from .. import uia, geom
-
+import pikuli
 from pikuli._functions import wait_while, wait_while_not
 from pikuli._exceptions import FindFailed, FailExit
+from pikuli.geom import Region
 
 
 logger = logging.getLogger('axxon.pikuli')
@@ -227,7 +227,7 @@ class HWNDElement(object):
             if not extra['res']:
                 raise Exception('pikuli.HWNDElement: constructor error: hwnd = %s is not child for main window %s' % (str(hwnd), str(self.hwnd_main_win)))'''
 
-        elif len(args) == 1 and isinstance(args[0], uia.UIAElement):
+        elif len(args) == 1 and isinstance(args[0], pikuli.uia.UIAElement):
             if args[0].hwnd is None or args[0].hwnd == 0:
                 raise Exception('pikuli.HWNDElement: constructor error: args[0].hwnd is None or args[0].hwnd == 0:; args = %s' % str(args))
             self.hwnd          = args[0].hwnd
@@ -384,7 +384,7 @@ class HWNDElement(object):
             (_, _, wc, hc) = GetClientRect(self.hwnd)
             # получение координат левого верхнего угла клиенской области осносительно угла экрана
             (xc, yc) = ClientToScreen(self.hwnd, (0, 0) )
-            self._reg = geom.Region(xc, yc, wc, hc, winctrl=self, title=self.title())
+            self._reg = Region(xc, yc, wc, hc, winctrl=self, title=self.title())
 
         return self._reg
 

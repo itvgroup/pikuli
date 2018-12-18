@@ -153,9 +153,9 @@ class MouseMixin(object):
         return cls._get_mouse_pos()
 
     @classmethod
-    def scroll(cls, direction, count=1):
+    def scroll(cls, direction, count=1, step=1):
         for _ in range(0, count):
-            cls._do_scroll(direction)
+            cls._do_scroll(direction, step=step)
             time.sleep(DELAY_MOUSE_SCROLL)
 
 class InputEmulator(
