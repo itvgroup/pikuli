@@ -675,7 +675,6 @@ class UIAElement(object):
                 self.winuiaelem = winuiaelem
                 super(Exception, self).__init__()
 
-
         def _is_winuiaelem_suitable(winuiaelem):
             if criteria['ProcessId'] is not None and criteria['ProcessId'] != winuiaelem.CurrentProcessId:
                 return False
