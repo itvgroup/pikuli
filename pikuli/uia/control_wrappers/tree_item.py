@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+from pikuli import logger, FindFailed
+from pikuli.uia.adapter import Enums
+
 from .uia_control import UIAControl
 from .check_box import CheckBox
 
@@ -21,19 +24,19 @@ class TreeItem(CheckBox, UIAControl):
         return bool(self.get_pattern('SelectionItemPattern').CurrentIsSelected)
 
     def is_expandable(self):
-        return not (self.get_pattern('ExpandCollapsePattern').CurrentExpandCollapseState == UIA.UIA_wrapper.ExpandCollapseState_LeafNode)
+        return not (self.get_pattern('ExpandCollapsePattern').CurrentExpandCollapseState == Enums.ExpandCollapseState.LeafNode)
 
     def is_expanded(self):
         ''' Проверка, что развернут текущий узел (полностью, не частично). Без учета состояния дочерних узлов. Если нет дочерних, то функция вернет False. '''
         if not self.is_expandable():
             return False
-        return (self.get_pattern('ExpandCollapsePattern').CurrentExpandCollapseState == UIA.UIA_wrapper.ExpandCollapseState_Expanded)
+        return (self.get_pattern('ExpandCollapsePattern').CurrentExpandCollapseState == Enums.ExpandCollapseState.Expanded)
 
     def is_collapsed(self):
         ''' Проверка, что развернут текущий узел (полностью, не частично). Без учета состояния дочерних узлов. Если нет дочерних, то функция вернет True. '''
         if not self.is_expandable():
             return True
-        return (self.get_pattern('ExpandCollapsePattern').CurrentExpandCollapseState == UIA.UIA_wrapper.ExpandCollapseState_Collapsed)
+        return (self.get_pattern('ExpandCollapsePattern').CurrentExpandCollapseState == Enums.ExpandCollapseState.Collapsed)
 
     def expand(self):
         if self.is_expandable() and not self.is_expanded():
