@@ -41,17 +41,14 @@ from System.Windows.Automation.Provider import (
     ProviderOptions,
 )
 
-
 from pikuli import logger
 from pikuli.utils import class_property
-from ..adapter_base import AdapterBase, AdapterMeta
+
 from ..helper_types import Enums
 from ..sdk_enums import _get_sdk_enums
 
 
-class Adapter(AdapterBase):
-
-    __metaclass__ = AdapterMeta
+class MonoAdapter(object):
 
     @classmethod
     def _make_enums(cls):

@@ -3,7 +3,6 @@
 from comtypes.client import GetModule, CreateObject
 import ctypes
 
-from ..adapter_base import AdapterBase, AdapterMeta
 from ..helper_types import Enums
 from ..sdk_enums import _get_sdk_enums
 
@@ -16,9 +15,7 @@ def _get_enum_element_full_name(elem):
         enum_name=elem.__class__.__name__, elem_name=elem._c_name)
 
 
-class Adapter(AdapterBase):
-
-    __metaclass__ = AdapterMeta
+class WinAdapter(object):
 
     _UIA_wrapper = GetModule((UIA_type_lib_IID, 1, 0))  # 'UIAutomationCore.dll'
     _IUIAutomation_obj = None

@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
+import pikuli.uia.adapter
 from pikuli.utils import class_property
-from .adapter import Adapter
 
 
 class TreeWalker(object):
 
     def __init__(self, condition):
-        self._walker = Adapter._IUIAutomation_obj.CreateTreeWalker(condition)
+        self._walker = pikuli.uia.adapter.Adapter._IUIAutomation_obj.CreateTreeWalker(condition)
 
     def GetParent(self, automation_element):
         return self._walker.GetParentElement(automation_element)

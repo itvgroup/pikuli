@@ -11,7 +11,7 @@ from .constants import (
     DELAY_MOUSE_CLICK, DELAY_MOUSE_DOUBLE_CLICK, DELAY_MOUSE_AFTER_ANY_CLICK,
     DELAY_MOUSE_SET_POS, DELAY_MOUSE_SCROLL
 )
-from .platform_init import ButtonCode, KeyCode, KeyboardOsMixin, MouseOsMixin
+from .platform_init import ButtonCode, KeyCode, OsKeyboardMixin, OsMouseMixin
 
 
 class KeyboardMixin(object):
@@ -158,7 +158,8 @@ class MouseMixin(object):
             cls._do_scroll(direction, step=step)
             time.sleep(DELAY_MOUSE_SCROLL)
 
+
 class InputEmulator(
     KeyboardMixin, MouseMixin,
-    KeyboardOsMixin, MouseOsMixin):
+    OsKeyboardMixin, OsMouseMixin):
     pass

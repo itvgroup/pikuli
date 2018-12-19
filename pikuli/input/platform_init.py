@@ -9,8 +9,8 @@ Method = namedtuple('Method', [
     'KeyCode',
     'ButtonCode',
     'ScrollDirection',
-    'KeyboardOsMixin',
-    'MouseOsMixin',
+    'OsKeyboardMixin',
+    'OsMouseMixin',
     'Clipboard'
 ])
 
@@ -53,11 +53,11 @@ class EmulatorMethod(object):
         global KeyCode
         global ButtonCode
         global ScrollDirection
-        global KeyboardOsMixin
-        global MouseOsMixin
+        global OsKeyboardMixin
+        global OsMouseMixin
         global Clipboard
 
-        KeyCode, ButtonCode, ScrollDirection, KeyboardOsMixin, MouseOsMixin, Clipboard = cls._collection[new_method]
+        KeyCode, ButtonCode, ScrollDirection, OsKeyboardMixin, OsMouseMixin, Clipboard = cls._collection[new_method]
         cls._current_method = new_method
 
 

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from .adapter import PatternFactory
-from .adapter.pattern_description import PatternDescription
+from .adapter.pattern_description import PatternDescriptions
 from .pattern_method import UiaPatternMethod
 
 
@@ -12,7 +12,7 @@ class UiaPattern(object):
     '''
     def __init__(self, automation_element, pattern_name):
         self._pattern_object = PatternFactory.make_patternt(automation_element, pattern_name)
-        self._pattern_description = PatternDescription.get_description(pattern_name)
+        self._pattern_description = PatternDescriptions.get_description(pattern_name)
 
     def __getattr__(self, member_name):
         member_object = getattr(self._pattern_object, member_name)

@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from ..property_value_converter import PropertyValueConverterBase
-from ..property_value_types import Rectangle
+from pikuli.uia.adapter.property_value_types import Rectangle
 
 
-class PropertyValueConverter(PropertyValueConverterBase):
+class WinPropertyValueConverter(object):
 
     @classmethod
     def convert_BoundingRectangle(cls, val):
