@@ -24,7 +24,7 @@ import pikuli
 from ._functions import _take_screenshot, verify_timeout_argument, highlight_region
 from . import FindFailed, FailExit
 from .Pattern import Pattern
-from .Location import Location, DELAY_BETWEEN_CLICK_AND_TYPE, DEALY_AFTER_CLICK
+from .Location import Location, DELAY_BETWEEN_CLICK_AND_TYPE, DELAY_AFTER_CLICK
 from .Vector import RelativeVec
 from .File import File
 
@@ -770,19 +770,19 @@ class Region(object):
         return self._find_timeout
 
 
-    def click(self, after_cleck_delay=DEALY_AFTER_CLICK, p2c_notif=True):
-        self.center.click(after_cleck_delay=DEALY_AFTER_CLICK, p2c_notif=False)
+    def click(self, after_click_delay=DELAY_AFTER_CLICK, p2c_notif=True, post_move_check=None):
+        self.center.click(after_click_delay=DELAY_AFTER_CLICK, p2c_notif=False, post_move_check=post_move_check)
         if p2c_notif:
             logger.info('pikuli.%s.click(): click in center of %s' % (type(self).__name__, str(self)))
 
 
-    def rightClick(self, after_cleck_delay=DEALY_AFTER_CLICK, p2c_notif=True):
-        self.center.rightClick(after_cleck_delay=DEALY_AFTER_CLICK)
+    def rightClick(self, after_click_delay=DELAY_AFTER_CLICK, p2c_notif=True):
+        self.center.rightClick(after_click_delay=DELAY_AFTER_CLICK)
         if p2c_notif:
             logger.info('pikuli.%s.rightClick(): right click in center of %s' % (type(self).__name__, str(self)))
 
-    def doubleClick(self, after_cleck_delay=DEALY_AFTER_CLICK, p2c_notif=True):
-        self.center.doubleClick(after_cleck_delay=DEALY_AFTER_CLICK)
+    def doubleClick(self, after_click_delay=DELAY_AFTER_CLICK, p2c_notif=True):
+        self.center.doubleClick(after_click_delay=DELAY_AFTER_CLICK)
         if p2c_notif:
             logger.info('pikuli.%s.doubleClick(): double click in center of %s' % (type(self).__name__, str(self)))
 

@@ -22,8 +22,8 @@ DELAY_IN_MOUSE_CLICK = 0.100        # Время в [c] между нажати�
 DELAY_MOUSE_DOUBLE_CLICK = 0.100    # Время в [c] между кликами (замерял сам и гуглил)
 DELAY_KBD_KEY_PRESS = 0.020
 
-DEALY_AFTER_CLICK            = 0.3  # В частности, время бездейставия между кликом в область и началом введения текста (по умолчанию).
-DELAY_BETWEEN_CLICK_AND_TYPE = DEALY_AFTER_CLICK
+DELAY_AFTER_CLICK            = 0.3  # В частности, время бездейставия между кликом в область и началом введения текста (по умолчанию).
+DELAY_BETWEEN_CLICK_AND_TYPE = DELAY_AFTER_CLICK
 
 DRAGnDROP_MOVE_DELAY = 0.005
 DRAGnDROP_MOVE_STEP  = 10
@@ -150,12 +150,12 @@ class LocationF(Vector):
     def _mouse_event(self, event, direction=0):
         return win32api.mouse_event(event, self._x_int, self._y_int, direction, 0)
 
-    def click(self, after_cleck_delay=DEALY_AFTER_CLICK, p2c_notif=True):
+    def click(self, after_click_delay=DELAY_AFTER_CLICK, p2c_notif=True, post_move_check=None):
         self.mouse_move()
         self._mouse_event(win32con.MOUSEEVENTF_LEFTDOWN)
         time.sleep(DELAY_IN_MOUSE_CLICK)
         self._mouse_event(win32con.MOUSEEVENTF_LEFTUP)
-        time.sleep(after_cleck_delay)
+        time.sleep(after_click_delay)
 
         if p2c_notif:
             logger.info('pikuli.%s.click(): click on %s' % (type(self).__name__, str(self)))
@@ -207,16 +207,16 @@ class LocationF(Vector):
         if p2c_notif:
             logger.info('pikuli.{}.click_move_hold(): moved to x {}, y {}'.format(type(self).__name__, to_x, to_y))
 
-    def rightClick(self, after_cleck_delay=DEALY_AFTER_CLICK, p2c_notif=True):
+    def rightClick(self, after_click_delay=DELAY_AFTER_CLICK, p2c_notif=True):
         self.mouse_move()
         self._mouse_event(win32con.MOUSEEVENTF_RIGHTDOWN)
         time.sleep(DELAY_IN_MOUSE_CLICK)
         self._mouse_event(win32con.MOUSEEVENTF_RIGHTUP)
-        time.sleep(after_cleck_delay)
+        time.sleep(after_click_delay)
         if p2c_notif:
             logger.info('pikuli.%s.rightClick(): rightClick on %s' % (type(self).__name__, str(self)))
 
-    def doubleClick(self, after_cleck_delay=DEALY_AFTER_CLICK, p2c_notif=True):
+    def doubleClick(self, after_click_delay=DELAY_AFTER_CLICK, p2c_notif=True):
         self.mouse_move()
         self._mouse_event(win32con.MOUSEEVENTF_LEFTDOWN)
         time.sleep(DELAY_IN_MOUSE_CLICK)
@@ -225,7 +225,7 @@ class LocationF(Vector):
         self._mouse_event(win32con.MOUSEEVENTF_LEFTDOWN)
         time.sleep(DELAY_IN_MOUSE_CLICK)
         self._mouse_event(win32con.MOUSEEVENTF_LEFTUP)
-        time.sleep(DEALY_AFTER_CLICK)
+        time.sleep(DELAY_AFTER_CLICK)
         if p2c_notif:
             logger.info('pikuli.%s.doubleClick(): doubleClick on %s' % (type(self).__name__, str(self)))
 
@@ -253,7 +253,7 @@ class LocationF(Vector):
              p2c_notif=True):
         ''' Не как в Sikuli '''
         if click:
-            self.click(after_cleck_delay=click_type_delay, p2c_notif=False)
+            self.click(after_click_delay=click_type_delay, p2c_notif=False)
         _text = str(text) + (Key.ENTER if press_enter else '')
         type_text(_text, modifiers, p2c_notif=False)
         if p2c_notif:
@@ -263,7 +263,7 @@ class LocationF(Vector):
         ''' Не как в Sikuli
         TODO: не нужен тут Ctrl+a  --  не всегда и не везде работает'''
         if click:
-            self.click(after_cleck_delay=click_type_delay, p2c_notif=False)
+            self.click(after_click_delay=click_type_delay, p2c_notif=False)
         type_text('a', KeyModifier.CTRL, p2c_notif=False)
         time.sleep(0.5)
         if press_enter:
