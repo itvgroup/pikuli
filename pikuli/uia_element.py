@@ -1143,7 +1143,7 @@ class _Enter_Text_method(UIAElement):
         try:
             set_text_to_clipboard(text)
             self.click()
-            self.type_text('v', modifiers=KeyModifier.CTRL, p2c_notif=p2c_notif)
+            self.type_text('v', modifiers=KeyModifier.CTRL)
         except:
             raise
         finally:
