@@ -18,6 +18,8 @@ import os
 import logging
 import sys
 
+
+
 logger = logging.getLogger('axxon.pikuli')
 
 from ._SettingsClass import SettingsClass
@@ -33,6 +35,7 @@ from .geom.location import Location
 from .Screen import Screen
 from .Match import Match
 from .Pattern import Pattern
+from .utils import wait_while, wait_while_not
 
 if os.name == 'nt':
     from .hwnd.hwnd_element import HWNDElement
@@ -59,6 +62,7 @@ __all__ = [
     'FailExit',
     'FindFailed',
     'wait_while',
+    'wait_while_not',
     'HWNDElement',
-    'UIAElement',
+    'logger'
 ]

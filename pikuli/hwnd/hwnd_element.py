@@ -23,10 +23,9 @@ comtypes.client.GetModule('oleacc.dll')             # Что-то там наг�
 from comtypes.gen.Accessibility import IAccessible  # ... и теперь чать этого импортируем
 
 import pikuli
-from pikuli._functions import wait_while, wait_while_not
-from pikuli._exceptions import FindFailed, FailExit
+from pikuli._exceptions import FindFailed
 from pikuli.geom import Region
-
+from ..utils import wait_while, wait_while_not
 
 logger = logging.getLogger('axxon.pikuli')
 

@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 
 from pikuli.input import Key, KeyModifier, InputEmulator, Clipboard
-from ..uia_element import UIAElement
-from . import CONTROL_CHECK_TIMEOUT
+from pikuli import logger
 
+from . import CONTROL_CHECK_TIMEOUT
+from ..uia_element import UIAElement
+from ...utils import wait_while_not
 
 TEXT_CLEAN_METHODS = ['uia_api', 'end&backspaces', 'home&deletes', 'single_backspace']
 

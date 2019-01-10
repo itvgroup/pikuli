@@ -16,8 +16,6 @@ if os.name == 'nt':
 
 import numpy as np
 
-from tools import wait_while, wait_while_not
-
 import pikuli
 from ._exceptions import FailExit, FindFailed
 

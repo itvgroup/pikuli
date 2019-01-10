@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from ..uia_element import UIAElement
+from ...hwnd import HWNDElement
+from pikuli import logger
 
 
 class UIAControl(UIAElement):
@@ -40,7 +42,7 @@ class UIAControl(UIAElement):
 
     def bring_to_front(self):
         self._test4readiness()
-        return hwnd.hwnd_element.HWNDElement(self).bring_to_front()
+        return HWNDElement(self).bring_to_front()
 
     def click(self, method='click', p2c_notif=True):
         '''

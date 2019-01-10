@@ -70,7 +70,7 @@ class AdapterMixin(object):
     """
 
     @classmethod
-    def get_api_property_names():
+    def get_api_property_names(cls):
         """
         Returns all Propoperty names are known in current API.
         """

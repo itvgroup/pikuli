@@ -2,6 +2,9 @@
 
 from .uia_control import UIAControl
 from .mixin import _LegacyIAccessiblePattern_value_methods, _Enter_Text_method
+from ..adapter import STATE_SYSTEM
+from ..._exceptions import FindFailed
+from pikuli import logger
 
 
 class ANPropGrid_Table(UIAControl):

@@ -5,6 +5,7 @@ import time
 from contextlib import contextmanager
 
 from pikuli import logger
+
 from .constants import (
     DELAY_KBD_KEY_PRESS, DELAY_KBD_KEY_RELEASE,
     DELAY_MOUSE_BTN_PRESS, DELAY_MOUSE_BTN_RELEASE,
@@ -50,17 +51,16 @@ class KeyboardMixin(object):
         cls.press_modifiers(modifiers)
 
         string_iter = iter(unicode(s))
+
         for char in string_iter:
             if char == '\x00':
-               special_key = string_iter.next()
-               cls.type_key(special_key)
+                continue
             elif char in cls._PrintableChars:
                 key_code, need_shift = cls._char_to_keycode(char)
                 with _press_shift_if_necessary(need_shift):
                     cls.type_key(key_code)
             else:
-                raise Exception('unknown symbol {!r} in string {!r}. PrintableChars = {!r}'.format(
-                    char, s, cls._PrintableChars))
+                raise Exception('unknown symbol {!r} in string {!r}. PrintableChars = {!r}'.format(char, s, cls._PrintableChars))
 
         cls.release_modifiers(modifiers)
 
@@ -82,6 +82,11 @@ class KeyboardMixin(object):
         cls._do_modifier_keys_action(modifiers, cls.release_key)
 
     @classmethod
+    def press_and_release_modifiers(cls, modifiers):
+        cls.press_modifiers(modifiers)
+        cls.release_modifiers(modifiers)
+
+    @classmethod
     def press_key(cls, key_code):
         cls._do_press_key(key_code)
         time.sleep(DELAY_KBD_KEY_PRESS)
@@ -95,10 +100,10 @@ class KeyboardMixin(object):
     def _do_modifier_keys_action(cls, modifiers, action):
         if not modifiers:
             return
-        for flag in KeyCode:
-            if flag.is_set_in(modifiers):
-                key_code = getattr(KeyCode, flag.name)
-                action(key_code)
+
+        key_code = [flag.name for flag in KeyCode if modifiers.name == flag.name]
+        assert len(key_code) == 1, (key_code, modifiers)
+        action(getattr(KeyCode, key_code[0]))
 
 
 class MouseMixin(object):
@@ -134,12 +139,12 @@ class MouseMixin(object):
         cls._do_release_button(btn_code)
 
     @classmethod
-    def press_button(cls, btn_code):
+    def press_button(cls, key_code):
         cls._do_press_button(key_code)
         time.sleep(DELAY_MOUSE_BTN_PRESS)
 
     @classmethod
-    def release_button(cls, btn_code):
+    def release_button(cls, key_code):
         cls._do_release_key(key_code)
         time.sleep(DELAY_MOUSE_BTN_RELEASE)
 

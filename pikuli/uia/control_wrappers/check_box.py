@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from ..adapter import Enums
+
+from ..adapter import Enums, STATE_SYSTEM
 from . import CONTROL_CHECK_TIMEOUT
 from .uia_control import UIAControl
-from .mixin import _ValuePattern_methods, _Enter_Text_method
+from ...utils import wait_while_not, wait_while
 
 
 class CheckBox(UIAControl):
@@ -75,7 +76,7 @@ class CheckBox(UIAControl):
 
             # Ждем смены состояния на новое:
             if not wait_while(lambda: self._check_state(init_state, 'uia'), check_timeout):
-                raise Exception('CheckBox.uncheck(...): error change state to {}: init = {}, current = {} (timeout {})'.foramt(
+                raise Exception('CheckBox.uncheck(...): error change state to {}: init = {}, current = {} (timeout {})'.format(
                     target_state, init_state, self._state('uia'), check_timeout))
 
             # Если сменилось на новое, но не желаемое, значит состояний три и надо еще раз Toogle():

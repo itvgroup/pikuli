@@ -4,12 +4,10 @@
 '''
 
 import logging
-import os
 import time
-import os
 from collections import namedtuple
 
-from pikuli.input import InputEmulator, KeyModifier, Key, ScrollDirection
+from pikuli.input import InputEmulator, KeyModifier, Key, ScrollDirection, ButtonCode
 from pikuli._exceptions import PostMoveCheck
 from pikuli._functions import FailExit, _take_screenshot
 
@@ -233,21 +231,25 @@ class LocationF(Vector):
         ''' Не как в Sikuli '''
         if click:
             self.click(after_cleck_delay=click_type_delay, p2c_notif=False)
-        _text = str(text) + (Key.ENTER if press_enter else '')
-        InputEmulator.type_text(_text, modifiers, p2c_notif=False)
+        print type(text), text
+        if text in Key:
+            InputEmulator.press_and_release_modifiers(text)
+        else:
+            InputEmulator.type_text(str(text), modifiers, p2c_notif=False)
+
+        if press_enter:
+            InputEmulator.press_and_release_modifiers(Key.ENTER)
+
         if p2c_notif:
             logger.info('pikuli.%s.type(): type on %s \'%s\'; modifiers=%s, click=%s' % (type(self).__name__, str(self), repr(text), str(modifiers), str(click)))
 
     def enter_text(self, text, modifiers=None, click=True, click_type_delay=0, p2c_notif=True, press_enter=True):
         ''' Не как в Sikuli
         TODO: не нужен тут Ctrl+a  --  не всегда и не везде работает'''
-        if click:
-            self.click(after_cleck_delay=click_type_delay, p2c_notif=False)
-        InputEmulator.type_text('a', KeyModifier.CTRL, p2c_notif=False)
+        self.type('a', KeyModifier.CTRL, click=click, press_enter=False, p2c_notif=False)
         time.sleep(0.5)
-        if press_enter:
-            text = str(text) + Key.ENTER
-        InputEmulator.type_text(str(text), modifiers, p2c_notif=False)
+        self.type(text, modifiers, click=False, press_enter=press_enter, p2c_notif=False)
+
         if p2c_notif:
             logger.info('pikuli.%s.enter_text(): enter_text on %s \'%s\'; modifiers=%s, click=%s' % (type(self).__name__, str(self), repr(text), str(modifiers), str(click)))
 

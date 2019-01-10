@@ -3,8 +3,8 @@
 import importlib
 import numbers
 
-from pikuli.utils import class_property
 from ..adapter.oleacc_h import ROLE_SYSTEM, ROLE_SYSTEM_rev
+
 
 class RegistredControlClasses(object):
     """
@@ -35,6 +35,7 @@ class RegistredControlClasses(object):
             (".tree", "Tree"),
             (".tree_item", "TreeItem"),
             (".window", "Window"),
+            (".radio_button", "RadioButton"),
         ]
 
         for module_loc, class_name in to_be_registered:
