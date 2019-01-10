@@ -231,11 +231,7 @@ class LocationF(Vector):
         ''' Не как в Sikuli '''
         if click:
             self.click(after_cleck_delay=click_type_delay, p2c_notif=False)
-        print type(text), text
-        if text in Key:
-            InputEmulator.press_and_release_modifiers(text)
-        else:
-            InputEmulator.type_text(str(text), modifiers, p2c_notif=False)
+        InputEmulator.type_text(str(text), modifiers, p2c_notif=False)
 
         if press_enter:
             InputEmulator.press_and_release_modifiers(Key.ENTER)

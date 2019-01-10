@@ -54,7 +54,8 @@ class KeyboardMixin(object):
 
         for char in string_iter:
             if char == '\x00':
-                continue
+                special_key = int(string_iter.next())
+                cls.type_key(special_key)
             elif char in cls._PrintableChars:
                 key_code, need_shift = cls._char_to_keycode(char)
                 with _press_shift_if_necessary(need_shift):
