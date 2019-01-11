@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from pikuli.uia.adapter import Enums
 
 from .exceptions import DriverException
 
@@ -37,8 +38,8 @@ class UiaPatternMethod(object):
 
             if argument_type == "POINTER(IUIAutomationElement)":
                 argument_type = "UIAElement"
-            elif hasattr(enums, argument_type):
-                argument_type = getattr(enums, argument_type)
+            elif hasattr(Enums, argument_type):
+                argument_type = getattr(Enums, argument_type)
 
             argument_string += "  Name:\t"+argument_name+"\n"
             argument_string += "  Type:\t"+repr(argument_type)+"\n\n"
@@ -73,8 +74,8 @@ class UiaPatternMethod(object):
             if expected_arg_type == "POINTER(IUIAutomationElement)":
                 # get the UIAElment
                 args[index] = args[index]._automation_element
-            elif hasattr(enums, expected_arg_type):
-                enum = getattr(enums, expected_arg_type)
+            elif hasattr(Enums, expected_arg_type):
+                enum = getattr(Enums, expected_arg_type)
 
                 # enum should be an int value, if argument is a string, should translate to int
                 if args[index] in enum.__members__:

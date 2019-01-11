@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import pikuli.uia.adapter
-from pikuli.utils import class_property
 
 
 class TreeWalker(object):

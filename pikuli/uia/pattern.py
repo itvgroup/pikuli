@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from .adapter import PatternFactory
+from .adapter import PatternFactory, Enums
 from .adapter.pattern_description import PatternDescriptions
 from .pattern_method import UiaPatternMethod
 
@@ -18,7 +18,7 @@ class UiaPattern(object):
         member_object = getattr(self._pattern_object, member_name)
 
         if self._pattern_description.has_method(member_name):
-            return UiaPatternMethod(member_object, member_name, self._methods[member_name])
+            return UiaPatternMethod(member_object, member_name, self._pattern_description.methods[member_name])
         elif self._pattern_description.has_property(member_name):
             return member_object
         else:
@@ -27,7 +27,7 @@ class UiaPattern(object):
     def __str__(self):
         docstring = ""
         docstring += "Properties:\n"
-        for property_ in self._properties.items():
+        for property_ in self._pattern_description.properties.items():
             name = property_[0]
             argument = property_[1][0]
             value_type = argument[1]
@@ -38,7 +38,7 @@ class UiaPattern(object):
             docstring += "  Value:\t"+repr(value)+"\n"
 
         docstring += "\nMethods:\n"
-        for method_ in self._methods.items():
+        for method_ in self._pattern_description.methods.items():
             name = method_[0]
             arguments = method_[1]
             docstring += "#"*32+"\n"
@@ -49,12 +49,11 @@ class UiaPattern(object):
                 argument_direction = argument[0]
                 argument_type = argument[1]
                 argument_name = argument[2]
-
                 if argument_direction == "in":
                     if argument_type == "POINTER(IUIAutomationElement)":
                         argument_type = "UIAElement"
-                    elif argument_type in hasattr(enums, argument_type):
-                        argument_type = getattr(enums, argument_type)
+                    elif hasattr(Enums, argument_type):
+                        argument_type = getattr(Enums, argument_type)
 
                     argument_string += "    Name:\t"+argument_name+"\n"
                     argument_string += "    Type:\t"+repr(argument_type)+"\n\n"

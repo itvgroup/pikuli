@@ -2,6 +2,7 @@
 
 from pikuli import logger
 from .patterns_plain_description import METHOD, PROPERTY, patterns_plain_description
+from ..exceptions import DriverException
 
 
 class PatternDescriptions():
@@ -60,3 +61,10 @@ class _PattDesc(object):
     def has_property(self, attr_name):
         return attr_name in self._properties_description
 
+    @property
+    def properties(self):
+        return self._properties_description
+
+    @property
+    def methods(self):
+        return self._methods_description

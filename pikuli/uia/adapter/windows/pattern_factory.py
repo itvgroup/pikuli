@@ -2,9 +2,8 @@
 
 import ctypes
 
-from pikuli import logger
-from pikuli.utils import class_property
 from ..pattern_description import PatternDescriptions
+from ...exceptions import DriverException
 
 
 class PatternFactory(object):
