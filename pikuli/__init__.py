@@ -30,7 +30,7 @@ from ._functions import *
 
 from .geom.vector import Vector, RelativeVec
 from .geom.region import Region
-from .geom.location import Location
+from .geom.location import Location, LocationF
 
 from .Screen import Screen
 from .Match import Match
@@ -58,11 +58,12 @@ __all__ = [
     'Screen',
     'Match',
     'Location',
+    'LocationF',
     'Pattern',
     'FailExit',
     'FindFailed',
     'wait_while',
     'wait_while_not',
-    'HWNDElement',
+    'HWNDElement'
     'logger'
 ]
