@@ -14,10 +14,11 @@ import os
 
 from oleacc_h import (STATE_SYSTEM, ROLE_SYSTEM, ROLE_SYSTEM_rev)
 from enum import Enum
-from itsdangerous import int_to_bytes
+
 import _ctypes
 if os.name == 'nt':
     import win32gui
+    from itsdangerous import int_to_bytes
 import UIA
 import Region
 import hwnd_element
