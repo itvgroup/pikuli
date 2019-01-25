@@ -18,7 +18,7 @@ from enum import Enum
 import _ctypes
 if os.name == 'nt':
     import win32gui
-    from itsdangerous import int_to_bytes
+#    from itsdangerous import int_to_bytes
 import UIA
 import Region
 import hwnd_element
