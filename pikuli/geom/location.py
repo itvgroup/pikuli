@@ -225,23 +225,25 @@ class LocationF(Vector):
         if modifiers is not None:
             InputEmulator.release_modifiers(modifiers)
 
-    def type(self, text, modifiers=None, click=True, press_enter=False,
-             click_type_delay=0,
-             p2c_notif=True):
+    def type(self, text, modifiers=None, click=True, press_enter=False, click_type_delay=0, p2c_notif=True):
         ''' Не как в Sikuli '''
         if click:
             self.click(after_cleck_delay=click_type_delay, p2c_notif=False)
+
         InputEmulator.type_text(str(text), modifiers, p2c_notif=False)
 
         if press_enter:
-            InputEmulator.press_and_release_modifiers(Key.ENTER)
+            InputEmulator.type_key(Key.ENTER)
 
         if p2c_notif:
             logger.info('pikuli.%s.type(): type on %s \'%s\'; modifiers=%s, click=%s' % (type(self).__name__, str(self), repr(text), str(modifiers), str(click)))
 
     def enter_text(self, text, modifiers=None, click=True, click_type_delay=0, p2c_notif=True, press_enter=True):
-        ''' Не как в Sikuli
-        TODO: не нужен тут Ctrl+a  --  не всегда и не везде работает'''
+        '''
+        ПЕРЕСТАТЬ ИСПОЛЬБЗОВАТЬ ЭТОТ МЕТОД
+        Не как в Sikuli
+        TODO: не нужен тут Ctrl+a  --  не всегда и не везде работает
+        '''
         self.type('a', KeyModifier.CTRL, click=click, press_enter=False, p2c_notif=False)
         time.sleep(0.5)
         self.type(text, modifiers, click=False, press_enter=press_enter, p2c_notif=False)
@@ -249,8 +251,7 @@ class LocationF(Vector):
         if p2c_notif:
             logger.info('pikuli.%s.enter_text(): enter_text on %s \'%s\'; modifiers=%s, click=%s' % (type(self).__name__, str(self), repr(text), str(modifiers), str(click)))
 
-        logger.warning('We need to eliminate all calls '
-                            'of Location.enter_text() !!!!!')
+        logger.warning('We need to eliminate all calls of Location.enter_text() !!!!!')
 
     def moveto(self, dest_location):
         """

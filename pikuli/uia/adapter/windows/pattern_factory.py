@@ -2,8 +2,8 @@
 
 import ctypes
 
+from pikuli.uia.exceptions import DriverException
 from ..pattern_description import PatternDescriptions
-from ...exceptions import DriverException
 
 
 class PatternFactory(object):

@@ -18,7 +18,7 @@ class UiaPattern(object):
         member_object = getattr(self._pattern_object, member_name)
 
         if self._pattern_description.has_method(member_name):
-            return UiaPatternMethod(member_object, member_name, self._pattern_description.methods[member_name])
+            return UiaPatternMethod(member_object, member_name, self._pattern_description.methods_description[member_name])
         elif self._pattern_description.has_property(member_name):
             return member_object
         else:
@@ -27,7 +27,7 @@ class UiaPattern(object):
     def __str__(self):
         docstring = ""
         docstring += "Properties:\n"
-        for property_ in self._pattern_description.properties.items():
+        for property_ in self._pattern_description.properties_description.items():
             name = property_[0]
             argument = property_[1][0]
             value_type = argument[1]
@@ -38,7 +38,7 @@ class UiaPattern(object):
             docstring += "  Value:\t"+repr(value)+"\n"
 
         docstring += "\nMethods:\n"
-        for method_ in self._pattern_description.methods.items():
+        for method_ in self._pattern_description.methods_description.items():
             name = method_[0]
             arguments = method_[1]
             docstring += "#"*32+"\n"

@@ -26,7 +26,7 @@ from ._SettingsClass import SettingsClass
 Settings = SettingsClass()
 
 from ._exceptions import FailExit, FindFailed
-from ._functions import *
+from ._functions import *  # TODO: remove it
 
 from .geom.vector import Vector, RelativeVec
 from .geom.region import Region
@@ -35,7 +35,6 @@ from .geom.location import Location, LocationF
 from .Screen import Screen
 from .Match import Match
 from .Pattern import Pattern
-from .utils import wait_while, wait_while_not
 
 if os.name == 'nt':
     from .hwnd.hwnd_element import HWNDElement
@@ -62,8 +61,4 @@ __all__ = [
     'Pattern',
     'FailExit',
     'FindFailed',
-    'wait_while',
-    'wait_while_not',
-    'HWNDElement'
-    'logger'
-]
+]  # TODO: shorter this list

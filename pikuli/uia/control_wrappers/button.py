@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from .uia_control import UIAControl
-from ..adapter import STATE_SYSTEM
 
 
 class Button(UIAControl):

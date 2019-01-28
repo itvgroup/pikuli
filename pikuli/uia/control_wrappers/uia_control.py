@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from ..uia_element import UIAElement
-from ...hwnd import HWNDElement
 from pikuli import logger
+from ..uia_element import UIAElement
 
 
 class UIAControl(UIAElement):
@@ -41,6 +40,8 @@ class UIAControl(UIAElement):
                 setattr(self, m, self._unavaulable_method_dummy)
 
     def bring_to_front(self):
+        # TODO:
+        from pikuli.hwnd import HWNDElement
         self._test4readiness()
         return HWNDElement(self).bring_to_front()
 

@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
 
-from ..adapter import Enums, STATE_SYSTEM
+from pikuli.adapter import Enums
+from pikuli.utils import wait_while_not, wait_while
 from . import CONTROL_CHECK_TIMEOUT
 from .uia_control import UIAControl
-from ...utils import wait_while_not, wait_while
 
 
 class CheckBox(UIAControl):

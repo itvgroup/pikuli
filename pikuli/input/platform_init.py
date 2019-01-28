@@ -50,7 +50,7 @@ class EmulatorMethod(object):
 
     @classmethod
     def set_method(cls, new_method):
-        global KeyCode
+        global KeyCode  # :class:`KeyCode` is the internal class. The public one is :class:`Key`, builded in the `keys.py`.
         global ButtonCode
         global ScrollDirection
         global OsKeyboardMixin

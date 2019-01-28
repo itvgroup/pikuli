@@ -13,6 +13,7 @@ import os
 import psutil
 from enum import Enum
 
+# TODO:
 if os.name == 'nt':
     import _ctypes
     import win32gui
@@ -25,13 +26,13 @@ else:
 import pikuli.uia
 
 from pikuli.geom import Region
+from pikuli.utils import wait_while
 from pikuli._functions import verify_timeout_argument
 from pikuli._exceptions import FindFailed, FailExit
 
 from .exceptions import DriverException
 from .adapter import Adapter, PatternFactory, PropertyValueConverter, AutomationElement, Condition, Enums, TreeWalker
 from .pattern import UiaPattern
-from ..utils import wait_while
 
 # "A lot of HRESULT codes…" (https://blogs.msdn.microsoft.com/eldar/2007/04/03/a-lot-of-hresult-codes/)
 COR_E_TIMEOUT = -2146233083  # -2146233083 =<математически>= -0x80131505;   0x80131505 =<в разрядной сетке>= (-2146233083 & 0xFFFFFFFF)

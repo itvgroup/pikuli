@@ -12,6 +12,7 @@ from .constants import (
     DELAY_MOUSE_CLICK, DELAY_MOUSE_DOUBLE_CLICK, DELAY_MOUSE_AFTER_ANY_CLICK,
     DELAY_MOUSE_SET_POS, DELAY_MOUSE_SCROLL
 )
+from .keys import str2items, Key
 from .platform_init import ButtonCode, KeyCode, OsKeyboardMixin, OsMouseMixin
 
 
@@ -50,24 +51,28 @@ class KeyboardMixin(object):
 
         cls.press_modifiers(modifiers)
 
-        string_iter = iter(unicode(s))
-
-        for char in string_iter:
-            if char == '\x00':
-                special_key = int(string_iter.next())
-                cls.type_key(special_key)
-            elif char in cls._PrintableChars:
-                key_code, need_shift = cls._char_to_keycode(char)
-                with _press_shift_if_necessary(need_shift):
-                    cls.type_key(key_code)
-            else:
-                raise Exception('unknown symbol {!r} in string {!r}. PrintableChars = {!r}'.format(char, s, cls._PrintableChars))
+        for item in str2items(s):
+            try:
+                key_code, need_shift = str_item_to_keycode(item)
+            except Exception as ex:
+                logger.exception(ex, 'Error dealing with symbol {!r} in string {!r}.'.format(item, s))
+                raise
+            with _press_shift_if_necessary(need_shift):
+                cls.type_key(key_code)
 
         cls.release_modifiers(modifiers)
 
         if p2c_notif:
             logger.info('pikuli._functions.type_text(): {!r} '
                         'was typed; modifiers={!r}'.format(s, modifiers))
+
+    @classmethod
+    def str_item_to_keycode(cls, item):
+        if item is Key:
+            return (item.key_code, False)
+        else:
+            assert item in cls._PrintableChar, 'PrintableChars={!r}; item={!r}'.format(cls._PrintableChar, item)
+            return cls._char_to_keycode(item)
 
     @classmethod
     def type_key(cls, key_code):
@@ -83,11 +88,6 @@ class KeyboardMixin(object):
         cls._do_modifier_keys_action(modifiers, cls.release_key)
 
     @classmethod
-    def press_and_release_modifiers(cls, modifiers):
-        cls.press_modifiers(modifiers)
-        cls.release_modifiers(modifiers)
-
-    @classmethod
     def press_key(cls, key_code):
         cls._do_press_key(key_code)
         time.sleep(DELAY_KBD_KEY_PRESS)
@@ -99,12 +99,8 @@ class KeyboardMixin(object):
 
     @classmethod
     def _do_modifier_keys_action(cls, modifiers, action):
-        if not modifiers:
-            return
-
-        key_code = [flag.name for flag in KeyCode if modifiers.name == flag.name]
-        assert len(key_code) == 1, (key_code, modifiers)
-        action(getattr(KeyCode, key_code[0]))
+        for modif_key_code in KeyModifier._str_to_key_codes(modifiers):
+            action(modif_key_code)
 
 
 class MouseMixin(object):

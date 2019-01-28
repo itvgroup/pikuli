@@ -25,7 +25,7 @@ from comtypes.gen.Accessibility import IAccessible  # ... и теперь чат
 import pikuli
 from pikuli._exceptions import FindFailed
 from pikuli.geom import Region
-from ..utils import wait_while, wait_while_not
+from pikuli.utils import wait_while, wait_while_not
 
 logger = logging.getLogger('axxon.pikuli')
 

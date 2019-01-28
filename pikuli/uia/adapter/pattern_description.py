@@ -40,31 +40,23 @@ class _PattDesc(object):
         self.pattern_name = pattern_name
         self.pattern_id = adapter.try_get_pattern_id(pattern_name)
 
-        self._methods_description = {}
-        self._properties_description = {}
+        self.methods_description = {}
+        self.properties_description = {}
         for member_description in (interface_description or []):
             type, name, args = _unpack_member_description(*member_description)
             if type == METHOD:
-                self._methods_description[name] = args
+                self.methods_description[name] = args
             elif type == PROPERTY:
-                self._properties_description[name] = args
+                self.properties_description[name] = args
             else:
                 raise DriverException("Unrecognised type {type!r} in member {member} of pattern {pattern}".format(
                     type=type, member=name, pattern=self.pattern_name))
     @property
     def is_valid(self):
-        return (self.pattern_name and self.pattern_id and (self._methods_description or self._properties_description))
+        return (self.pattern_name and self.pattern_id and (self.methods_description or self.properties_description))
 
     def has_method(self, attr_name):
-        return attr_name in self._methods_description
+        return attr_name in self.methods_description
 
     def has_property(self, attr_name):
-        return attr_name in self._properties_description
-
-    @property
-    def properties(self):
-        return self._properties_description
-
-    @property
-    def methods(self):
-        return self._methods_description
+        return attr_name in self.properties_description
