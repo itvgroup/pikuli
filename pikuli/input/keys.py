@@ -36,9 +36,9 @@ class KeyModifier(str, Enum):
     '''
     Аргумент modifiers функции type_text().
     '''
-    ALT   = Key.ALT
-    CTRL  = Key.CTRL
-    SHIFT = Key.SHIFT
+    ALT   = Key.ALT.value
+    CTRL  = Key.CTRL.value
+    SHIFT = Key.SHIFT.value
 
     @classmethod
     def _str_to_key_codes(cls, s):
