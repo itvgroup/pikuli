@@ -4,26 +4,15 @@
 '''
 
 import logging
-import os
 import time
-import os
 from collections import namedtuple
 
-if os.name == 'nt':
-    import win32api
-    import win32con
+from pikuli.input import InputEmulator, KeyModifier, Key, ScrollDirection, ButtonCode
+from pikuli._exceptions import PostMoveCheck
+from pikuli._functions import FailExit, _take_screenshot
 
-from ._exceptions import PostMoveCheck
-from ._functions import KeyModifier, Key, type_text, FailExit, _take_screenshot, press_modifiers, release_modifiers
-from .Vector import Vector, RelativeVec
+from .vector import Vector, RelativeVec
 
-DELAY_AFTER_MOUSE_MOVEMENT = 0.500  # Время в [c]
-DELAY_IN_MOUSE_CLICK = 0.100        # Время в [c] между нажатием и отжатием кнопки (замерял сам и гуглил)
-DELAY_MOUSE_DOUBLE_CLICK = 0.100    # Время в [c] между кликами (замерял сам и гуглил)
-DELAY_KBD_KEY_PRESS = 0.020
-
-DELAY_AFTER_CLICK            = 0.3  # В частности, время бездейставия между кликом в область и началом введения текста (по умолчанию).
-DELAY_BETWEEN_CLICK_AND_TYPE = DELAY_AFTER_CLICK
 
 DRAGnDROP_MOVE_DELAY = 0.005
 DRAGnDROP_MOVE_STEP  = 10
@@ -120,14 +109,14 @@ class LocationF(Vector):
         arr = _take_screenshot(self._x_int, self._y_int, 1, 1)
         return Color(*arr.reshape(3)[::-1])
 
-    def mouse_move(self, delay=DELAY_AFTER_MOUSE_MOVEMENT):
+    def mouse_move(self, delay=0):
         """
         :return: Положения курсора, где мышка действительно оказалась.
         :rtype: :class:`Location`
         """
-        win32api.SetCursorPos((self._x_int, self._y_int))
+        InputEmulator.set_mouse_pos(self._x_int, self._y_int)
         time.sleep(delay)
-        new_loc = self.__class__(win32api.GetCursorPos())
+        new_loc = self.__class__(InputEmulator.get_mouse_pos())
         if new_loc != self:
             logger.warning('{}.mouse_move: new_loc={} != {}=self'.format(self.__class__, new_loc, self))
         return new_loc
@@ -147,42 +136,34 @@ class LocationF(Vector):
     def right(self, dx):
         return self + Vector(dx, 0)
 
-    def _mouse_event(self, event, direction=0):
-        return win32api.mouse_event(event, self._x_int, self._y_int, direction, 0)
-
-    def click(self, after_click_delay=DELAY_AFTER_CLICK, p2c_notif=True, post_move_check=None):
+    def click(self, after_cleck_delay=0, p2c_notif=True, post_move_check=None):
         self.mouse_move()
-        self._mouse_event(win32con.MOUSEEVENTF_LEFTDOWN)
-        time.sleep(DELAY_IN_MOUSE_CLICK)
-        self._mouse_event(win32con.MOUSEEVENTF_LEFTUP)
-        time.sleep(after_click_delay)
-
+        if post_move_check and not post_move_check():
+            raise PostMoveCheck("")
+        InputEmulator.left_click()
+        time.sleep(after_cleck_delay)
         if p2c_notif:
             logger.info('pikuli.%s.click(): click on %s' % (type(self).__name__, str(self)))
 
     def mouseDown(self, button='left', p2c_notif=True):
         self.mouse_move()
-        if button == 'left':
-            self._mouse_event(win32con.MOUSEEVENTF_LEFTDOWN)
-        else:
-            self._mouse_event(win32con.MOUSEEVENTF_RIGHTDOWN)
+        btn_code = ButtonCode.LEFT if button == 'left' else ButtonCode.RIGHT
+        InputEmulator.press_button(btn_code)
         if p2c_notif:
             logger.info('pikuli.%s.mouseDown(): mouseDown on %s' % (type(self).__name__, str(self)))
 
     def mouseUp(self, button='left', p2c_notif=True):
         self.mouse_move()
-        if button == 'left':
-            self._mouse_event(win32con.MOUSEEVENTF_LEFTUP)
-        else:
-            self._mouse_event(win32con.MOUSEEVENTF_RIGHTUP)
+        btn_code = ButtonCode.LEFT if button == 'left' else ButtonCode.RIGHT
+        InputEmulator.release_button(btn_code)
         if p2c_notif:
             logger.info('pikuli.%s.mouseUp(): mouseUp on %s' % (type(self).__name__, str(self)))
 
     def click_and_hold(self, delay, p2c_notif=True):
         self.mouse_move()
-        self._mouse_event(win32con.MOUSEEVENTF_LEFTDOWN)
+        InputEmulator.press_button(ButtonCode.LEFT)
         time.sleep(delay)
-        self._mouse_event(win32con.MOUSEEVENTF_LEFTUP)
+        InputEmulator.release_button(ButtonCode.LEFT)
         if p2c_notif:
             logger.info('pikuli.%s.click_and_hold(): click_and_hold on %s' % (type(self).__name__, str(self)))
 
@@ -195,37 +176,33 @@ class LocationF(Vector):
         :return: :class:`Location`
         """
         self.mouse_move()
-        self._mouse_event(win32con.MOUSEEVENTF_LEFTDOWN)
+        InputEmulator.press_button(ButtonCode.LEFT)
         time.sleep(1)
+        InputEmulator.set_mouse_pos(to.x, to.y)
+        '''
+        TODO: ??? почему я тут сделал через событие, а не win32api.SetCursorPos ???
         screen_w = win32api.GetSystemMetrics(0)
         screen_h = win32api.GetSystemMetrics(1)
         to_x = to.x * (65535 / screen_w)
         to_y = to.y * (65535 / screen_h)
         win32api.mouse_event(win32con.MOUSEEVENTF_MOVE | win32con.MOUSEEVENTF_ABSOLUTE, to_x, to_y)
+        '''
         time.sleep(delay)
-        self._mouse_event(win32con.MOUSEEVENTF_LEFTUP)
+        InputEmulator.release_button(ButtonCode.LEFT)
         if p2c_notif:
             logger.info('pikuli.{}.click_move_hold(): moved to x {}, y {}'.format(type(self).__name__, to_x, to_y))
 
-    def rightClick(self, after_click_delay=DELAY_AFTER_CLICK, p2c_notif=True):
+    def rightClick(self, after_cleck_delay=0, p2c_notif=True):
         self.mouse_move()
-        self._mouse_event(win32con.MOUSEEVENTF_RIGHTDOWN)
-        time.sleep(DELAY_IN_MOUSE_CLICK)
-        self._mouse_event(win32con.MOUSEEVENTF_RIGHTUP)
-        time.sleep(after_click_delay)
+        InputEmulator.right_click()
+        time.sleep(after_cleck_delay)
         if p2c_notif:
             logger.info('pikuli.%s.rightClick(): rightClick on %s' % (type(self).__name__, str(self)))
 
-    def doubleClick(self, after_click_delay=DELAY_AFTER_CLICK, p2c_notif=True):
+    def doubleClick(self, after_cleck_delay=0, p2c_notif=True):
         self.mouse_move()
-        self._mouse_event(win32con.MOUSEEVENTF_LEFTDOWN)
-        time.sleep(DELAY_IN_MOUSE_CLICK)
-        self._mouse_event(win32con.MOUSEEVENTF_LEFTUP)
-        time.sleep(DELAY_MOUSE_DOUBLE_CLICK)
-        self._mouse_event(win32con.MOUSEEVENTF_LEFTDOWN)
-        time.sleep(DELAY_IN_MOUSE_CLICK)
-        self._mouse_event(win32con.MOUSEEVENTF_LEFTUP)
-        time.sleep(DELAY_AFTER_CLICK)
+        InputEmulator.left_dbl_click()
+        time.sleep(after_cleck_delay)
         if p2c_notif:
             logger.info('pikuli.%s.doubleClick(): doubleClick on %s' % (type(self).__name__, str(self)))
 
@@ -233,47 +210,48 @@ class LocationF(Vector):
         # direction:
         #   1 - forward
         #  -1 - backward
-        if modifiers is not None:
-            press_modifiers(modifiers)
         self.mouse_move()
+        if modifiers is not None:
+            InputEmulator.press_modifiers(modifiers)
         if click:
             self.click(p2c_notif=False)
         logger.info('{} scrolling: direction={}, '
                          'count={}...'.format(self, direction, count))
-        for i in range(0, int(count)):
-            self._mouse_event(win32con.MOUSEEVENTF_WHEEL, direction=int(direction))
-            time.sleep(DELAY_IN_MOUSE_CLICK)
+        InputEmulator.scroll(
+            ScrollDirection.UP if direction == 1 else ScrollDirection.DOWN,
+            count=int(count))
         if p2c_notif:
             logger.info('pikuli.%s.scroll(): scroll on %s; direction=%s, count=%s, click=%s' % (type(self).__name__, str(self), str(direction), str(count), str(click)))
         if modifiers is not None:
-            release_modifiers(modifiers)
+            InputEmulator.release_modifiers(modifiers)
 
-    def type(self, text, modifiers=None, click=True, press_enter=False,
-             click_type_delay=DELAY_BETWEEN_CLICK_AND_TYPE,
-             p2c_notif=True):
+    def type(self, text, modifiers=None, click=True, press_enter=False, click_type_delay=0, p2c_notif=True):
         ''' Не как в Sikuli '''
         if click:
-            self.click(after_click_delay=click_type_delay, p2c_notif=False)
-        _text = str(text) + (Key.ENTER if press_enter else '')
-        type_text(_text, modifiers, p2c_notif=False)
+            self.click(after_cleck_delay=click_type_delay, p2c_notif=False)
+
+        InputEmulator.type_text(str(text), modifiers, p2c_notif=False)
+
+        if press_enter:
+            InputEmulator.type_key(Key.ENTER)
+
         if p2c_notif:
             logger.info('pikuli.%s.type(): type on %s \'%s\'; modifiers=%s, click=%s' % (type(self).__name__, str(self), repr(text), str(modifiers), str(click)))
 
-    def enter_text(self, text, modifiers=None, click=True, click_type_delay=DELAY_BETWEEN_CLICK_AND_TYPE, p2c_notif=True, press_enter=True):
-        ''' Не как в Sikuli
-        TODO: не нужен тут Ctrl+a  --  не всегда и не везде работает'''
-        if click:
-            self.click(after_click_delay=click_type_delay, p2c_notif=False)
-        type_text('a', KeyModifier.CTRL, p2c_notif=False)
+    def enter_text(self, text, modifiers=None, click=True, click_type_delay=0, p2c_notif=True, press_enter=True):
+        '''
+        ПЕРЕСТАТЬ ИСПОЛЬБЗОВАТЬ ЭТОТ МЕТОД
+        Не как в Sikuli
+        TODO: не нужен тут Ctrl+a  --  не всегда и не везде работает
+        '''
+        self.type('a', KeyModifier.CTRL, click=click, press_enter=False, p2c_notif=False)
         time.sleep(0.5)
-        if press_enter:
-            text = str(text) + Key.ENTER
-        type_text(str(text), modifiers, p2c_notif=False)
+        self.type(text, modifiers, click=False, press_enter=press_enter, p2c_notif=False)
+
         if p2c_notif:
             logger.info('pikuli.%s.enter_text(): enter_text on %s \'%s\'; modifiers=%s, click=%s' % (type(self).__name__, str(self), repr(text), str(modifiers), str(click)))
 
-        logger.warning('We need to eliminate all calls '
-                            'of Location.enter_text() !!!!!')
+        logger.warning('We need to eliminate all calls of Location.enter_text() !!!!!')
 
     def moveto(self, dest_location):
         """

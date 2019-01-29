@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 
-import _functions
-from . import FailExit
-from Region import Region
+from . import _functions, FailExit, geom
 
 
-class Screen(Region):
+class Screen(geom.region.Region):
     """ Represents physical computer display screen.
         x, y  --  left upper corner coords relative to virtual desktop.
         w, h  --  screen rectangle area dimensions.
