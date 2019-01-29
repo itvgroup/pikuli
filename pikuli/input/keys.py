@@ -29,7 +29,7 @@ class Key(NullPrefixStr, Enum):
     @property
     def key_code(self):
         key_code_str = NullPrefixStr.drop_nullprefix(self.value)
-        return int(key_code_str)
+        return ord(key_code_str)
 
 
 class KeyModifier(str, Enum):
@@ -44,8 +44,8 @@ class KeyModifier(str, Enum):
     def _str_to_key_codes(cls, s):
         out = []
         for item in list(str2items(s)):
-            assert item is Key
-            out.append(KeyModifier(item).key_code)
+            assert (item in Key) and KeyModifier(item)
+            out.append(item.key_code)
         return out
 
 
@@ -53,16 +53,16 @@ def str2items(s):
     s = unicode(s)
     out = []
 
-    idxes = xrange(len(s))
+    idxes = iter(xrange(len(s)))
     for i in idxes:
         char = s[i]
         try:
             char_next = s[i+1]
             special_key = Key(char + char_next)
+        except:
+            out.append(char)
         else:
             idxes.next()
             out.append(special_key)
-        except:
-            out.append(char)
 
     return out
