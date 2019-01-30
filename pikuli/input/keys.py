@@ -6,6 +6,11 @@ from .helper_types import NullPrefixStr
 from .platform_init import KeyCode, ScrollDirection
 
 
+class KeyMeta(EnumMeta):
+    def __new__(mcls, name, bases, dct):
+        dct.update({e.name: e.value for e in list(KeyCode)})
+        return super(KeyMeta, mcls).__new__(mcls, name, bases, dct)
+
 class Key(NullPrefixStr, Enum):
     '''
     Пары '\x00' и кода специальных клавиш. Пары хранятся как строки из (два символа), позволяет лего
@@ -18,12 +23,7 @@ class Key(NullPrefixStr, Enum):
     литера, а OS-зависимый код спецаильного символа.
     '''
 
-    class __KeyMeta(EnumMeta):
-        def __new__(mcls, name, bases, dct):
-            dct.update({e.name: e.value for e in list(KeyCode)})
-            return super(KeyMeta, mcls).__new__(mcls, name, bases, dct)
-
-    __metaclass__ = __KeyMeta
+    __metaclass__ = KeyMeta
 
     @property
     def key_code(self):
@@ -58,10 +58,9 @@ def str2items(s):
         try:
             char_next = s[i+1]
             special_key = Key(char + char_next)
+        except:
+            out.append(char)
         else:
             idxes.next()
             out.append(special_key)
-        except:
-            out.append(char)
-
     return out
