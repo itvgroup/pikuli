@@ -12,7 +12,7 @@ from .constants import (
     DELAY_MOUSE_CLICK, DELAY_MOUSE_DOUBLE_CLICK, DELAY_MOUSE_AFTER_ANY_CLICK,
     DELAY_MOUSE_SET_POS, DELAY_MOUSE_SCROLL
 )
-from .keys import str2items, Key
+from .keys import InputSequence, Key, KeyModifier
 from .platform_init import ButtonCode, KeyCode, OsKeyboardMixin, OsMouseMixin
 
 
@@ -27,7 +27,7 @@ class KeyboardMixin(object):
     )
 
     @classmethod
-    def type_text(cls, s, modifiers=None, p2c_notif=True):
+    def type_text(cls, input_data, modifiers=None, p2c_notif=True):
         """
         Особенности:
             -- Если установлены modifiers, то не будет различия между строчными и загалавными буквами.
@@ -40,6 +40,9 @@ class KeyboardMixin(object):
         # https://ru.wikipedia.org/wiki/Скан-код
         # http://stackoverflow.com/questions/21197257/keybd-event-keyeventf-extendedkey-explanation-required
 
+        input_data = InputSequence(input_data)
+        modifiers = InputSequence(modifiers)
+
         @contextmanager
         def _press_shift_if_necessary(char_need_shift_key):
             if char_need_shift_key and (not modifiers):
@@ -49,29 +52,31 @@ class KeyboardMixin(object):
             else:
                 yield
 
-        cls.press_modifiers(modifiers)
+        try:
+            print input_data, modifiers
+            cls.press_modifiers(modifiers)
 
-        for item in str2items(s):
-            try:
-                key_code, need_shift = str_item_to_keycode(item)
-            except Exception as ex:
-                logger.exception(ex, 'Error dealing with symbol {!r} in string {!r}.'.format(item, s))
-                raise
-            with _press_shift_if_necessary(need_shift):
-                cls.type_key(key_code)
-
-        cls.release_modifiers(modifiers)
+            for item in input_data:
+                try:
+                    key_code, need_shift = cls.str_item_to_keycode(item)
+                except Exception as ex:
+                    logger.exception(ex, 'Error dealing with symbol {!r} in string {!r}.'.format(item, input_data))
+                    raise
+                with _press_shift_if_necessary(need_shift):
+                    cls.type_key(key_code)
+        finally:
+            cls.release_modifiers(modifiers)
 
         if p2c_notif:
             logger.info('pikuli._functions.type_text(): {!r} '
-                        'was typed; modifiers={!r}'.format(s, modifiers))
+                        'was typed; modifiers={!r}'.format(input_data, modifiers))
 
     @classmethod
     def str_item_to_keycode(cls, item):
         if item is Key:
             return (item.key_code, False)
         else:
-            assert item in cls._PrintableChar, 'PrintableChars={!r}; item={!r}'.format(cls._PrintableChar, item)
+            assert item in cls._PrintableChars, 'PrintableChars={!r}; item={!r}'.format(cls._PrintableChars, item)
             return cls._char_to_keycode(item)
 
     @classmethod
@@ -99,8 +104,8 @@ class KeyboardMixin(object):
 
     @classmethod
     def _do_modifier_keys_action(cls, modifiers, action):
-        for modif_key_code in KeyModifier._str_to_key_codes(modifiers):
-            action(modif_key_code)
+        for m in modifiers:
+            action(m.key_code)
 
 
 class MouseMixin(object):
