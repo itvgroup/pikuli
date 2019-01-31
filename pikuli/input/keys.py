@@ -56,6 +56,9 @@ class InputSequence(object):
             else:
                 yield elem
 
+    @property
+    def is_empty(self):
+        return len(self._container) == 0
 
 
 class KeyMeta(EnumMeta):
