@@ -3,11 +3,16 @@
 from Xlib.display import Display
 # from Xlib.protocol.event import KeyPress, KeyRelease
 
+from ..helper_types import _HookedClassInit
 
-class X11Base(object):
 
-    _display = Display()
-    _root_window = _display.screen().root
+class X11Base(_HookedClassInit):
+
+    @classmethod
+    def __hooked_class_init(cls):
+        cls._display = Display()
+        cls._root_window = _display.screen().root
+
 
 '''
 class X11KeyboardMixin(X11Base):
@@ -31,6 +36,11 @@ class X11KeyboardMixin(X11Base):
 '''
 
 class X11MouseMixin(X11Base):
+
+    __hooked_class_init_overriding = [
+        '_set_mouse_pos',
+        '_get_mouse_pos'
+    ]
 
     @classmethod
     def _set_mouse_pos(cls, x, y):
