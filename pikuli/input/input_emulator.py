@@ -44,7 +44,7 @@ class KeyboardMixin(object):
         modifiers = InputSequence(modifiers)
         @contextmanager
         def _press_shift_if_necessary(char_need_shift_key):
-            if char_need_shift_key and modifiers.is_empty:
+            if char_need_shift_key and modifiers.is_empty():
                 cls.press_key(KeyCode.SHIFT)
                 yield
                 cls.release_key(KeyCode.SHIFT)
