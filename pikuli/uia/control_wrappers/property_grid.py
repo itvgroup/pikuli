@@ -37,7 +37,7 @@ class ANPropGrid_Table(UIAControl):
         '''
         def _find_row_precisely(obj, nested_name, exact_level):
 
-            rows = [e for e in obj.find_all(Name=nested_name, exact_level=exact_level) if isinstance(e, ANPropGrid_Row)]
+            rows = [ANPropGrid_Row(e) for e in obj.find_all(Name=nested_name, exact_level=exact_level)]
             if len(rows) > 1:
                 Exception('ANPropGrid_Table.find_row._find_row_precisely(...): len(rows) != 0\n\tlen(rows) = %i\n\trows = %s' % (len(rows), str(rows)))
             elif len(rows) == 0:
