@@ -43,6 +43,11 @@ class InputSequence(object):
     def _is_all_unique(self):
         return len(set(self._container)) == len(self._container)
 
+    def _repeat(self, times):
+        new = InputSequence(self)
+        new._container = new._container * times
+        return new
+
     def __iter__(self):
         for elem in self._container:
             if isinstance(elem, basestring):
@@ -50,6 +55,7 @@ class InputSequence(object):
                     yield c
             else:
                 yield elem
+
 
 
 class KeyMeta(EnumMeta):
@@ -65,12 +71,27 @@ class KeyBaseEnum(int, Enum):
         return int(self.value)
 
     def __add__(self, right_operand):
-        right_operand = InputSequence(right_operand)
-        return InputSequence(self) + right_operand
+        return self._sum(self, right_operand)
 
     def __radd__(self, left_operand):
+        return self._sum(left_operand, self)
+
+    def __mul__(self, right_operand):
+        return self._duplicate(right_operand)
+
+    def __rmul__(self, left_operand):
+        return self._duplicate(left_operand)
+
+    @classmethod
+    def _sum(cls, left_operand, right_operand):
         left_operand = InputSequence(left_operand)
-        return left_operand + InputSequence(self)
+        right_operand = InputSequence(right_operand)
+        return left_operand + right_operand
+
+    def _duplicate(self, times):
+        if not isinstance(times, int) or isinstance(times, KeyBaseEnum):
+            raise ValueError("Operand should be int: {!r}".format(times))
+        return InputSequence(self)._repeat(times)
 
 
 class Key(KeyBaseEnum):

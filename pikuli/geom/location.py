@@ -230,7 +230,7 @@ class LocationF(Vector):
         if click:
             self.click(after_cleck_delay=click_type_delay, p2c_notif=False)
 
-        InputEmulator.type_text(str(text), modifiers, p2c_notif=False)
+        InputEmulator.type_text(text, modifiers, p2c_notif=False)
 
         if press_enter:
             InputEmulator.type_key(Key.ENTER)

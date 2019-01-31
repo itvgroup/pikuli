@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from pikuli import logger, FindFailed
+from pikuli.uia.adapter import STATE_SYSTEM
 
 from .uia_control import UIAControl
 from .mixin import _LegacyIAccessiblePattern_value_methods, _Enter_Text_method

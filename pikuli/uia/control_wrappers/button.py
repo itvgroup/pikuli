@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from pikuli.uia.adapter import STATE_SYSTEM
 
 from .uia_control import UIAControl
 

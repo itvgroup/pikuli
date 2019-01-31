@@ -42,10 +42,9 @@ class KeyboardMixin(object):
 
         input_data = InputSequence(input_data)
         modifiers = InputSequence(modifiers)
-
         @contextmanager
         def _press_shift_if_necessary(char_need_shift_key):
-            if char_need_shift_key and (not modifiers):
+            if char_need_shift_key and not modifiers._container:
                 cls.press_key(KeyCode.SHIFT)
                 yield
                 cls.release_key(KeyCode.SHIFT)
@@ -53,7 +52,6 @@ class KeyboardMixin(object):
                 yield
 
         try:
-            print input_data, modifiers
             cls.press_modifiers(modifiers)
 
             for item in input_data:
@@ -73,8 +71,9 @@ class KeyboardMixin(object):
 
     @classmethod
     def str_item_to_keycode(cls, item):
-        if item is Key:
-            return (item.key_code, False)
+
+        if isinstance(item, Key):
+            return item.key_code, False
         else:
             assert item in cls._PrintableChars, 'PrintableChars={!r}; item={!r}'.format(cls._PrintableChars, item)
             return cls._char_to_keycode(item)
