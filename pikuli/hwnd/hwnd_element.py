@@ -8,12 +8,12 @@ import types
 import logging
 
 import psutil
-if os.name == "nt":
-    from win32api import *
-    from win32con import *
-    from win32gui import *
-    from win32process import *
-    from win32con import *
+
+from win32api import *
+from win32con import *
+from win32gui import *
+from win32process import *
+from win32con import *
 from ctypes import oledll
 from ctypes import byref
 import comtypes

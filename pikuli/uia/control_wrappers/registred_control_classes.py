@@ -36,20 +36,6 @@ class RegistredControlClasses(object):
             (".tree_item", "TreeItem"),
             (".window", "Window"),
             (".radio_button", "RadioButton"),
-            (".time_zone_row", "TimeZoneRow"),
-            (".image", "Image"),
-            (".data_grid", "DataGrid"),
-            (".header", "Header"),
-            (".header_item", "HeaderItem"),
-            (".win_edit", "WinEdit"),
-            (".win_combo_box", "WinComboBox"),
-            (".win_radio_button", "WinRadioButton"),
-            (".win_text_box", "WinTextBox"),
-            (".data_grid_view", "DataGridView"),
-            (".win_check_box", "WinCheckBox"),
-            (".win_time_text_box", "WinTimeTextBox"),
-            (".win_progress_bar", "WinProgressBar"),
-            (".license_doc", "Document")
         ]
 
         for module_loc, class_name in to_be_registered:
