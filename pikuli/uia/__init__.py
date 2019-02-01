@@ -14,6 +14,5 @@ except Exception as ex:
     err_msg = traceback.format_exc()
     logger.exception(ex,
         'NOTE: Cann\'t initialize class UIA API. A dummy will be used. Some features is not available.')
-    print ex
     UIAElement = NotImplemetedDummyFactory.make_class(target_cls='UIAElement', reason=err_msg)
     Desktop = NotImplemetedDummyFactory.make_class(target_cls='Desktop', reason=err_msg)
