@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
+
 import time
 
 from pikuli import logger
 
 
 class class_property(property):
+
     def __init__(self, method):
         super(class_property, self).__init__(classmethod(method))
 

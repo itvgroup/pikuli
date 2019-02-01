@@ -134,7 +134,6 @@ class EvdevKeyboardMixin(EvdevBase):
 
 class EvdevMouseMixin(EvdevBase):
 
-
     @classmethod
     def _do_press_button(cls, btn_code):
         cls._uinput_dev.write(ecodes.EV_KEY, btn_code, 1)
