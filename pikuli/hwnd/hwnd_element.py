@@ -1,32 +1,31 @@
 # -*- coding: utf-8 -*-
 
-''' Субмодуль работы с WinForms через win32api. '''
-import logging
+''' Субмодуль работы с контролами через win32api. '''
+
 import os
 import re
 import types
-
 import logging
+
 import psutil
-if os.name == 'nt':
-    from win32api import *
-    from win32con import *
-    from win32gui import *
-    from win32process import *
-    from win32con import *
-    from ctypes import oledll
-    from ctypes import byref
-    import comtypes
-    import comtypes.client
 
-    comtypes.client.GetModule('oleacc.dll')             # Что-то там нагенерирует ...
-    from comtypes.gen.Accessibility import IAccessible  # ... и теперь чать этого импортируем
+from win32api import *
+from win32con import *
+from win32gui import *
+from win32process import *
+from win32con import *
+from ctypes import oledll
+from ctypes import byref
+import comtypes
+import comtypes.client
 
-    import Region
-    from _functions import wait_while, wait_while_not
-    from _exceptions import FindFailed, FailExit
-    import uia_element
+comtypes.client.GetModule('oleacc.dll')             # Что-то там нагенерирует ...
+from comtypes.gen.Accessibility import IAccessible  # ... и теперь чать этого импортируем
 
+import pikuli
+from pikuli._exceptions import FindFailed
+from pikuli.geom import Region
+from pikuli.utils import wait_while, wait_while_not
 
 logger = logging.getLogger('axxon.pikuli')
 
@@ -94,7 +93,7 @@ def _find_main_parent_window(child_hwnd, child_pid=None):
 
 def _find_all_windows_by_pid(pid):
     '''
-    
+
     Находит все окна по заданному PID
     :return: list of handle
     '''
@@ -227,7 +226,7 @@ class HWNDElement(object):
             if not extra['res']:
                 raise Exception('pikuli.HWNDElement: constructor error: hwnd = %s is not child for main window %s' % (str(hwnd), str(self.hwnd_main_win)))'''
 
-        elif len(args) == 1 and isinstance(args[0], uia_element.UIAElement):
+        elif len(args) == 1 and isinstance(args[0], pikuli.uia.UIAElement):
             if args[0].hwnd is None or args[0].hwnd == 0:
                 raise Exception('pikuli.HWNDElement: constructor error: args[0].hwnd is None or args[0].hwnd == 0:; args = %s' % str(args))
             self.hwnd          = args[0].hwnd
@@ -261,7 +260,7 @@ class HWNDElement(object):
         (_, _, wc, hc) = GetClientRect(hwnd)
         # получение координат левого верхнего угла клиенской области осносительно угла экрана
         (xc, yc) = ClientToScreen(hwnd, (0, 0) )
-        reg = Region.Region(xc, yc, wc, hc)
+        reg = geom.Region(xc, yc, wc, hc)
         if hwnd == self.hwnd:
             reg.winctrl = self
         else:
@@ -384,7 +383,7 @@ class HWNDElement(object):
             (_, _, wc, hc) = GetClientRect(self.hwnd)
             # получение координат левого верхнего угла клиенской области осносительно угла экрана
             (xc, yc) = ClientToScreen(self.hwnd, (0, 0) )
-            self._reg = Region.Region(xc, yc, wc, hc, winctrl=self, title=self.title())
+            self._reg = Region(xc, yc, wc, hc, winctrl=self, title=self.title())
 
         return self._reg
 
@@ -521,6 +520,6 @@ win32defines = pywinauto.win32defines
 
 def _treeview_element__reg(self):
     rect = self.Rectangle()
-    return Region(rect.left, rect.top, rect.width, rect.height)
+    return geom.Region(rect.left, rect.top, rect.width, rect.height)
 setattr(pywinauto.controls.common_controls._treeview_element, 'reg', _treeview_element__reg)
 """

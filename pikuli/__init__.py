@@ -12,23 +12,37 @@ Doc pywin32:
 
 '''
 
+#SUPPORT_UIA = True
+
 import os
 import logging
 import sys
-from ._functions import *
-from .Screen import Screen
-from .Location import Location
-from .Vector import Vector, RelativeVec
-from .Match import Match
-from .Pattern import Pattern
-from .hwnd_element import HWNDElement
-from .Region import Region
+
+
+
+logger = logging.getLogger('axxon.pikuli')
+
+from ._SettingsClass import SettingsClass
+Settings = SettingsClass()
 
 from ._exceptions import FailExit, FindFailed
-from ._SettingsClass import *
+from ._functions import *  # TODO: remove it
 
-Settings = SettingsClass()
-logger = logging.getLogger('axxon.pikuli')
+from .geom.vector import Vector, RelativeVec
+from .geom.region import Region
+from .geom.location import Location, LocationF
+
+from .Screen import Screen
+from .Match import Match
+from .Pattern import Pattern
+
+if os.name == 'nt':
+    from .hwnd.hwnd_element import HWNDElement
+
+#if SUPPORT_UIA:
+#    from .uia import UIAElement  # , AutomationElement
+#    from .uia.control_wrappers import RegistredControlClasses
+#    RegistredControlClasses._register_all()
 
 try:
     Settings.addImagePath(
@@ -43,9 +57,8 @@ __all__ = [
     'Screen',
     'Match',
     'Location',
+    'LocationF',
     'Pattern',
     'FailExit',
     'FindFailed',
-    'wait_while',
-    'HWNDElement',
-]
+]  # TODO: shorter this list

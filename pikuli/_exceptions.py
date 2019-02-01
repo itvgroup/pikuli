@@ -3,8 +3,6 @@
 import traceback
 
 
-
-
 class PikuliError(RuntimeError):
     pass
 
