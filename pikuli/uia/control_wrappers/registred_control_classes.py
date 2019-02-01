@@ -36,6 +36,7 @@ class RegistredControlClasses(object):
             (".tree_item", "TreeItem"),
             (".window", "Window"),
             (".radio_button", "RadioButton"),
+            (".scroll_bar", "ScrollBar"),
         ]
 
         for module_loc, class_name in to_be_registered:
