@@ -146,7 +146,7 @@ class MouseMixin(object):
 
     @classmethod
     def release_button(cls, key_code):
-        cls._do_release_key(key_code)
+        cls._do_release_button(key_code)
         time.sleep(DELAY_MOUSE_BTN_RELEASE)
 
     @classmethod
