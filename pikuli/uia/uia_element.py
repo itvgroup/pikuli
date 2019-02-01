@@ -127,7 +127,7 @@ class UIAElement(object):
                 self._automation_element = pointer2elem._automation_element
                 self._from_hwnd = False
             elif isinstance(pointer2elem, int) or isinstance(pointer2elem, long):
-                self._automation_element = UIA.IUIAutomation_obj.ElementFromHandle(pointer2elem)
+                self._automation_element = Adapter._IUIAutomation_obj.ElementFromHandle(pointer2elem)
                 self._from_hwnd = True
             else:
                 raise Exception('pikuli.UIAElement: can not construct UIAElement')
