@@ -4,6 +4,8 @@ import os
 from collections import namedtuple
 from contextlib import contextmanager
 
+from pikuli._helpers import NotImplemetedDummyFactory
+
 
 Method = namedtuple('Method', [
     'KeyCode',
@@ -13,11 +15,6 @@ Method = namedtuple('Method', [
     'OsMouseMixin',
     'Clipboard'
 ])
-
-
-class Dummy(object):
-    def __getattr__(self, attr):
-        raise NotImplemeted()
 
 
 class EmulatorMethod(object):
@@ -89,12 +86,24 @@ elif os.name == 'posix':
     class EvdevX11MouseMixin(EvdevMouseMixin, X11MouseMixin):
         pass
 
+    class EmulatorMethodLazyGetter(object):
+        def __str__(self):
+            return str(EmulatorMethod.get_method())
+        def __repr__(self):
+            return repr(EmulatorMethod.get_method())
+    NotImplemetedDummy = NotImplemetedDummyFactory.make_class(
+        msg='InputEmulator attribute {attr!r} is not available while input method is {input_methods!s}',
+        input_methods=EmulatorMethodLazyGetter())
+
     EmulatorMethod._collection['evdev'] = Method(
-        EvdevKeyCodes, EvdevButtonCode, EvdevScrollDirection, EvdevKeyboardMixin, EvdevMouseMixin, Dummy)
+        EvdevKeyCodes, EvdevButtonCode, EvdevScrollDirection, EvdevKeyboardMixin, EvdevMouseMixin, NotImplemetedDummy)
+
     EmulatorMethod._collection['x11'] = Method(
-        Dummy, Dummy, Dummy, Dummy, X11MouseMixin, Dummy)
+        NotImplemetedDummy, NotImplemetedDummy, NotImplemetedDummy, NotImplemetedDummy, X11MouseMixin, NotImplemetedDummy)
+
     EmulatorMethod._collection['gtk3'] = Method(
-        Dummy, Dummy, Dummy, GtkKeyboardMixin, Dummy, GtkClipboard)
+        NotImplemetedDummy, NotImplemetedDummy, NotImplemetedDummy, GtkKeyboardMixin, NotImplemetedDummy, GtkClipboard)
+
     EmulatorMethod._collection['evdev+x11+gtk3'] = Method(
         EvdevKeyCodes, EvdevButtonCode, EvdevScrollDirection, GtkKeyboardMixin, EvdevX11MouseMixin, GtkClipboard)
 

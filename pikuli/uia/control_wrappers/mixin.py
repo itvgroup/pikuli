@@ -97,27 +97,28 @@ class _Enter_Text_method(UIAElement):
         '''
         text = str(text)
         if method == 'click':
-            if text != self.get_value():
-                #self.type_text('a', modifiers=KeyModifier.CTRL, chck_text=False, click=True) -- не на всех контролах корректно работает
-                self.clear_text(clean_method, check_timeout=check_timeout, p2c_notif=p2c_notif)
-
-                #if len(self.get_value()) != 0:  --  а если поле не поддается очищению, а сосдение -- очищается (пример: "гриды")? Лучше првоерку убрать -- важен еонечный результа.
-                #    raise Exception('_Enter_Text_method.enter_text(...): can not clear the text field. It still contains the following: %s' % self.get_value())
-                self.type_text(text + Key.ENTER, chck_text=False, click=False, p2c_notif=False)
-                changed = True
-            else:
-                changed = False
+            self.region.enter_text(text)
+            # if text != self.get_value():
+            #     #self.type_text('a', modifiers=KeyModifier.CTRL, chck_text=False, click=True) -- не на всех контролах корректно работает
+            #     self.clear_text(clean_method, check_timeout=check_timeout, p2c_notif=p2c_notif)
+            #
+            #     #if len(self.get_value()) != 0:  --  а если поле не поддается очищению, а сосдение -- очищается (пример: "гриды")? Лучше првоерку убрать -- важен еонечный результа.
+            #     #    raise Exception('_Enter_Text_method.enter_text(...): can not clear the text field. It still contains the following: %s' % self.get_value())
+            #     self.type_text(text + Key.ENTER, chck_text=False, click=False, p2c_notif=False)
+            #     changed = True
+            # else:
+            #     changed = False
         elif method == 'invoke':
-            changed = self.set_value_api(text, p2c_notif=False)
+            self.set_value_api(text, p2c_notif=False)
         else:
             raise Exception('_Enter_Text_method.enter_text(...): unsupported method = \'%s\'' % str(method))
 
-        if p2c_notif:
-            if changed:
-                logger.info('pikuli.%s.enter_text(): enter \'%s\' in %s' % (type(self).__name__, repr(text), str(self)))
-            else:
-                logger.info('pikuli.%s.enter_text(): \'%s\' is alredy in %s' % (type(self).__name__, repr(text), str(self)))
-        return changed
+        # if p2c_notif:
+        #     if changed:
+        #         logger.info('pikuli.%s.enter_text(): enter \'%s\' in %s' % (type(self).__name__, repr(text), str(self)))
+        #     else:
+        #         logger.info('pikuli.%s.enter_text(): \'%s\' is alredy in %s' % (type(self).__name__, repr(text), str(self)))
+        # return changed
 
 
 class _ValuePattern_methods(UIAElement):

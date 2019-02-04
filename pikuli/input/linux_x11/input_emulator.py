@@ -5,7 +5,6 @@ from Xlib.display import Display
 
 from ..helper_types import _HookedClassInit
 
-
 class X11Base(_HookedClassInit):
 
     @classmethod
@@ -37,10 +36,12 @@ class X11KeyboardMixin(X11Base):
 
 class X11MouseMixin(X11Base):
 
-    __hooked_class_init_overriding = [
-        '_set_mouse_pos',
-        '_get_mouse_pos'
-    ]
+    __hooked_class_init_overriding = {
+        X11Base: [
+            '_set_mouse_pos',
+            '_get_mouse_pos'
+        ]
+    }
 
     @classmethod
     def _set_mouse_pos(cls, x, y):
