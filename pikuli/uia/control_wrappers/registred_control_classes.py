@@ -40,6 +40,7 @@ class RegistredControlClasses(object):
             (".progress_bar", "ProgressBar"),
             (".header", "Header"),
             (".thumb", "Thumb"),
+            (".tab_item", "TabItem"),
         ]
 
         for module_loc, class_name in to_be_registered:

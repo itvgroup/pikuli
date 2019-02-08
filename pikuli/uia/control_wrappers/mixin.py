@@ -151,7 +151,7 @@ class _ValuePattern_methods(UIAElement):
                 logger.info('pikuli.%s.set_value_api(): \'%s\' is alredy in %s (via ValuePattern)' % (type(self).__name__, repr(text), str(self)))
         return changed
 
-    def is_readoly(self):
+    def is_read_only(self):
         return bool(self.get_pattern('ValuePattern').CurrentIsReadOnly)
 
 

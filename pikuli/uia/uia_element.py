@@ -159,6 +159,7 @@ class UIAElement(object):
         '''
         we also support direct use name to get object
         '''
+
         attr = self.get_property(name)
         if attr is not None:
             if name == 'ControlType':
