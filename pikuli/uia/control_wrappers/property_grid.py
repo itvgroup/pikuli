@@ -109,8 +109,8 @@ class ANPropGrid_Row(UIAControl, _LegacyIAccessiblePattern_value_methods, _Enter
 
     @property
     def value(self):
-        return self.get_pattern('LegacyIAccessiblePattern').CurrentValue
+        return self.get_pattern('ValuePattern').CurrentValue
 
     @property
     def has_value_pattern(self):
-        return self.get_pattern('LegacyIAccessiblePattern') is not None
+        return self.get_pattern('ValuePattern') is not None

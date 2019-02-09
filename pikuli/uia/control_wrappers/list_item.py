@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from pikuli.uia.adapter import Enums
 
 from .uia_control import UIAControl
 
@@ -17,4 +18,4 @@ class ListItem(UIAControl):
 
     @property
     def is_checked(self):
-        return self.get_pattern('TogglePattern').CurrentToggleState == UIA.UIA_wrapper.ToggleState_On
+        return bool(self.get_pattern('TogglePattern').CurrentToggleState)
