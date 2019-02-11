@@ -47,7 +47,7 @@ class CheckBox(UIAControl):
         """
         Проверяем состояние CheckBox (установлена ли галочка).
 
-        :param bool expected_state: Ожидаемое состояние CheckBox (`True` -- галочка установлена)
+        :param expected_state: Ожидаемое состояние CheckBox (`True` -- галочка установлена)
         :param str method: Метод проверки: `legacy` -- через `LegacyIAccessiblePattern`, а `uia` --
                            через `TogglePattern`.
         """
@@ -91,10 +91,13 @@ class CheckBox(UIAControl):
         return True
 
     def is_checked(self):
-        return self._check_state(True, 'legacy')
+        return self._check_state(True, 'uia')
 
     def is_unchecked(self):
-        return self._check_state(False, 'legacy')
+        return self._check_state(False, 'uia')
+
+    def is_indeterminate(self):
+        return self._check_state(None, 'uia')
 
     def check(self, method='click', check_timeout=CONTROL_CHECK_TIMEOUT):
         """
