@@ -2,7 +2,7 @@
 
 import ctypes
 
-from pikuli.uia.exceptions import DriverException
+from pikuli.uia.exceptions import AdapterException
 from ..pattern_description import PatternDescriptions
 
 
@@ -23,7 +23,7 @@ class PatternFactory(object):
 
         raw_pointer = automation_element.GetCurrentPatternAs(description.pattern_id, interface_id._iid_)
         if not raw_pointer:
-            raise DriverException("Cannot get pattern {}".format(pattern_name))
+            raise AdapterException("Cannot get pattern {}".format(pattern_name))
 
         pattern_obj = ctypes.POINTER(interface_id)(raw_pointer)
         return pattern_obj

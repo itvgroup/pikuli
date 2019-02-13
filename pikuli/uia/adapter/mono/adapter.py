@@ -44,11 +44,12 @@ from System.Windows.Automation.Provider import (
 from pikuli import logger
 from pikuli.utils import class_property
 
+from ..adapter_base import AdapterBase
 from ..helper_types import Enums
 from ..sdk_enums import _get_sdk_enums
 
 
-class MonoAdapter(object):
+class MonoAdapter(AdapterBase):
 
     @classmethod
     def _make_enums(cls):
@@ -123,7 +124,7 @@ class MonoAdapter(object):
     def _build_patterns_map(cls, names):
         """ Is called by the ancestor class :class:`AdapterBase`. """
         names.remove('LegacyIAccessiblePattern')  # .Net (not just Mono) doesn't support `LegacyIAccessiblePattern`.
-        return cls._build_map(System.Windows.Automation, "{name}", "Pattern", names)
+        return cls._build_map(System.Windows.Automation, "{name}Identifiers", "Pattern", names)
 
     @classmethod
     def is_automation_element(cls, obj):

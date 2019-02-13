@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from pikuli.uia.adapter import Enums
 
-from .exceptions import DriverException
+from .exceptions import AdapterException
 
 
 class UiaPatternMethod(object):
@@ -27,7 +27,7 @@ class UiaPatternMethod(object):
                 self.outs.append([arg_type, arg_name])
             else:
                 # skip unsupported arg_direction
-                raise DriverException("Unsupported arg_direction: %s" % arg_direction)
+                raise AdapterException("Unsupported arg_direction: %s" % arg_direction)
 
     def __repr__(self):
         docstring = "Name:\t"+self.name+"\n"

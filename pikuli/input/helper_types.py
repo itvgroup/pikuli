@@ -33,7 +33,7 @@ class _HookedClassInitMeta(type):
         try:
             class_init_method()
         except Exception as ex:
-            logger.exception(ex,
+            logger.exception(
                 'NOTE: Cann\'t initialize class {!r}. A dummy will be used. '
                 'Some features is not available.'.format(cls))
             err_msg = traceback.format_exc()

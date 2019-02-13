@@ -11,5 +11,5 @@ else:
     class COMError(Exception): pass
 
 
-class DriverException(Exception):
+class AdapterException(Exception):
     pass

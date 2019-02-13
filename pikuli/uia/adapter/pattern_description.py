@@ -2,7 +2,7 @@
 
 from pikuli import logger
 from .patterns_plain_description import METHOD, PROPERTY, patterns_plain_description
-from ..exceptions import DriverException
+from ..exceptions import AdapterException
 
 
 class PatternDescriptions():
@@ -49,7 +49,7 @@ class _PattDesc(object):
             elif type == PROPERTY:
                 self.properties_description[name] = args
             else:
-                raise DriverException("Unrecognised type {type!r} in member {member} of pattern {pattern}".format(
+                raise AdapterException("Unrecognised type {type!r} in member {member} of pattern {pattern}".format(
                     type=type, member=name, pattern=self.pattern_name))
     @property
     def is_valid(self):

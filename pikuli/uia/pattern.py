@@ -11,18 +11,24 @@ class UiaPattern(object):
     (Based on https://github.com/xcgspring/AXUI)
     '''
     def __init__(self, automation_element, pattern_name):
+        self._pattern_name = pattern_name
         self._pattern_object = PatternFactory.make_patternt(automation_element, pattern_name)
         self._pattern_description = PatternDescriptions.get_description(pattern_name)
 
     def __getattr__(self, member_name):
-        member_object = getattr(self._pattern_object, member_name)
+        member_object = getattr(self._pattern_object, member_name, None)
 
+        ret = None
         if self._pattern_description.has_method(member_name):
-            return UiaPatternMethod(member_object, member_name, self._pattern_description.methods_description[member_name])
+            ret = UiaPatternMethod(member_object, member_name, self._pattern_description.methods_description[member_name])
         elif self._pattern_description.has_property(member_name):
-            return member_object
-        else:
-            raise AttributeError("Pattern attribute {!r} not exist".format(member_name))
+            ret = member_object
+
+        if ret is None or member_object is None:
+            raise AttributeError("Attribute {!r} not found in pattern {!r} (ret={!r}, member_object={!r})".format(
+                member_name, self._pattern_name, ret, member_object))
+
+        return ret
 
     def __str__(self):
         docstring = ""

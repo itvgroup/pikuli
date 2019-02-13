@@ -27,7 +27,7 @@ from pikuli.utils import wait_while
 from pikuli._functions import verify_timeout_argument
 from pikuli._exceptions import FindFailed, FailExit
 
-from .exceptions import DriverException, COMError
+from .exceptions import AdapterException, COMError
 from .adapter import Adapter, PatternFactory, PropertyValueConverter, AutomationElement, Condition, Enums, TreeWalker
 from .pattern import UiaPattern
 from .settings import NEXT_SEARCH_ITER_DELAY, DEFAULT_FIND_TIMEOUT, DYNAMIC_FIND_TIMEOUT
@@ -256,7 +256,7 @@ class UIAElement(object):
     def get_pattern(self, pattern_name):
         try:
             pattern = UiaPattern(self._automation_element, pattern_name)
-        except DriverException:
+        except AdapterException:
             pattern = None
         return pattern
 
