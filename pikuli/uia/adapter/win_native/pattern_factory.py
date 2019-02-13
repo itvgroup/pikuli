@@ -13,7 +13,7 @@ class PatternFactory(object):
     @classmethod
     def init(cls, adapter):
         PatternDescriptions.init(adapter)
-        pattern_names = PatternDescriptions.get_all_names()
+        pattern_names = PatternDescriptions.get_names()
         cls._pattern_interfaces_map = adapter._build_pattern_interfaces_map(pattern_names)
 
     @classmethod

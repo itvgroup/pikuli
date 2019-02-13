@@ -159,16 +159,16 @@ class UIAElement(object):
         '''
         we also support direct use name to get object
         '''
-
         attr = self.get_property(name)
         if attr is not None:
             if name == 'ControlType':
                 return Adapter.get_control_type_name(attr)
-            else:
-                return attr
+            return attr
+
         attr = self.get_pattern(name)
         if attr is not None:
             return attr
+
         raise AttributeError("Attribute {!r} not exist in {}".format(name, type(self)))
 
     def _short_info(self):
@@ -260,6 +260,9 @@ class UIAElement(object):
         except AdapterException:
             pattern = None
         return pattern
+
+    def get_supported_patterns(self):
+        return Adapter.get_supported_patterns(self)
 
     def _test4readiness(self):
         ''' TODO: По идеи, надо сделать некую проврку, что класс создан правильно и готов к использованию.

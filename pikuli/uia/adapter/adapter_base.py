@@ -74,7 +74,7 @@ class AdapterBase(object):
     @classmethod
     def _build_map(cls, get_attr_from, name_format, err_msg_preamble, names):
         """
-        Is used in derived classes :class:`mono.Adapter` and :class:`windows.Adapter`.
+        Is used in derived classes :class:`dotnet.Adapter` and :class:`win_native.Adapter`.
         """
         name2id = {}
         for name in names:

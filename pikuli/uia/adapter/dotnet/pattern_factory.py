@@ -11,6 +11,10 @@ class _PatternWrapper(object):
         self._dotnet_pattern_obj = dotnet_pattern_obj
 
     def __getattr__(self, attr_name):
+        _dotnet_pattern_obj_attr = getattr(self._dotnet_pattern_obj, attr_name, None)
+        if _dotnet_pattern_obj_attr is not None:
+            return _dotnet_pattern_obj_attr
+
         mode, property_name = self._split_attr_name(attr_name)
         if not mode or not property_name:
             raise AttributeError('attr_name={!r} is invalid', attr_name)

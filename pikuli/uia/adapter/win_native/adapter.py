@@ -80,3 +80,8 @@ class WinAdapter(AdapterBase):
     @classmethod
     def is_automation_element(cls, obj):
         return isinstance(obj, cls._IUIAutomationElement)
+
+    @classmethod
+    def get_supported_patterns(cls, uia_element):
+        return [pattern_name for pattern_name in cls._patterns_map.names()
+                if uia_element.get_pattern(pattern_name) is not None]
