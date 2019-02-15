@@ -92,6 +92,7 @@ elif os.name == 'posix':
         def __repr__(self):
             return repr(EmulatorMethod.get_method())
     NotImplemetedDummy = NotImplemetedDummyFactory.make_class(
+        'NotImplemetedDummy',
         msg='InputEmulator attribute {attr!r} is not available while input method is {input_methods!s}',
         input_methods=EmulatorMethodLazyGetter())
 
