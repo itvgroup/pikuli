@@ -59,12 +59,12 @@ class EmulatorMethod(object):
 
 
 if os.name == 'nt':
-    from .windows.input_emulator import WinVirtKeyCodes
-    from .windows.input_emulator import WinButtonCode
-    from .windows.input_emulator import WinScrollDirection
-    from .windows.input_emulator import WinKeyboardMixin
-    from .windows.input_emulator import WinMouseMixin
-    from .windows.clipboard import WinClipboard
+    from .win_native.input_emulator import WinVirtKeyCodes
+    from .win_native.input_emulator import WinButtonCode
+    from .win_native.input_emulator import WinScrollDirection
+    from .win_native.input_emulator import WinKeyboardMixin
+    from .win_native.input_emulator import WinMouseMixin
+    from .win_native.clipboard import WinClipboard
 
     EmulatorMethod._collection['win'] = Method(
         WinVirtKeyCodes, WinButtonCode, WinScrollDirection, WinKeyboardMixin, WinMouseMixin, WinClipboard)

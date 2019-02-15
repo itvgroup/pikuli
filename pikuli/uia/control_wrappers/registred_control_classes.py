@@ -23,6 +23,7 @@ class RegistredControlClasses(object):
             (".combo_box", "ComboBox"),
             (".custom_control", "CustomControl"),
             # (".desktop", "Desktop"), - exclude this one due to it hasn't CONTROL_TYPE
+            (".data_grid", "DataGrid"),
             (".document", "Document"),
             (".edit", "Edit"),
             (".header", "Header"),
