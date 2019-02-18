@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 
 import os
+import tempfile
 
 
 class SettingsClass(object):
 
     __def_IMG_ADDITION_PATH = []  # Пути, кроме текущего и мб еще какого-то подобного
     __def_MinSimilarity = 0.995  # Почти устойчиво с 0.995, но однажны не нашел узелок для контура. 0.700 -- будет найдено в каждом пикселе (порог надо поднимать выше).
-    __def_FindFailedDir = os.path.join(os.environ['TEMP'], 'find_failed')
+    __def_FindFailedDir = os.path.join(tempfile.gettempdir(), 'find_failed')
 
     # Logger:
     __def_PatternURLTemplate = None  # Где искать картинки-шаблрны. Строка-шаблон с %s, куда подставляется имя файла с картинкой-шаблоном. К примеру: http://192.168.116.1/pikuli/pattern/ok_button.png
