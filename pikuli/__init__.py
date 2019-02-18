@@ -19,8 +19,9 @@ import logging
 import sys
 
 
-
 logger = logging.getLogger('axxon.pikuli')
+from .utils import basic_logger_config
+basic_logger_config()
 
 from ._SettingsClass import SettingsClass
 Settings = SettingsClass()

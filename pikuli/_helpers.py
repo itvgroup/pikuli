@@ -5,6 +5,10 @@ import os
 from pikuli import logger
 
 
+class NotImplemetedDummyBase(object):
+    pass
+
+
 class NotImplemetedDummyFactory(object):
 
     class _AttrPlaceholder(object):
@@ -14,22 +18,42 @@ class NotImplemetedDummyFactory(object):
     _attr_placeholder = _AttrPlaceholder()
 
     @classmethod
-    def make_class(cls, msg=None, reason=None, target_cls=None, **kwargs):
+    def make_classes(cls, target_cls, msg=None, reason=None, **kwargs):
+        err_msg = cls._make_class_err_msg(msg, 'classes', reason, target_cls, **kwargs)
+        logger.warning('NOTE: ' + err_msg)
+        return [cls._make_class(err_msg) for c in target_cls]
+
+    @classmethod
+    def make_class(cls, target_cls, msg=None, reason=None, **kwargs):
+        err_msg = cls._make_class_err_msg(msg, 'class', reason, target_cls, **kwargs)
+        logger.warning('NOTE: ' + err_msg)
+        return cls._make_class(err_msg)
+
+    @classmethod
+    def _make_class(cls, err_msg):
+        class NotImplemetedDummy(NotImplemetedDummyBase):
+            def __getattr__(self, attr):
+                raise NotImplementedError(err_msg.format(attr=attr))
+        return NotImplemetedDummy
+
+    @classmethod
+    def _make_class_err_msg(cls, msg, msg_class_part, reason, target_cls, **kwargs):
         if msg is None:
-            msg = ('All methods, in particular {attr!r}, of the class {target_cls!r} is '
+            attr_part = ', in particular {attr!r},' if 'attr' in kwargs else ''
+            msg = ('All methods' + attr_part + ' of the ' + msg_class_part + ' {target_cls!r} is '
                    'unavailable by the following reason:{linesep}{reason!s}')
 
         formated_reason = cls.format_reason(reason)
-        format_args = dict(target_cls=target_cls, reason=formated_reason, linesep=os.linesep, attr=cls._attr_placeholder)
+
+        format_args = dict(
+            target_cls=target_cls,
+            reason=formated_reason,
+            linesep=os.linesep,
+            attr=cls._attr_placeholder)
         format_args.update(kwargs)
+
         err_msg = msg.format(**format_args)
-        logger.warning('NOTE: ' + err_msg)
-
-        class NotImplemetedDummy(object):
-            def __getattr__(self, attr):
-                raise NotImplementedError(err_msg.format(attr=attr))
-
-        return NotImplemetedDummy
+        return err_msg
 
     @classmethod
     def make_class_method(cls, target_cls, method_name, reason):

@@ -58,7 +58,7 @@ class KeyboardMixin(object):
                 try:
                     key_code, need_shift = cls.str_item_to_keycode(item)
                 except Exception as ex:
-                    logger.exception(ex, 'Error dealing with symbol {!r} in string {!r}.'.format(item, input_data))
+                    logger.exception('Error dealing with symbol {!r} in string {!r}.'.format(item, input_data))
                     raise
                 with _press_shift_if_necessary(need_shift):
                     cls.type_key(key_code)

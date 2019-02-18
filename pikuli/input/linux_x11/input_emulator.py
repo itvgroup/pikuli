@@ -10,7 +10,7 @@ class X11Base(_HookedClassInit):
     @classmethod
     def __hooked_class_init(cls):
         cls._display = Display()
-        cls._root_window = _display.screen().root
+        cls._root_window = cls._display.screen().root
 
 
 '''

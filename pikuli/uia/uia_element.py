@@ -27,7 +27,7 @@ from pikuli.utils import wait_while
 from pikuli._functions import verify_timeout_argument
 from pikuli._exceptions import FindFailed, FailExit
 
-from .exceptions import DriverException, COMError
+from .exceptions import AdapterException, COMError
 from .adapter import Adapter, PatternFactory, PropertyValueConverter, AutomationElement, Condition, Enums, TreeWalker
 from .pattern import UiaPattern
 from .settings import NEXT_SEARCH_ITER_DELAY, DEFAULT_FIND_TIMEOUT, DYNAMIC_FIND_TIMEOUT
@@ -159,16 +159,16 @@ class UIAElement(object):
         '''
         we also support direct use name to get object
         '''
-
         attr = self.get_property(name)
         if attr is not None:
             if name == 'ControlType':
                 return Adapter.get_control_type_name(attr)
-            else:
-                return attr
+            return attr
+
         attr = self.get_pattern(name)
         if attr is not None:
             return attr
+
         raise AttributeError("Attribute {!r} not exist in {}".format(name, type(self)))
 
     def _short_info(self):
@@ -257,9 +257,12 @@ class UIAElement(object):
     def get_pattern(self, pattern_name):
         try:
             pattern = UiaPattern(self._automation_element, pattern_name)
-        except DriverException:
+        except AdapterException:
             pattern = None
         return pattern
+
+    def get_supported_patterns(self):
+        return Adapter.get_supported_patterns(self)
 
     def _test4readiness(self):
         ''' TODO: По идеи, надо сделать некую проврку, что класс создан правильно и готов к использованию.
