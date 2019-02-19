@@ -25,9 +25,9 @@ class WinAdapter(AdapterBase):
     for __interface_id in [("IUIAutomation2", "CUIAutomation8"), ("IUIAutomation", "CUIAutomation")]:
         __IUIAutomation = getattr(_UIA_wrapper, __interface_id[0], None)
         __CUIAutomation = getattr(_UIA_wrapper, __interface_id[1], None)
-        if __IUIAutomation is not None:
-            _IUIAutomation_obj = CreateObject(__CUIAutomation, None, None, __IUIAutomation)
-            break
+        # if __IUIAutomation is not None:
+        #     _IUIAutomation_obj = CreateObject(__CUIAutomation, None, None, __IUIAutomation)
+        #     break
 
     @classmethod
     def _make_enums(cls):
