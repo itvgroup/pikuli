@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+from comtypes import CoInitialize
 from comtypes.client import GetModule, CreateObject
 import ctypes
 
@@ -19,7 +19,6 @@ def _get_enum_element_full_name(elem):
 class WinAdapter(AdapterBase):
 
     _UIA_wrapper = GetModule((UIA_type_lib_IID, 1, 0))  # 'UIAutomationCore.dll'
-    print "_UIA_wrapper values :  {}".format(_UIA_wrapper)
 
     _IUIAutomation_obj = None
     _IUIAutomationElement = getattr(_UIA_wrapper, 'IUIAutomationElement', None)
@@ -28,6 +27,7 @@ class WinAdapter(AdapterBase):
         __IUIAutomation = getattr(_UIA_wrapper, __interface_id[0], None)
         __CUIAutomation = getattr(_UIA_wrapper, __interface_id[1], None)
         if __IUIAutomation is not None:
+            CoInitialize()
             _IUIAutomation_obj = CreateObject(__CUIAutomation, None, None, __IUIAutomation)
             break
 
