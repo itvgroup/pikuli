@@ -3,7 +3,7 @@
 from pikuli.uia.adapter.property_value_types import Rectangle
 
 
-class MonoPropertyValueConverter(object):
+class DotNetPropertyValueConverter(object):
 
     @classmethod
     def convert_BoundingRectangle(cls, val):

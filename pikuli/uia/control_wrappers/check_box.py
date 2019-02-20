@@ -12,11 +12,7 @@ class CheckBox(UIAControl):
     CONTROL_TYPE = 'CheckBox'
     REQUIRED_PATTERNS = {}
 
-    TOOGLE_STATES_TO_BOOL = {
-        Enums.ToggleState.On: True,
-        Enums.ToggleState.Off: False,
-        Enums.ToggleState.Indeterminate: None
-    }
+
 
     def _state(self, method):
         """
@@ -24,12 +20,17 @@ class CheckBox(UIAControl):
 
         :return: `True`, `False`, `None` (если `ToggleState_Indeterminate` через UIA)
         """
+        TOOGLE_STATES_TO_BOOL = {
+            Enums.ToggleState.On: True,
+            Enums.ToggleState.Off: False,
+            Enums.ToggleState.Indeterminate: None
+        }
         if method in ['click', 'legacy']:
             curr_state = self.get_pattern('LegacyIAccessiblePattern').CurrentState
             state = bool(curr_state & STATE_SYSTEM['CHECKED'])
         elif method == 'uia':
             toog_state = self.get_pattern('TogglePattern').CurrentToggleState
-            state = self.TOOGLE_STATES_TO_BOOL[toog_state]
+            state = TOOGLE_STATES_TO_BOOL[toog_state]
         else:
             raise Exception('CheckBox.check(...): unsupported method = \'{}\''.format(method))
         return state

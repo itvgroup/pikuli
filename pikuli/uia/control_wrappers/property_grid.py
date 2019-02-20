@@ -36,8 +36,7 @@ class ANPropGrid_Table(UIAControl):
             force_expand -- разворачивать ли свернутые строки, если они обнаружены при поиске строки и являются для нее группирующими.
         '''
         def _find_row_precisely(obj, nested_name, exact_level):
-
-            rows = [ANPropGrid_Row(e) for e in obj.find_all(Name=nested_name, exact_level=exact_level)]
+            rows = [ANPropGrid_Row(e) for e in obj.find_all(Name=nested_name, exact_level=exact_level) if e.CONTROL_TYPE == "Custom"]
             if len(rows) > 1:
                 Exception('ANPropGrid_Table.find_row._find_row_precisely(...): len(rows) != 0\n\tlen(rows) = %i\n\trows = %s' % (len(rows), str(rows)))
             elif len(rows) == 0:
@@ -110,8 +109,8 @@ class ANPropGrid_Row(UIAControl, _LegacyIAccessiblePattern_value_methods, _Enter
 
     @property
     def value(self):
-        return self.get_pattern('LegacyIAccessiblePattern').CurrentValue
+        return self.get_pattern('ValuePattern').CurrentValue
 
     @property
     def has_value_pattern(self):
-        return self.get_pattern('LegacyIAccessiblePattern') is not None
+        return self.get_pattern('ValuePattern') is not None

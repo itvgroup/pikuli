@@ -3,6 +3,7 @@
 from pikuli import FindFailed
 from pikuli.utils import wait_while_not
 
+from . import CONTROL_CHECK_TIMEOUT
 from .uia_control import UIAControl
 from .mixin import _ValuePattern_methods, _Enter_Text_method
 
@@ -72,7 +73,7 @@ class ComboBox(UIAControl, _ValuePattern_methods, _Enter_Text_method):
             -- если value_cmbbox == value_child, то возвращаем это
             -- если value_cmbbox != value_child и value_cmbbox != '', то генерируем исключение
         '''
-        value_cmbbox = _None_of_str(self.get_pattern('ValuePattern').CurrentValue)
+        value_cmbbox = self.get_pattern('ValuePattern').CurrentValue or None
 
         childs = self.find_all(ControlType='Text', exact_level=1) + self.find_all(ControlType='Edit', exact_level=1)
         if len(childs) > 1:

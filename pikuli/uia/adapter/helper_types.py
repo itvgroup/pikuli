@@ -67,3 +67,6 @@ class IdNameMap(object):
 
     def names(self):
         return self._name2id.keys()
+
+    def ids(self):
+        return self._name2id.values()

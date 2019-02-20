@@ -5,6 +5,7 @@ import traceback
 from collections import namedtuple
 
 from pikuli import logger
+from pikuli._helpers import NotImplemetedDummyFactory
 
 
 WindowsButtonCode = namedtuple('WindowsButtonCode', ['event_down', 'event_up'])
@@ -22,49 +23,41 @@ class _HookedClassInitMeta(type):
         class_init_method = getattr(cls, class_init_method_name, None)
         if class_init_method:
             cls.init(class_init_method)
-        else:
-            cls.mark_as_ok()
 
-        if cls.is_marked_fail():
-            overriding_list_name = cls.get_private_name(cls.HOOKED_INIT_CLASS_OVERRIDING)
-            overriding_list = getattr(cls, overriding_list_name, None)
-            if overriding_list:
-                cls.override_methods(overriding_list)
+        overriding_dict_name = cls.get_private_name(cls.HOOKED_INIT_CLASS_OVERRIDING)
+        overriding_dict = getattr(cls, overriding_dict_name, None)
+        if overriding_dict:
+            cls.override_unavailable_methods(overriding_dict)
 
     def init(cls, class_init_method):
         try:
             class_init_method()
         except Exception as ex:
-            logger.exception(ex,
+            logger.exception(
                 'NOTE: Cann\'t initialize class {!r}. A dummy will be used. '
                 'Some features is not available.'.format(cls))
             err_msg = traceback.format_exc()
             cls.mark_as_fail(err_msg)
-        else:
-            cls.mark_as_ok()
 
-    def override_methods(cls, overriding_list):
+    def override_unavailable_methods(cls, overriding_dict):
+        for _, method_names_list in overriding_dict.items():
+            missed_methods = [method_name for method_name in method_names_list if not hasattr(cls, method_name)]
+            if missed_methods:
+                raise AttributeError('Try to override the followin missig methods in the {!r}: {!r}'.format(
+                    cls, missed_methods))
 
-        for method_name in overriding_list:
-            if not hasattr(cls, method_name):
-                raise AttributeError('Try to override missig method {!r} in the {!r}'.format(method_name, cls))
-
-            def dummy(self, *args, **kwargs):
-                raise NotImplementedError('Method {!r} is unavailable by the following reason:{}{!s}'.format(
-                    method_name, os.linesep, cls._init_class_failed_reason))
-
-            setattr(cls, method_name, dummy)
-
-    def mark_as_ok(cls):
-        cls._init_class_failed_reason = None
-        cls._init_class_failed = False
+        for failed_cls, err_msg in cls.init_class_failed.items():
+            methods_to_override = overriding_dict.get(failed_cls, [])
+            for method_name in methods_to_override:
+                dummy = NotImplemetedDummyFactory.make_class_method(cls, method_name, err_msg)
+                setattr(cls, method_name, dummy)
 
     def mark_as_fail(cls, err_msg):
-        reason = ['  * ' + l.rstrip() for l in err_msg.splitlines()]
-        cls._init_class_failed_reason = os.linesep.join(reason)
-        cls._init_class_failed = True
+        cls.init_class_failed.update({cls: err_msg})
 
-    def is_marked_fail(cls):
+    @property
+    def init_class_failed(cls):
+        cls._init_class_failed = getattr(cls, '_init_class_failed', {})
         return cls._init_class_failed
 
     def get_private_name(cls, attr_name):

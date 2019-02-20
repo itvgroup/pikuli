@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
-
 from .uia_control import UIAControl
 
 
-class Window(UIAControl):
+class Thumb(UIAControl):
 
-    CONTROL_TYPE = 'Window'
+    CONTROL_TYPE = 'Thumb'
+
+

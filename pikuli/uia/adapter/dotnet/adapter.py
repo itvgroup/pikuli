@@ -1,10 +1,38 @@
 # -*- coding: utf-8 -*-
 
+import re
+
 import clr
+
+_uia_assembly_names = {
+    "short": [
+        "UIAutomationTypes",
+        "UIAutomationProvider",
+        "UIAutomationClient"
+    ],
+    "full_v4": [
+        "UIAutomationTypes, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35",
+        "UIAutomationProvider, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35",
+        "UIAutomationClient, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35"
+    ],
+    "full_v3": [
+        "UIAutomationTypes, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35",
+        "UIAutomationProvider, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35",
+        "UIAutomationClient, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35"
+    ]
+}
+
+def _load_uia_assemblies_by_name_type(name_type):
+    for assm_name in _uia_assembly_names[name_type]:
+        clr.AddReference(assm_name)  # contains System.Windows.Automation
+
+
 clr.AddReference("System.Runtime")
-clr.AddReference("UIAutomationTypes")  # System.Windows.Automation
-clr.AddReference("UIAutomationProvider")  # System.Windows.Automation
-clr.AddReference("UIAutomationClient")  # System.Windows.Automation
+try:
+    _load_uia_assemblies_by_name_type("short")
+except:
+    _load_uia_assemblies_by_name_type("full_v4")
+
 
 import System.Windows.Automation
 from System.Windows.Automation import (
@@ -44,11 +72,14 @@ from System.Windows.Automation.Provider import (
 from pikuli import logger
 from pikuli.utils import class_property
 
+from ..adapter_base import AdapterBase
 from ..helper_types import Enums
 from ..sdk_enums import _get_sdk_enums
 
 
-class MonoAdapter(object):
+class DotNetAdapter(AdapterBase):
+
+    _AUTOMATION_PATTERN_PROGRAMMATIC_NAME_FORMAT = re.compile(r"(?P<pattern_name>\w+)Identifiers\.Pattern")
 
     @classmethod
     def _make_enums(cls):
@@ -122,9 +153,24 @@ class MonoAdapter(object):
     @classmethod
     def _build_patterns_map(cls, names):
         """ Is called by the ancestor class :class:`AdapterBase`. """
-        names.remove('LegacyIAccessiblePattern')  # .Net (not just Mono) doesn't support `LegacyIAccessiblePattern`.
-        return cls._build_map(System.Windows.Automation, "{name}", "Pattern", names)
+        # names.remove('LegacyIAccessiblePattern')  # .Net (not just Mono) doesn't support `LegacyIAccessiblePattern`.
+        return cls._build_map(System.Windows.Automation, "{name}Identifiers", "Pattern", names)
 
     @classmethod
     def is_automation_element(cls, obj):
         return isinstance(obj, AutomationElement_clr)
+
+    @classmethod
+    def get_supported_patterns(cls, uia_element):
+        ret = []
+
+        automation_pattern_array = uia_element._automation_element.GetSupportedPatterns()
+
+        for automation_pattern in automation_pattern_array:
+            m = cls._AUTOMATION_PATTERN_PROGRAMMATIC_NAME_FORMAT.match(automation_pattern.ProgrammaticName)
+            if not m:
+                continue
+            pattern_name = m.group('pattern_name')
+            ret.append(pattern_name)
+
+        return ret

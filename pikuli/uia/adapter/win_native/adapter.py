@@ -3,6 +3,7 @@
 from comtypes.client import GetModule, CreateObject
 import ctypes
 
+from ..adapter_base import AdapterBase
 from ..helper_types import Enums
 from ..sdk_enums import _get_sdk_enums
 
@@ -15,7 +16,7 @@ def _get_enum_element_full_name(elem):
         enum_name=elem.__class__.__name__, elem_name=elem._c_name)
 
 
-class WinAdapter(object):
+class WinAdapter(AdapterBase):
 
     _UIA_wrapper = GetModule((UIA_type_lib_IID, 1, 0))  # 'UIAutomationCore.dll'
     _IUIAutomation_obj = None
@@ -79,3 +80,8 @@ class WinAdapter(object):
     @classmethod
     def is_automation_element(cls, obj):
         return isinstance(obj, cls._IUIAutomationElement)
+
+    @classmethod
+    def get_supported_patterns(cls, uia_element):
+        return [pattern_name for pattern_name in cls._patterns_map.names()
+                if uia_element.get_pattern(pattern_name) is not None]

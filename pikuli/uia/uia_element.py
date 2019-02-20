@@ -15,13 +15,10 @@ from enum import Enum
 
 # TODO:
 if os.name == 'nt':
-    import _ctypes
     import win32gui
     from .adapter.oleacc_h import ROLE_SYSTEM_rev
-    COMError = _ctypes.COMError
 else:
     ROLE_SYSTEM_rev = {}
-    class COMError(Exception): pass
 
 import pikuli.uia
 
@@ -30,9 +27,10 @@ from pikuli.utils import wait_while
 from pikuli._functions import verify_timeout_argument
 from pikuli._exceptions import FindFailed, FailExit
 
-from .exceptions import DriverException
+from .exceptions import AdapterException, COMError
 from .adapter import Adapter, PatternFactory, PropertyValueConverter, AutomationElement, Condition, Enums, TreeWalker
 from .pattern import UiaPattern
+from .settings import NEXT_SEARCH_ITER_DELAY, DEFAULT_FIND_TIMEOUT, DYNAMIC_FIND_TIMEOUT
 
 # "A lot of HRESULT codes…" (https://blogs.msdn.microsoft.com/eldar/2007/04/03/a-lot-of-hresult-codes/)
 COR_E_TIMEOUT = -2146233083  # -2146233083 =<математически>= -0x80131505;   0x80131505 =<в разрядной сетке>= (-2146233083 & 0xFFFFFFFF)
@@ -41,11 +39,6 @@ NAMES_of_COR_E = {
     COR_E_TIMEOUT: 'COR_E_TIMEOUT',
     COR_E_SUBSCRIBERS_FAILED: 'COR_E_SUBSCRIBERS_FAILED'
 }
-
-
-NEXT_SEARCH_ITER_DELAY = 2  # Задержка между итерациями поиска, пока ещё не вышел timeout
-DEFAULT_FIND_TIMEOUT   = 11
-DYNAMIC_FIND_TIMEOUT = None
 
 # CONSOLE_ERASE_LINE_SEQUENCE = '\033[F' + '\033[2K'
 
@@ -170,11 +163,12 @@ class UIAElement(object):
         if attr is not None:
             if name == 'ControlType':
                 return Adapter.get_control_type_name(attr)
-            else:
-                return attr
+            return attr
+
         attr = self.get_pattern(name)
         if attr is not None:
             return attr
+
         raise AttributeError("Attribute {!r} not exist in {}".format(name, type(self)))
 
     def _short_info(self):
@@ -263,9 +257,12 @@ class UIAElement(object):
     def get_pattern(self, pattern_name):
         try:
             pattern = UiaPattern(self._automation_element, pattern_name)
-        except DriverException:
+        except AdapterException:
             pattern = None
         return pattern
+
+    def get_supported_patterns(self):
+        return Adapter.get_supported_patterns(self)
 
     def _test4readiness(self):
         ''' TODO: По идеи, надо сделать некую проврку, что класс создан правильно и готов к использованию.
