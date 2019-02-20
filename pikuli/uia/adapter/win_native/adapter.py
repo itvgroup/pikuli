@@ -28,8 +28,6 @@ class WinAdapter(AdapterBase):
         __IUIAutomation = getattr(_UIA_wrapper, __interface_id[0], None)
         __CUIAutomation = getattr(_UIA_wrapper, __interface_id[1], None)
         if __IUIAutomation is not None:
-            print "__CUIAutomation values :  {}".format(__CUIAutomation)
-            print "__IUIAutomation values :  {}".format(__IUIAutomation)
             _IUIAutomation_obj = CreateObject(__CUIAutomation, None, None, __IUIAutomation)
             break
 
