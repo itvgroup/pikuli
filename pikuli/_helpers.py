@@ -6,7 +6,7 @@ from pikuli import logger
 
 
 class NotImplemetedDummyBase(object):
-    pass
+    err_msg = None
 
 
 class NotImplemetedDummyFactory(object):
@@ -34,6 +34,7 @@ class NotImplemetedDummyFactory(object):
         class NotImplemetedDummy(NotImplemetedDummyBase):
             def __getattr__(self, attr):
                 raise NotImplementedError(err_msg.format(attr=attr))
+        NotImplemetedDummy.err_msg = err_msg
         return NotImplemetedDummy
 
     @classmethod
