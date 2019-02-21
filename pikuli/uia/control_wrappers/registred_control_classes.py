@@ -41,6 +41,7 @@ class RegistredControlClasses(object):
             (".radio_button", "RadioButton"),
             (".scroll_bar", "ScrollBar"),
             (".separator", "Separator"),
+            (".spinner", "Spinner"),
             (".tab_item", "TabItem"),
             (".text", "Text"),
             (".thumb", "Thumb"),
