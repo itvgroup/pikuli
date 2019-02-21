@@ -9,7 +9,7 @@ from .exceptions import AdapterException
 
 try:
     from .adapter import Adapter as __Adapter
-    # assert not issubclass(__Adapter, NotImplemetedDummyBase)
+    assert not issubclass(__Adapter, NotImplemetedDummyBase), __Adapter.err_msg
 
     from .uia_element import UIAElement
     from .control_wrappers import Desktop
