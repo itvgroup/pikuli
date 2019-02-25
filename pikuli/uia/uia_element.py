@@ -551,7 +551,10 @@ class UIAElement(object):
 
             def _add_to_next_level_todo(root_elem):
                 if max_descend_level is None or level < max_descend_level:
-                    elem   = walker.GetFirstChild(root_elem)
+                    try:
+                        elem = walker.GetFirstChild(root_elem)
+                    except Exception as ex:
+                        raise FindFailed(ex)
                     while elem:
                         next_level_todo_arr.append( elem )
                         elem = walker.GetNextSibling(elem)
@@ -676,7 +679,6 @@ class UIAElement(object):
                     full_text = 'Traceback for error point:\n' + tb_text.rstrip() + '\nError message:\n  ' + type(ex).__name__ + ': ' + str(ex)
                     logger.error(full_text)
                     raise ex
-
             else:
                 # Тут, если ищем один элемент и все никак его не найдем или ищем много элементов:
                 if not find_first_only or (find_first_only and (datetime.datetime.today()-t0).total_seconds() >= timeout):
