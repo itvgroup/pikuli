@@ -179,7 +179,7 @@ class Region(object):
             if self._main_window_hwnd is None and len(args) == 1:
                 self._main_window_hwnd = args[0]._main_window_hwnd
             if self._main_window_hwnd is None :
-                w = win32gui.WindowFromPoint((self._x + self._w/2, self._y + self._h/2))
+                w = win32gui.WindowFromPoint((int(self._x + self._w/2), int(self._y + self._h/2)))
                 self._main_window_hwnd = pikuli.hwnd.hwnd_element._find_main_parent_window(w)
         else:
             self._main_window_hwnd = None

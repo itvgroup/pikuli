@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-'''
+"""
    Файл содержит вспомогательные функции, используемые в pikuli.
-'''
+"""
 import os
 import time
 import logging

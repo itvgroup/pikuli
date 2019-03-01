@@ -111,9 +111,9 @@ class KeyModifier(KeyBaseEnum):
     '''
     Аргумент modifiers функции type_text().
     '''
-    ALT   = Key.ALT.value
-    CTRL  = Key.CTRL.value
-    SHIFT = Key.SHIFT.value
+    ALT   = KeyCode.ALT.value
+    CTRL  = KeyCode.CTRL.value
+    SHIFT = KeyCode.SHIFT.value
 
     def __add__(self, right_operand):
         return self._add(right_operand)
