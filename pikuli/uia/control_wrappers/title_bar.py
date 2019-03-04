@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
+from .uia_control import UIAControl
 
-from ..uia_element import UIAElement
 
-
-class TitleBar(UIAElement):
+class TitleBar(UIAControl):
 
     CONTROL_TYPE = 'TitleBar'
+

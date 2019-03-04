@@ -733,7 +733,14 @@ class UIAElement(object):
             reg = Region(xc, yc, wc, hc, winctrl=self, title=self.Name, find_timeout=self._find_timeout)
         else:
             rect = map(int, self.get_bounding_rectangle())
-            reg = Region(*rect, winctrl=self, title=self.Name, find_timeout=self._find_timeout)
+
+            try:
+                name = self.Name
+            except Exception:
+                logger.info("{} has not attribute Name. Name=''".format(self))
+                name = ""
+
+            reg = Region(*rect, winctrl=self, title=name, find_timeout=self._find_timeout)
 
         return reg
 
