@@ -190,7 +190,7 @@ class LocationF(Vector):
         time.sleep(delay)
         InputEmulator.release_button(ButtonCode.LEFT)
         if p2c_notif:
-            logger.info('pikuli.{}.click_move_hold(): moved to x {}, y {}'.format(type(self).__name__, to_x, to_y))
+            logger.info('pikuli.{}.click_move_hold(): moved to x {}, y {}'.format(type(self).__name__, to.x, to.y))
 
     def rightClick(self, after_cleck_delay=0, p2c_notif=True):
         self.mouse_move()
