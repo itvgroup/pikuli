@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import time
 
 from pikuli import logger, FindFailed
 from pikuli.uia.adapter import Enums
@@ -25,6 +26,21 @@ class TreeItem(CheckBox, UIAControl):
 
     def is_expandable(self):
         return not (self.get_pattern('ExpandCollapsePattern').CurrentExpandCollapseState == Enums.ExpandCollapseState.LeafNode)
+
+    def select(self):
+        # self.get_pattern('SelectionItemPattern').AddToSelection()
+        self.get_pattern('SelectionItemPattern').Select()
+        
+
+    def unselect(self):
+        try:
+            self.get_pattern('SelectionItemPattern').RemoveFromSelection()
+            assert not self.is_selected()
+        except Exception as ex:
+            print  ex
+
+    def click(self):
+        self.select()
 
     def is_expanded(self):
         ''' Проверка, что развернут текущий узел (полностью, не частично). Без учета состояния дочерних узлов. Если нет дочерних, то функция вернет False. '''

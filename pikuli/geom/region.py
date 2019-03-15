@@ -102,7 +102,7 @@ class Region(object):
         return self.w >= other.w and self.h >= other.h
 
     def __str__(self):
-        return '<Region (%i, %i, %i, %i)>' % (self.x, self.y, self.w, self.h)
+        return '<Region ({}, {}, {}, {})>'.format(self.x, self.y, self.w, self.h)
 
     def __init__(self, *args, **kwargs):  # relation='top-left', title=None):
         '''
@@ -239,13 +239,17 @@ class Region(object):
 
             elif len(args) == 4:
                 args = list(args)
-                for i in range(4):
-                    try:
-                        args[i] = int(args[i])
-                    except ValueError as ex:
-                        raise FailExit('Region.setRect(...): can not tranform to integer args[%i] = %s' %(i, repr(args[i])))
-                if args[2] < 0 or args[3] < 0:
-                    raise FailExit('Region.setRect(...): args[2] < 0 or args[3] < 0:')
+                try:
+                    for i in range(4):
+                        try:
+                            args[i] = int(args[i])
+                        except ValueError as ex:
+                            raise FailExit('Region.setRect(...): can not tranform to integer args[%i] = %s' %(i, repr(args[i])))
+
+                    if args[2] < 0 or args[3] < 0:
+                        raise FailExit('Region.setRect(...): args[2] < 0 or args[3] < 0:')
+                except OverflowError:
+                    pass
 
                 relation = kwargs.get('relation', 'top-left')
                 if relation is None:
@@ -887,6 +891,9 @@ class Region(object):
         loc = Location(*args)
         loc.base_reg = self
         return loc.rel
+
+    def is_visible(self):
+        return not (isinstance(self.x, float) and isinstance(self.y, float) and isinstance(self.h, float) and isinstance(self.w, float))
 
     def find_all_solid_markers_by_piece(self, ps):
         '''
