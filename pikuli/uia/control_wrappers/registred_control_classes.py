@@ -24,11 +24,11 @@ class RegistredControlClasses(object):
             (".custom_control", "CustomControl"),
             # (".desktop", "Desktop"), - exclude this one due to it hasn't CONTROL_TYPE
             (".data_grid", "DataGrid"),
+            (".data_item", "DataItem"),
             (".document", "Document"),
             (".edit", "Edit"),
             (".header", "Header"),
             (".hyperlink", "Hyperlink"),
-            (".item", "Item"),
             (".image", "Image"),
             (".list", "List"),
             (".list_item", "ListItem"),
