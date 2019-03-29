@@ -42,6 +42,7 @@ class RegistredControlClasses(object):
             (".scroll_bar", "ScrollBar"),
             (".separator", "Separator"),
             (".spinner", "Spinner"),
+            (".tab", "Tab"),
             (".tab_item", "TabItem"),
             (".text", "Text"),
             (".thumb", "Thumb"),
