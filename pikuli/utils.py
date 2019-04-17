@@ -4,6 +4,7 @@ import logging
 import sys
 import time
 
+import arrow
 from pikuli import logger
 
 
@@ -38,10 +39,13 @@ def wait_while(f_logic, timeout, warning_timeout=None, warning_text=None, delay_
     """
     Внутренний цик выполняется, пока вычисление `f_logic()` трактуется как `True`.
     """
-    elaps_time = 0
+
     warning_flag = False
+    start_time = arrow.now()
 
     while f_logic():
+        elaps_time = (arrow.now() - start_time).total_seconds()
+
         if warning_timeout is not None and elaps_time > warning_timeout and not warning_flag:
             text_addon = '. {}'.format(warning_text) if warning_text else ''
             logger.warning("Waiting time exceeded {}{}".format(warning_timeout, text_addon))
@@ -51,7 +55,6 @@ def wait_while(f_logic, timeout, warning_timeout=None, warning_text=None, delay_
             return False
 
         time.sleep(delay_between_attempts)
-        elaps_time += delay_between_attempts
 
     return True
 
@@ -60,10 +63,13 @@ def wait_while_not(f_logic, timeout, warning_timeout=None, delay_between_attempt
     """
     Внутренний цик выполняется, пока вычисление `f_logic()` трактуется как `False`.
     """
-    elaps_time = 0
-    warning_flag = False
 
+    warning_flag = False
+    start_time = arrow.now()
     while not f_logic():
+
+        elaps_time = (arrow.now() - start_time).total_seconds()
+
         if warning_timeout is not None and elaps_time > warning_timeout and not warning_flag:
             logger.warning("Waiting time exceeded {}".format(warning_timeout))
             warning_flag = True
@@ -72,6 +78,5 @@ def wait_while_not(f_logic, timeout, warning_timeout=None, delay_between_attempt
             return False
 
         time.sleep(delay_between_attempts)
-        elaps_time += delay_between_attempts
 
     return True
