@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-
+import datetime
 import logging
 import sys
 import time
 
-import arrow
+from datetime import datetime
 from pikuli import logger
 
 
@@ -41,10 +41,10 @@ def wait_while(f_logic, timeout, warning_timeout=None, warning_text=None, delay_
     """
 
     warning_flag = False
-    start_time = arrow.now()
+    start_time = datetime.now()
 
     while f_logic():
-        elaps_time = (arrow.now() - start_time).total_seconds()
+        elaps_time = (datetime.now() - start_time).total_seconds()
 
         if warning_timeout is not None and elaps_time > warning_timeout and not warning_flag:
             text_addon = '. {}'.format(warning_text) if warning_text else ''
@@ -65,10 +65,10 @@ def wait_while_not(f_logic, timeout, warning_timeout=None, delay_between_attempt
     """
 
     warning_flag = False
-    start_time = arrow.now()
+    start_time = datetime.now()
     while not f_logic():
 
-        elaps_time = (arrow.now() - start_time).total_seconds()
+        elaps_time = (datetime.now() - start_time).total_seconds()
 
         if warning_timeout is not None and elaps_time > warning_timeout and not warning_flag:
             logger.warning("Waiting time exceeded {}".format(warning_timeout))
