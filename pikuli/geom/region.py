@@ -806,9 +806,9 @@ class Region(object):
         if p2c_notif:
             logger.info('pikuli.%s.type(): \'%s\' was typed in center of %s; click=%s, modifiers=%s' % (type(self).__name__, repr(text), str(self), str(click), str(modifiers)))
 
-    def enter_text(self, text, modifiers=None, click=True, p2c_notif=True):
+    def enter_text(self, text, modifiers=None, click=True, p2c_notif=True, press_enter=True):
         ''' Не как в Sikuli '''
-        self.center.enter_text(text, modifiers=modifiers, click=click, p2c_notif=False)
+        self.center.enter_text(text, modifiers=modifiers, click=click, p2c_notif=False, press_enter=press_enter)
         if p2c_notif:
             logger.info('pikuli.%s.enter_text(): \'%s\' was entred in center of %s; click=%s, modifiers=%s' % (type(self).__name__, repr(text), str(self), str(click), str(modifiers)))
 
