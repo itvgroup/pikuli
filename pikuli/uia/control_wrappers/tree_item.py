@@ -30,7 +30,6 @@ class TreeItem(CheckBox, UIAControl):
     def select(self):
         # self.get_pattern('SelectionItemPattern').AddToSelection()
         self.get_pattern('SelectionItemPattern').Select()
-        
 
     def unselect(self):
         try:
@@ -38,9 +37,6 @@ class TreeItem(CheckBox, UIAControl):
             assert not self.is_selected()
         except Exception as ex:
             print  ex
-
-    def click(self):
-        self.select()
 
     def is_expanded(self):
         ''' Проверка, что развернут текущий узел (полностью, не частично). Без учета состояния дочерних узлов. Если нет дочерних, то функция вернет False. '''
