@@ -6,10 +6,11 @@
 import os
 import time
 import logging
-import os
+import mss
+from io import BytesIO
+from PIL import Image
 
 if os.name == 'nt':
-    import win32ui
     import win32api
     import win32gui
     import win32con
@@ -133,86 +134,12 @@ def _take_screenshot(x, y, w, h, hwnd=None):
     Получаем скриншот области:
         x, y  --  верхний левый угол прямоуголника в системе координат виртуального рабочего стола
         w, h  --  размеры прямоуголника
-        hwnd  --  Если None, то используется контекст 'DISPLAY'. Если не None, то используется контекст окна с hwnd
-                  (если рисовать в контекст дисплея, то не портятся картинки в конетксте окон).
-
-      Любопытно, что если пытаться выйти за пределы левого монитора, читая данные из его контекста, то оставшаяся
-    часть скриншота сам будет браться и из контекста другого монитора. Т.о., важно знать какому монитору принадлежит
-    верхний левый угол прямоуголника, скриншот которого получаем. И не надо провериять, на каких мониторах располагаются
-    остальные углы этой области. Вообще без проблем можно право и вниз уйти за пределы всех мониторов.
-      Однако, надо помнить, что при копировании буфера через BitBlt() надо указывать начальные координаты с системе
-    отсчета монитора, а не виртуального рабочего стола. Т.о. входные (x,y) надо пересчитывать.
-      Еще нюанс: копирование данных из контекста окна дает белый фон на чисто OpenGL'ой раскледке камер. Аналогично
-    с windll.user32.PrintWindow(...). Помогает применение флага CAPTUREBLT у BitBlt(...). Но надо еще изучать (TODO here).
-
-      Нужны какие-то новые технологии типа DirectX или DWM, чтоыб наверняка сделать скриншот всего соедрежимого окна с OpenGL.
+    #
     '''
-    # http://stackoverflow.com/questions/3291167/how-to-make-screen-screenshot-with-win32-in-c
-    # http://stackoverflow.com/questions/18733486/python-win32api-bitmap-getbitmapbits
-    # http://stackoverflow.com/questions/24129253/screen-capture-with-opencv-and-python-2-7
-    # http://vsokovikov.narod.ru/New_MSDN_API/Bitmaps/captur_image.htm
-    # http://stackoverflow.com/questions/19695214/python-screenshot-of-inactive-window-printwindow-win32gui  --  скриншот окна
-    # https://msdn.microsoft.com/en-us/library/windows/desktop/dd183402(v=vs.85).aspx
-    #
-    # Как узнать рамер экрана:
-    #   Варинат 1:
-    #       (_, _, scr_rect) = _screen_n_to_mon_descript(n)
-    #       (w, h) = (scr_rect[2] - scr_rect[0], scr_rect[3] - scr_rect[1])
-    #   Варинат 2:
-    #       w = win32print.GetDeviceCaps(scr_hdc, win32con.HORZRES)
-    #       h = win32print.GetDeviceCaps(scr_hdc, win32con.VERTRES)
-    #
-    x, y, w, h = map(int, (x, y, w, h))
-    mpos = list(win32api.GetCursorPos())
-
-    # Получим контекст всех дисплев или всего рабочего стола:
-    hwnd = None  # !!! не работает скриншот окна с OpenGL :(
-    if hwnd is None:
-        #scr_hdc = win32gui.GetDC(0)
-        scr_hdc = win32gui.CreateDC('DISPLAY', None, None)
-    else:
-        scr_hdc = win32gui.GetDC(hwnd)  # Контекст только клиентской части окна! Не вклчаются даже менюшеки типа 'File' и скролл-бары.
-        x, y  = win32gui.ScreenToClient(hwnd, (x, y))
-
-    # Спрячем курсо вне эурана: не влияние на интерфейс (подсветка чего-то при наведении), не попадет на скриншот.
-    #win32api.SetCursorPos((win32print.GetDeviceCaps(scr_hdc, win32con.HORZRES) + 1, win32print.GetDeviceCaps(scr_hdc, win32con.VERTRES) + 1))
-
-    mem_hdc = win32gui.CreateCompatibleDC(scr_hdc)  # New context of memory device. This one is compatible with 'scr_hdc'
-    new_bitmap_h = win32gui.CreateCompatibleBitmap(scr_hdc, w, h)
-    win32gui.SelectObject(mem_hdc, new_bitmap_h)    # Returns 'old_bitmap_h'. It will be deleted automatically.
-
-    # Прямое копирование из контекста окна
-    win32gui.BitBlt(mem_hdc, 0, 0, w, h, scr_hdc, x, y, win32con.SRCCOPY)  # | CAPTUREBLT)
-
-    bmp = win32ui.CreateBitmapFromHandle(new_bitmap_h)
-    bmp_info = bmp.GetInfo()
-    if bmp_info['bmHeight'] != h or bmp_info['bmWidth'] != w:
-        raise FailExit('bmp_info = %s, but (x, y, w, h, hwnd) = %s' %
-                       (str(bmp_info), str((w, y, w, h, hwnd))))
-    if bmp_info['bmType'] != 0 or bmp_info['bmPlanes'] != 1:
-        raise FailExit('bmp_info = %s: bmType !=0 or bmPlanes != 1; (x, y, w, h, hwnd) = %s' %
-                       (str(bmp_info), str((w, y, w, h, hwnd))))
-    if bmp_info['bmBitsPixel'] % 8 != 0:
-        raise FailExit('bmp_info = %s: (bmBitsPixel mod. 8) != 0; (x, y, w, h, hwnd) = %s' %
-                       (str(bmp_info), str((w, y, w, h, hwnd))))
-
-    bmp_arr = list(bmp.GetBitmapBits())
-    del bmp_arr[3::4]  # Dele alpha channel. TODO: Is it fast enough???
-    bmp_np = np.array(bmp_arr, dtype=np.uint8).reshape((h, w, 3))
-
-    #win32api.SetCursorPos(mpos)  # Возвращаем курсор.
-    if hwnd is None:
-        win32gui.DeleteDC(scr_hdc)
-    else:
-        win32gui.ReleaseDC(hwnd, scr_hdc)
-    win32gui.DeleteDC(mem_hdc)
-    win32gui.DeleteObject(new_bitmap_h)
-
-    # import cv2, time
-    # t = time.time()
-    # cv2.imwrite('d:\\tmp\\s-%i-%06i-field.png' % (int(t), (t-int(t))*10**6), bmp_np)
-
-    return bmp_np
+    with mss.mss() as sct:
+        sct_img = sct.grab(dict(top=x, left=y, height=h, width=w))
+        scr = mss.tools.to_png(sct_img.rgb, sct_img.size, output="")
+        return np.array(Image.open(BytesIO(scr)).convert('RGB'))
 
 
 """def _scr_num_of_point(x, y):
@@ -234,40 +161,9 @@ def __check_reg_in_single_screen(self):
         raise FailExit('region occupies more than one screen')
     return Screen(_monitor_hndl_to_screen_n(m_tl))
 """
-"""
-def _take_screenshot_(*args):
-    '''
-    Получаем скриншот. Возможные наборы входных аргументов:
-        Скриншот всего экрана:
-            n  --  номер экрана-монитора (integer)
-        Скриншот области:
-            x, y, w, h  --  размеры прямоуголника
-            reg         --  прямоуголник типа Region
-    '''
-    # http://stackoverflow.com/questions/3291167/how-to-make-screen-screenshot-with-win32-in-c
-    # http://stackoverflow.com/questions/18733486/python-win32api-bitmap-getbitmapbits
-    # http://stackoverflow.com/questions/24129253/screen-capture-with-opencv-and-python-2-7
-    if len(args) == 1:
-        if isinstance(args[0], int):
-            n = args[0]
-        elif isinstance(args[0], Region):
-            raise Exception('TODO here')
-    elif len(args) == 4:
 
-    scr_hdc = win32gui.CreateDC('DISPLAY', _screen_n_to_monitor_name(n), None)
-    mem_hdc = win32gui.CreateCompatibleDC(scr_hdc)  # New context of memory device. This one is compatible with 'scr_hdc'
-
-    # (_, _, scr_rect) = _screen_n_to_mon_descript(n)
-    # (w, h) = (scr_rect[2] - scr_rect[0], scr_rect[3] - scr_rect[1])
-    w = win32print.GetDeviceCaps(scr_hdc, win32con.HORZRES)
-    h = win32print.GetDeviceCaps(scr_hdc, win32con.VERTRES)
-    new_bitmap_h = win32gui.CreateCompatibleBitmap(scr_hdc, w, h)
-    win32gui.SelectObject(mem_hdc, new_bitmap_h)  # Returns 'old_bitmap_h'. It will be deleted automatically.
-    win32gui.BitBlt(mem_hdc, 0, 0, w, h, scr_hdc, 0, 0, win32con.SRCCOPY)
-"""
 
 def pixel_color_at(x, y):
-    hdc = win32gui.GetWindowDC(win32gui.GetDesktopWindow())
-    c = int(win32gui.GetPixel(hdc, x, y))
-    # (r, g, b)
-    return (c & 0xff), ((c >> 8) & 0xff), ((c >> 16) & 0xff)
+    with mss.mss() as sct:
+        sct_img = sct.grab(sct.monitors[0])
+        return sct_img.pixel(x, y)
