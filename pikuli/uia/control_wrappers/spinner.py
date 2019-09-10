@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
+from pikuli.uia.control_wrappers.mixin import _ValuePattern_methods
+from pikuli.uia.control_wrappers.uia_control import UIAControl
 
-from ..uia_element import UIAElement
 
-
-class Spinner(UIAElement):
+class Spinner(UIAControl, _ValuePattern_methods):
 
     CONTROL_TYPE = 'Spinner'
