@@ -137,7 +137,7 @@ def _take_screenshot(x, y, w, h, hwnd=None):
     #
     '''
     with mss.mss() as sct:
-        sct_img = sct.grab(dict(top=x, left=y, height=h, width=w))
+        sct_img = sct.grab(dict(left=x, top=y, height=h, width=w))
         scr = mss.tools.to_png(sct_img.rgb, sct_img.size, output="")
         return np.array(Image.open(BytesIO(scr)).convert('RGB'))
 
