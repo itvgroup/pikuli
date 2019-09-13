@@ -16,6 +16,5 @@ class ListItem(UIAControl):
     def is_selected(self):
         return bool(self.get_pattern('SelectionItemPattern').CurrentIsSelected)
 
-    @property
     def is_checked(self):
         return bool(self.get_pattern('TogglePattern').CurrentToggleState)
