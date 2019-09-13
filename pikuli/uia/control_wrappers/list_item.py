@@ -12,7 +12,6 @@ class ListItem(UIAControl):
     def select(self):
         self.get_pattern('SelectionItemPattern').Select()
 
-    @property
     def is_selected(self):
         return bool(self.get_pattern('SelectionItemPattern').CurrentIsSelected)
 
