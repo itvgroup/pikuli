@@ -50,7 +50,7 @@ def wait_while(f_logic, timeout, warning_timeout=None, warning_text=None, delay_
             pass
         else:
             if not result:
-                return result
+                return True
 
         elaps_time = (datetime.now() - start_time).total_seconds()
 
@@ -79,7 +79,7 @@ def wait_while_not(f_logic, timeout, warning_timeout=None, delay_between_attempt
             pass
         else:
             if result:
-                return result
+                return True
 
         elaps_time = (datetime.now() - start_time).total_seconds()
 
