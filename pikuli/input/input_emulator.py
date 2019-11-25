@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-
-import string
 import time
 from contextlib import contextmanager
 

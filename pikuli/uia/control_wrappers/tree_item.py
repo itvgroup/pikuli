@@ -36,7 +36,7 @@ class TreeItem(CheckBox, UIAControl):
             self.get_pattern('SelectionItemPattern').RemoveFromSelection()
             assert not self.is_selected()
         except Exception as ex:
-            print  ex
+            logger.exception(ex)
 
     def is_expanded(self):
         ''' Проверка, что развернут текущий узел (полностью, не частично). Без учета состояния дочерних узлов. Если нет дочерних, то функция вернет False. '''

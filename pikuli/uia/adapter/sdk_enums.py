@@ -31,8 +31,8 @@ AutomationIdentifierType = ApiEnumAutoval('AutomationIdentifierType',
 
 
 class ConditionType(ApiEnumExplicit):
-    True = 0
-    False = 1
+    TRUE = 0
+    FALSE = 1
     Property = 2
     And = 3
     Or = 4

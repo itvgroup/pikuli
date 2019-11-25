@@ -6,7 +6,7 @@ import numbers
 from ..adapter.oleacc_h import ROLE_SYSTEM, ROLE_SYSTEM_rev
 
 
-class RegistredControlClasses(object):
+class RegisteredControlClasses:
     """
     TODO: Improme registration machinery and criteria structure.
     """
@@ -27,6 +27,7 @@ class RegistredControlClasses(object):
             (".data_item", "DataItem"),
             (".document", "Document"),
             (".edit", "Edit"),
+            (".group", "Group"),
             (".header", "Header"),
             (".hyperlink", "Hyperlink"),
             (".image", "Image"),
@@ -41,7 +42,9 @@ class RegistredControlClasses(object):
             (".radio_button", "RadioButton"),
             (".scroll_bar", "ScrollBar"),
             (".separator", "Separator"),
+            (".split_button", "SplitButton"),
             (".spinner", "Spinner"),
+            (".status_bar", "StatusBar"),
             (".tab", "Tab"),
             (".tab_item", "TabItem"),
             (".text", "Text"),
@@ -56,8 +59,8 @@ class RegistredControlClasses(object):
         for module_loc, class_name in to_be_registered:
             module = importlib.import_module(module_loc, package="pikuli.uia.control_wrappers")
             constrol_class = getattr(module, class_name)
-            #if not RegistredControlClasses.try_get_class_by_control_type(control_cls.CONTROL_TYPE):
-            RegistredControlClasses._add_new(class_name, constrol_class)
+            #if not RegisteredControlClasses.try_get_class_by_control_type(control_cls.CONTROL_TYPE):
+            RegisteredControlClasses._add_new(class_name, constrol_class)
 
     @classmethod
     def _add_new(cls, name, new_class):

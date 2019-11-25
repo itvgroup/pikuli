@@ -6,7 +6,7 @@ import cv2
 
 import pikuli
 from .File import File
-from _exceptions import FailExit
+from ._exceptions import FailExit
 
 
 logger = logging.getLogger('axxon.pikuli')

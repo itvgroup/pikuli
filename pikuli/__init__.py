@@ -42,8 +42,8 @@ if os.name == 'nt':
 
 #if SUPPORT_UIA:
 #    from .uia import UIAElement  # , AutomationElement
-#    from .uia.control_wrappers import RegistredControlClasses
-#    RegistredControlClasses._register_all()
+#    from .uia.control_wrappers import RegisteredControlClasses
+#    RegisteredControlClasses._register_all()
 
 try:
     Settings.addImagePath(

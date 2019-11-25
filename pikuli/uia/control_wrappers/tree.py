@@ -65,7 +65,7 @@ class Tree(UIAControl):
         # logger.debug(CONSOLE_ERASE_LINE_SEQUENCE)
         logger.debug('pikuli.Tree.find_item: searching by criteria item_name = \'%s\', timeout = %s' % (str(item_name), str(timeout)))
 
-        if isinstance(item_name, (basestring, re._pattern_type)):
+        if isinstance(item_name, (str, re.Pattern)): # ?
             item_name = [item_name]
         if not isinstance(item_name, (list, tuple)):
             raise Exception('pikuli.ui_element.Tree: not isinstance(item_name, list) and not isinstance(item_name, str)\n\titem_name = %s\n\ttimeout = %s' % (str(item_name), str(timeout)))

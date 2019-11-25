@@ -66,6 +66,5 @@ class _HookedClassInitMeta(type):
             attr_name=attr_name)
 
 
-class _HookedClassInit(object):
-
-    __metaclass__ = _HookedClassInitMeta
+class _HookedClassInit(metaclass=_HookedClassInitMeta):
+    pass

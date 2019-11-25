@@ -15,7 +15,7 @@ class InputSequence(object):
         elif isinstance(obj, (Key, KeyModifier)):
             self._container = [obj]
         else:
-            self._container = [unicode(obj)]
+            self._container = [str(obj)]
 
     def __add__(self, right_operand):
         right_operand = InputSequence(right_operand)
@@ -50,7 +50,7 @@ class InputSequence(object):
 
     def __iter__(self):
         for elem in self._container:
-            if isinstance(elem, basestring):
+            if isinstance(elem, str):
                 for c in elem:
                     yield c
             else:
@@ -61,9 +61,10 @@ class InputSequence(object):
 
 
 class KeyMeta(EnumMeta):
-    def __new__(mcls, name, bases, dct):
-        dct.update({e.name: e.value for e in list(KeyCode)})
-        return super(KeyMeta, mcls).__new__(mcls, name, bases, dct)
+    def __new__(mcs, name, bases, dct):
+        for e in KeyCode:
+            dct[e.name] = e.value
+        return super(KeyMeta, mcs).__new__(mcs, name, bases, dct)
 
 
 class KeyBaseEnum(int, Enum):
@@ -96,21 +97,20 @@ class KeyBaseEnum(int, Enum):
         return InputSequence(self)._repeat(times)
 
 
-class Key(KeyBaseEnum):
-    '''
+class Key(KeyBaseEnum, metaclass=KeyMeta):
+    """
     Коды специальных клавиш. Позволяют легко добавлять их к строкам в коде. К примеру:
         type_text("some text" + Key.ENTER)
 
     Код клавиши зависит от OS. Для Windows это Virtual-key Code, а в Linux -- коды evdev.
-    '''
-
-    __metaclass__ = KeyMeta
+    """
+    pass
 
 
 class KeyModifier(KeyBaseEnum):
-    '''
+    """
     Аргумент modifiers функции type_text().
-    '''
+    """
     ALT   = Key.ALT.value
     CTRL  = Key.CTRL.value
     SHIFT = Key.SHIFT.value

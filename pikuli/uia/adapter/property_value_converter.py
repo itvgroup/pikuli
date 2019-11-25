@@ -21,9 +21,7 @@ class PropertyValueConverterMeta(type):
         return new_cls
 
 
-class PropertyValueConverter(OsPropertyValueConverter):
-
-    __metaclass__ = PropertyValueConverterMeta
+class PropertyValueConverter(OsPropertyValueConverter, metaclass=PropertyValueConverterMeta):
 
     _converters = {}
 

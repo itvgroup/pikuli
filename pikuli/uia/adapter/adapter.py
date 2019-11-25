@@ -33,6 +33,5 @@ class AdapterMeta(type):
         return cls
 
 
-class Adapter(OsAdapterMixin):
-
-    __metaclass__ = AdapterMeta
+class Adapter(OsAdapterMixin, metaclass=AdapterMeta):
+    pass

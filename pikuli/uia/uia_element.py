@@ -119,7 +119,7 @@ class UIAElement(object):
             elif isinstance(pointer2elem, UIAElement):
                 self._automation_element = pointer2elem._automation_element
                 self._from_hwnd = False
-            elif isinstance(pointer2elem, int) or isinstance(pointer2elem, long):
+            elif isinstance(pointer2elem, int):
                 self._automation_element = Adapter._IUIAutomation_obj.ElementFromHandle(pointer2elem)
                 self._from_hwnd = True
             else:
@@ -181,7 +181,7 @@ class UIAElement(object):
             hwnd = ', ' + str(hwnd)
 
         name = repr(getattr(self, 'Name', '<no Name>'))  #.encode('utf-8')
-        if pikuli.uia.control_wrappers.RegistredControlClasses.is_class_registred(self):
+        if pikuli.uia.control_wrappers.RegisteredControlClasses.is_class_registred(self):
             return u'<%s \'%s\',\'%s\'%s>' % (
                 type(self).__name__,
                 name,
@@ -275,14 +275,14 @@ class UIAElement(object):
         tmp_uia_element = UIAElement(automation_element, find_timeout=find_timeout)
 
         cotrol_type = tmp_uia_element.ControlType
-        class_by_controltype = pikuli.uia.control_wrappers.RegistredControlClasses.get_class_by_control_type(cotrol_type)
+        class_by_controltype = pikuli.uia.control_wrappers.RegisteredControlClasses.get_class_by_control_type(cotrol_type)
 
         # .Net (not just Mono) doesn't support `LegacyIAccessiblePattern`.
         legacy_support = getattr(tmp_uia_element, 'IsLegacyIAccessiblePatternAvailable', None)
 
         if legacy_support:
             legacy_role = tmp_uia_element.LegacyIAccessiblePattern.CurrentRole
-            class_by_legacyrole = pikuli.uia.control_wrappers.RegistredControlClasses.try_get_by_legacy_role(legacy_role)
+            class_by_legacyrole = pikuli.uia.control_wrappers.RegisteredControlClasses.try_get_by_legacy_role(legacy_role)
         else:
             class_by_legacyrole = None
 
@@ -419,10 +419,10 @@ class UIAElement(object):
             val = kwargs.pop(key, None)
             if val is not None:
                 not_none_criteria[key] = val
-                if isinstance(val, re._pattern_type) or hasattr(val, 'match'):
+                if isinstance(val, re.Pattern) or hasattr(val, 'match'):
                     pass
                 elif isinstance(val, (list, tuple)):
-                    val = map(str, val)
+                    val = list(map(str, val))
                 else:
                     val = str(val)
             criteria[key] = val
@@ -435,7 +435,7 @@ class UIAElement(object):
 
         val = kwargs.pop('ProcessId', None)
         if val is not None:
-            if isinstance(val, basestring):
+            if isinstance(val, str):
                 not_none_criteria['ProcessId'] = val
                 for proc in psutil.process_iter():
                     try:
@@ -473,7 +473,6 @@ class UIAElement(object):
                 self.automation_element = automation_element
                 super(Exception, self).__init__()
 
-
         def _is_automation_element_suitable(automation_element):
             if criteria['ProcessId'] is not None and criteria['ProcessId'] != automation_element.CurrentProcessId:
                 return False
@@ -501,14 +500,13 @@ class UIAElement(object):
                 elif isinstance(criteria[key], str):
                     if not (uielem_val == criteria[key]):
                         return False
-                elif isinstance(criteria[key], re._pattern_type) or hasattr(criteria[key], 'match'):  # re.complile
+                elif isinstance(criteria[key], re.Pattern) or hasattr(criteria[key], 'match'):  # re.complile
                     if not (criteria[key].match(uielem_val) is not None):
                         return False
                 else:
                     raise Exception('%s: unsupported value \"%s\" of key \'%s\'' % (_func_name, str(criteria[key]), str(key)))
 
             return True
-
 
         def _search_with_method(start_automation_element, method_f):
             found_automation_element_arr_local = []
