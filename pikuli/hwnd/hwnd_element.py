@@ -82,7 +82,7 @@ def _find_main_parent_window(child_hwnd, child_pid=None):
         else:
             if child_pid is not None:
                 (_, ppid) = GetWindowThreadProcessId(parent_hwnd)  # По указателяю на окно получаем (threadId, processId)
-                if long(ppid) != long(child_pid):
+                if int(ppid) != int(child_pid):
                     return child_hwnd
         return _fmpw(parent_hwnd, child_pid)
 
@@ -101,7 +101,7 @@ def _find_all_windows_by_pid(pid):
     def EnumWindows_callback(hwnd, extra):                      # Callback на перебор всех окон. Вызывается для каждого окна.
         (_, processId) = GetWindowThreadProcessId(hwnd)  # По указателяю на окно получаем (threadId, processId)
         if processId == extra['pid']:
-            extra['hwnds'].append(long(hwnd))
+            extra['hwnds'].append(int(hwnd))
 
     for proc in psutil.process_iter():
         try:
@@ -131,7 +131,7 @@ def _find_window_by_process_name_and_title(proc_name, in_title):
                 if elem not in text:
                     return
             if 'hwnd' not in extra:
-                extra['hwnd'] = long(hwnd)
+                extra['hwnd'] = int(hwnd)
             else:
                 extra['hwnd'] = -1
 
@@ -200,8 +200,8 @@ class HWNDElement(object):
             (self.pid, self.hwnd) = _find_window_by_process_name_and_title(self.proc_name, self.main_wnd_in_title)
             self.hwnd_main_win   = _find_main_parent_window(self.hwnd)
 
-        elif len(args) == 1 and (isinstance(args[0], types.IntType) or isinstance(args[0], types.LongType)):
-            self.hwnd          = long(args[0])
+        elif len(args) == 1 and (isinstance(args[0], int)):
+            self.hwnd          = args[0]
             self.hwnd_main_win = _find_main_parent_window(self.hwnd)
             (_, self.pid)      = GetWindowThreadProcessId(self.hwnd)
 
