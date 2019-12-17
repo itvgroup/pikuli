@@ -60,7 +60,7 @@ class Vector(object):
         """
         Синоним :func:`Vector.__div__`
         """
-        return self.__dev__(other)
+        return self.__div__(other)
 
     def __neg__(self):
         return self.__class__(-self.x, -self.y)
