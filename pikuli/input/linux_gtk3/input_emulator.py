@@ -18,7 +18,7 @@ class GtkKeyboardMixin(EvdevKeyboardMixin):
         Returns an ``evdev`` key code of the unicode printable character `char`.
         """
         charcode = ord(str(char))
-        x11_keysym = Gdk.str(charcode)  # X11 KeySym
+        x11_keysym = Gdk.unicode_to_keyval(charcode)  # X11 KeySym
         x11_keycode = cls._display.keysym_to_keycode(x11_keysym)  # X11 KeyCode
 
         # Got "shift" status:
