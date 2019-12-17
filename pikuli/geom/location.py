@@ -70,7 +70,7 @@ class LocationF(Vector):
         :type base_reg: :class:`Region`
         """
         rel_vec = RelativeVec(*args)
-        abs_vec = Vector(base_reg.top_left) + Vector(rel_vec).hprod(Vector(base_reg.w, base_reg.h)) / 100
+        abs_vec = Vector(base_reg.top_left) + Vector(rel_vec).hprod(Vector(base_reg.w, base_reg.h)) // 100
         return cls(abs_vec, base_reg=base_reg)
 
     @property
@@ -404,7 +404,7 @@ class LocationF(Vector):
         :return type: :class:`Location`
         """
         loc = Location(*args)
-        return (self + loc) / 2
+        return (self + loc) // 2
 
     def distance_to(self, *args):
         """
