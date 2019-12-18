@@ -137,7 +137,9 @@ def _take_screenshot(x, y, w, h, hwnd=None):
     #
     '''
     with mss.mss() as sct:
-        max_x, _, max_y, _ = sct.monitors[0].values()
+        monitor = sct.monitors[0]
+        max_x = monitor["height"]
+        max_y = monitor["width"]
         # проверка выхода заданного значения width за допустимый диапозон
         w = w if x + w < max_x else max_x - x
         # проверка выхода заданного значения height за допустимый диапозон
