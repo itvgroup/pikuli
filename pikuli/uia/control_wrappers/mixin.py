@@ -3,7 +3,7 @@
 from pikuli import logger
 from pikuli.input import Key, KeyModifier, InputEmulator, Clipboard
 from pikuli.uia import UIAElement
-from pikuli.utils import wait_while_not
+from wait_loop import wait_while_not
 
 from . import CONTROL_CHECK_TIMEOUT
 

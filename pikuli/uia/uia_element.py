@@ -23,7 +23,7 @@ else:
 import pikuli.uia
 
 from pikuli.geom import Region
-from pikuli.utils import wait_while
+from wait_loop import wait_while
 from pikuli._functions import verify_timeout_argument
 from pikuli._exceptions import FindFailed, FailExit
 
