@@ -38,14 +38,10 @@ class DataItem(UIAControl, _ValuePattern_methods, _Enter_Text_method):
     def expand(self):
         if self.is_collapsed():
             self.get_pattern('LegacyIAccessiblePattern').DoDefaultAction()
-        if not self.is_expanded():
-            raise Exception('pikuli.ANPropGrid_Row.expand: string \'%s\' was not expanded.' % self.Name)
 
     def collapse(self):
         if self.is_expanded():
             self.get_pattern('LegacyIAccessiblePattern').DoDefaultAction()
-        if not self.is_collapsed():
-            raise Exception('pikuli.ANPropGrid_Row.expand: string \'%s\' was not collapsed.' % self.Name)
 
     """def type_text(self, text):
         ''' Кликнем мышкой по строке и введем новый текст без автоматического нажания ENTER'a.
