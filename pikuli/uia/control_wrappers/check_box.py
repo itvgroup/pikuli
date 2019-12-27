@@ -2,7 +2,7 @@
 
 
 from pikuli.uia.adapter import Enums, STATE_SYSTEM
-from pikuli.utils import wait_while_not, wait_while
+from wait_loop import wait_while_not, wait_while
 from . import CONTROL_CHECK_TIMEOUT
 from .uia_control import UIAControl
 
