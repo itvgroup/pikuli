@@ -52,8 +52,11 @@ class UIAControl(UIAElement):
             TODO: !!! invoke пока не реализован !!!
         '''
         if method == 'click':
-            if hasattr(self, 'scroll_into_view'):
-                self.scroll_into_view()
+            try:
+                if hasattr(self, 'scroll_into_view'):
+                    self.scroll_into_view()
+            except Exception as e:
+                logger.warn(f"Scroll into view error: {e}")
 
             if hasattr(self, '_type_text_click'):
                 click_location = self._type_text_click['click_location']  # к примеру, метод getTopLeft()
