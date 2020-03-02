@@ -29,6 +29,7 @@ class RegisteredControlClasses:
             (".edit", "Edit"),
             (".group", "Group"),
             (".header", "Header"),
+            (".header_item", "HeaderItem"),
             (".hyperlink", "Hyperlink"),
             (".image", "Image"),
             (".list", "List"),
