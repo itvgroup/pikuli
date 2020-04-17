@@ -34,6 +34,7 @@ class DataGrid(UIAControl):
                 if not row.is_expanded() and not force_expand:
                     raise FindFailed('pikuli.ANPropGrid_Table: row \'%s\' was found, but it is collapsed. Try to set force_expand = True.\nSearch arguments:\n\trow_name = %s\n\tforce_expand = %s' % (str(nested_name), str(row_name), str(force_expand)))
                 row.expand()
+                row = _find_row_precisely(self, row_name[0], 1)
                 row = _find_row_precisely(row, nested_name, 0)  # Раньше: Так функция сперва изет Next, а потом -- Previous. Т.о., максимальная скорость (если строки не найдется, то фейл теста -- можно и потратить время на previous-поиск)
             found_elem = row
         else:
