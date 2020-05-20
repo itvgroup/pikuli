@@ -20,13 +20,13 @@ class NotImplemetedDummyFactory(object):
     @classmethod
     def make_classes(cls, target_cls, msg=None, reason=None, **kwargs):
         err_msg = cls._make_class_err_msg(msg, 'classes', reason, target_cls, **kwargs)
-        logger.warning('NOTE: ' + err_msg)
+        logger.debug('NOTE: ' + err_msg)
         return [cls._make_class(err_msg) for c in target_cls]
 
     @classmethod
     def make_class(cls, target_cls, msg=None, reason=None, **kwargs):
         err_msg = cls._make_class_err_msg(msg, 'class', reason, target_cls, **kwargs)
-        logger.warning('NOTE: ' + err_msg)
+        logger.debug('NOTE: ' + err_msg)
         return cls._make_class(err_msg)
 
     @classmethod
@@ -61,7 +61,7 @@ class NotImplemetedDummyFactory(object):
         formated_reason = cls.format_reason(reason)
         err_msg = ('Method {!r} of the {!r} is unavailable by the following reason:'
                    '{}{!s}'.format(method_name, type(target_cls).__name__, os.linesep, formated_reason))
-        logger.warning('NOTE: ' + err_msg)
+        logger.debug('NOTE: ' + err_msg)
 
         def not_implemeted_dummy(*args, **kwargs):
             raise NotImplementedError(err_msg)
