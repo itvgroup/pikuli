@@ -779,12 +779,10 @@ class Region(object):
     def get_find_timeout(self):
         return self._find_timeout
 
-
-    def click(self, after_cleck_delay=0, p2c_notif=True, post_move_check=None):
-        self.center.click(after_cleck_delay=after_cleck_delay, p2c_notif=False, post_move_check=post_move_check)
+    def click(self, after_cleck_delay=0, p2c_notif=True):
+        self.center.click(after_cleck_delay=after_cleck_delay, p2c_notif=False)
         if p2c_notif:
             logger.info('pikuli.%s.click(): click in center of %s' % (type(self).__name__, str(self)))
-
 
     def rightClick(self, after_cleck_delay=0, p2c_notif=True):
         self.center.rightClick(after_cleck_delay=after_cleck_delay)

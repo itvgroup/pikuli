@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+from contextlib import contextmanager
 
 from enum import Enum
 from evdev import ecodes
@@ -92,6 +93,14 @@ def _TEMP_parse_dumpkeys_output():
     return keycode_and_shift_by_ascii
 
 
+class InputMixin(object):
+
+    @staticmethod
+    @contextmanager
+    def block_input():
+        raise NotImplementedError()
+
+
 class EvdevBase(object):
 
     _uinput_dev = UInput(
@@ -102,7 +111,7 @@ class EvdevBase(object):
         name='pikuli-evdev-uinput')
 
 
-class EvdevKeyboardMixin(EvdevBase):
+class EvdevKeyboardMixin(EvdevBase, InputMixin):
 
     _keycode_and_shift_by_ascii = _TEMP_parse_dumpkeys_output()
 
@@ -132,7 +141,7 @@ class EvdevKeyboardMixin(EvdevBase):
         cls._uinput_dev.syn()
 
 
-class EvdevMouseMixin(EvdevBase):
+class EvdevMouseMixin(EvdevBase, InputMixin):
 
     @classmethod
     def _do_press_button(cls, btn_code):

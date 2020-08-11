@@ -2,6 +2,7 @@
 
 from Xlib.display import Display
 # from Xlib.protocol.event import KeyPress, KeyRelease
+from decorator import contextmanager
 
 from ..helper_types import _HookedClassInit
 
@@ -34,7 +35,16 @@ class X11KeyboardMixin(X11Base):
         """ `key_code` is ... """
 '''
 
-class X11MouseMixin(X11Base):
+
+class InputMixin(object):
+
+    @staticmethod
+    @contextmanager
+    def block_input():
+        raise NotImplementedError()
+
+
+class X11MouseMixin(X11Base, InputMixin):
 
     __hooked_class_init_overriding = {
         X11Base: [

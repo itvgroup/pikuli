@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-
+from contextlib import contextmanager
+from ctypes import windll
 from enum import Enum
 
 import win32api
@@ -57,7 +58,17 @@ class WinScrollDirection(int, Enum):
     DOWN = -1
 
 
-class WinKeyboardMixin(object):
+class InputMixin(object):
+
+    @staticmethod
+    @contextmanager
+    def block_input():
+        windll.user32.BlockInput(True)
+        yield
+        windll.user32.BlockInput(False)
+
+
+class WinKeyboardMixin(InputMixin):
 
     @classmethod
     def _char_to_keycode(cls, char):
@@ -77,7 +88,7 @@ class WinKeyboardMixin(object):
         win32api.keybd_event(key_code, 0, win32con.KEYEVENTF_EXTENDEDKEY | win32con.KEYEVENTF_KEYUP, 0)  # win32con.KEYEVENTF_EXTENDEDKEY
 
 
-class WinMouseMixin(object):
+class WinMouseMixin(InputMixin):
 
     @classmethod
     def _do_press_button(cls, btn_code):
