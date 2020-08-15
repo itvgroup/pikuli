@@ -306,6 +306,8 @@ class LocationF(Vector):
 
         for x, y in self.points_between_points(src_x, src_y, dest_x, dest_y, move_step):
             InputEmulator.set_mouse_pos(x, y)
+
+        assert (dest_x, dest_y) == InputEmulator.get_mouse_pos(), (src_x, src_y, InputEmulator.get_mouse_pos())
         self._x = dest_x
         self._y = dest_y
         return self
@@ -331,8 +333,8 @@ class LocationF(Vector):
             self.mouseDown(p2c_notif=False)
             self._is_mouse_down = True
 
-        self.moveto((dest_x, dest_y))
-
+        self.moveto((dest_x, dest_y), move_step=1)
+        time.sleep(0.1)
         self._x = dest_x
         self._y = dest_y
         return self
