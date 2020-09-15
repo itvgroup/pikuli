@@ -140,6 +140,7 @@ class LocationF(Vector):
     def click(self, after_cleck_delay=0, p2c_notif=True):
         with InputEmulator.block_input():
             self.mouse_move()
+            time.sleep(0.1)
             InputEmulator.left_click()
             if p2c_notif:
                 logger.info('pikuli.%s.click(): click on %s' % (type(self).__name__, str(self)))
