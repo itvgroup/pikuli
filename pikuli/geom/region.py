@@ -38,8 +38,7 @@ RELATIONS = ['top-left', 'center']
 DELAY_BETWEEN_CV_ATTEMPT = 1.0
 DEFAULT_FIND_TIMEOUT = 3.1
 
-logger = logging.getLogger('axxon.pikuli')
-
+from pikuli import logger
 
 def _get_list_of_patterns(ps, failExitText):
     if not isinstance(ps, list):

@@ -25,8 +25,8 @@ import pikuli
 from pikuli._exceptions import FindFailed
 from pikuli.geom import Region
 from wait_loop import wait_while, wait_while_not
+from pikuli import logger
 
-logger = logging.getLogger('axxon.pikuli')
 
 '''
 !!! TODO: !!!

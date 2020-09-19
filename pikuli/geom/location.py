@@ -20,8 +20,7 @@ DRAGnDROP_MOVE_STEP  = 6
 
 Color = namedtuple('Color', 'r g b')
 
-logger = logging.getLogger('axxon.pikuli')
-
+from pikuli import logger
 """
 TODO: Unit Test
 

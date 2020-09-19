@@ -81,7 +81,7 @@ class AdapterBase(object):
             api_name = name_format.format(name=name)
             id_ = getattr(get_attr_from, api_name, None)
             if id_ is None:
-                logger.warning("{preamble} {name} ({api_name}) not exist in current UIA namespace".format(
+                logger.debug("{preamble} {name} ({api_name}) not exist in current UIA namespace".format(
                     preamble=err_msg_preamble, name=name, api_name=api_name))
                 continue
             name2id[name] = id_

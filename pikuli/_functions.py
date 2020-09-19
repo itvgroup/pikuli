@@ -19,9 +19,7 @@ import numpy as np
 
 import pikuli
 from ._exceptions import FailExit, FindFailed
-
-
-logger = logging.getLogger('axxon.pikuli')
+from pikuli import logger
 
 
 # Константа отсутствует в win32con, но есть в http://userpages.umbc.edu/~squire/download/WinGDI.h:

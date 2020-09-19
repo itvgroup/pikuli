@@ -19,9 +19,8 @@ import logging
 import sys
 
 
-logger = logging.getLogger('axxon.pikuli')
+from .logger import PikuliLogger as logger
 from .utils import basic_logger_config
-basic_logger_config()
 
 from ._SettingsClass import SettingsClass
 Settings = SettingsClass()
@@ -49,8 +48,7 @@ try:
     Settings.addImagePath(
         os.path.dirname(os.path.abspath(sys.modules['__main__'].__file__)))
 except Exception as e:
-    logging.getLogger('axxon.pikuli').error(
-        'Problem with addImagePath: {}'.format(e))
+    logger.exception(e)
 
 __all__ = [
     'Settings',

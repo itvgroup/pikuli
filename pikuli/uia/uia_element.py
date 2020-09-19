@@ -42,7 +42,7 @@ NAMES_of_COR_E = {
 
 # CONSOLE_ERASE_LINE_SEQUENCE = '\033[F' + '\033[2K'
 
-logger = logging.getLogger('axxon.pikuli')
+from pikuli import logger
 
 '''
 TODO:
