@@ -19,8 +19,7 @@ from ctypes import byref
 import comtypes
 import comtypes.client
 
-comtypes.client.GetModule('oleacc.dll')             # Что-то там нагенерирует ...
-from comtypes.gen.Accessibility import IAccessible  # ... и теперь чать этого импортируем
+
 
 import pikuli
 from pikuli._exceptions import FindFailed
@@ -412,8 +411,9 @@ class HWNDElement(object):
         if not wait_while(self.is_visible, timeout):
             raise Exception('pikuli.HWNDElement: wait_for_invisible(...) of %s was failed' % str(self))
 
-
     def _obj(self):
+        comtypes.client.GetModule('oleacc.dll')  # Что-то там нагенерирует ...
+        from comtypes.gen.Accessibility import IAccessible  # ... и теперь чать этого импортируем
         obj = comtypes.POINTER(IAccessible)()
         oledll.oleacc.AccessibleObjectFromWindow(self.hwnd, OBJID_CLIENT, byref(obj._iid_), byref(obj))
         return obj
