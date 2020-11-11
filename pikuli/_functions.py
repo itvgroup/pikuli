@@ -168,7 +168,11 @@ def __check_reg_in_single_screen(self):
 """
 
 
-def pixel_color_at(x, y):
+def pixel_color_at(x, y, monitor_number=1):
+    return pixels_colors_at([(x, y)], monitor_number)[0]
+
+
+def pixels_colors_at(coords_tuple_list, monitor_number=1):
     with mss.mss() as sct:
-        sct_img = sct.grab(sct.monitors[0])
-        return sct_img.pixel(x, y)
+        sct_img = sct.grab(sct.monitors[monitor_number])  # некст по умолчанию выводится на первый монитор
+        return list(map(lambda coord: sct_img.pixel(*coord), coords_tuple_list))
