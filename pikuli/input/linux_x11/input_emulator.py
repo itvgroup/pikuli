@@ -41,7 +41,7 @@ class InputMixin(object):
     @staticmethod
     @contextmanager
     def block_input():
-        raise NotImplementedError()
+        pass
 
 
 class X11MouseMixin(X11Base, InputMixin):
