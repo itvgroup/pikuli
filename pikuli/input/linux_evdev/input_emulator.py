@@ -98,7 +98,7 @@ class InputMixin(object):
     @staticmethod
     @contextmanager
     def block_input():
-        raise NotImplementedError()
+        yield
 
 
 class EvdevBase(object):

@@ -41,7 +41,7 @@ class InputMixin(object):
     @staticmethod
     @contextmanager
     def block_input():
-        pass
+        yield
 
 
 class X11MouseMixin(X11Base, InputMixin):
