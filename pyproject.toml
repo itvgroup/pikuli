@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "pikuli"
+version = "0.0.1"
+description = "Desktop GUI application tests automation tool."
+license = "MIT"
+authors = [
+    "AxxonSoft <https://www.axxonsoft.com>"
+]
+readme = 'README.md'
+repository = "https://github.com/itvgroup/pikuli"
+homepage = "https://github.com/itvgroup/pikuli"
+keywords = ['automation', 'test', 'gui']
+
+[tool.poetry.dependencies]
+python = "^3.6"
+numpy = "^1.17"
+psutil = "^5.6.7"
+mss = "*"
+Pillow = { version = "^6.2.1"}
+opencv-python = { version = "^4.5", optional = true }
+comtypes = { version = "^1.1.7", platform = "win32" }
+pywin32 = { version = ">= 214", platform = "win32" }
+pythonnet = { version = "^2.5.2", platform = "linux" }
+evdev = { version = "*", platform = "linux" }
+xlib = { version = "*", platform = "linux" }
