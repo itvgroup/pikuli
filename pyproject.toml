@@ -1,10 +1,10 @@
 [tool.poetry]
 name = "pikuli"
-version = "0.0.1"
+version = "0.0.2"
 description = "Desktop GUI application tests automation tool."
 license = "MIT"
 authors = [
-    "AxxonSoft <https://www.axxonsoft.com>"
+    "AxxonSoft <support@axxonsoft.com>"
 ]
 readme = 'README.md'
 repository = "https://github.com/itvgroup/pikuli"
