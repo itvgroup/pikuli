@@ -22,8 +22,8 @@ else:
 
 import pikuli.uia
 
+from pikuli import wait_while
 from pikuli.geom import Region
-from wait_loop import wait_while
 from pikuli._functions import verify_timeout_argument
 from pikuli._exceptions import FindFailed, FailExit
 
@@ -53,26 +53,6 @@ TODO:
 
     --- обработка доступности LegacyIAccessiblePattern в основнмо классе UIAElement
 '''
-
-"""
-'''
-    Если в функции поиска ниже явно не передатся таймаут, то будет использоваться глобальная для модуля
-переменная _default_timeout. Её _можно_ менять извне с помощью функций uia_set_default_timeout() и
-uia_set_initial_default_timeout(). Это нужно для организации цеочки поиска с помощью db_class.
-'''
-if '_default_timeout' not in globals():
-    _default_timeout = DEFAULT_FIND_TIMEOUT
-
-def uia_set_default_timeout(timeout):
-    global _default_timeout
-    logger.debug('uia_set_default_timeout(): _default_timeout  %f -> %f' % (_default_timeout, timeout))
-    _default_timeout = float(timeout)
-
-def uia_set_initial_default_timeout():
-    global _default_timeout
-    logger.debug('uia_set_initial_default_timeout(): _default_timeout  %f -> %f' % (_default_timeout, DEFAULT_FIND_TIMEOUT))
-    _default_timeout = DEFAULT_FIND_TIMEOUT
-"""
 
 class UIAElement(object):
     '''
@@ -169,6 +149,9 @@ class UIAElement(object):
         if attr is not None:
             return attr
 
+        if name in Adapter.known_element_property_names:
+            return None
+    
         raise AttributeError("Attribute {!r} not exist in {}".format(name, type(self)))
 
     def _short_info(self):
@@ -336,9 +319,6 @@ class UIAElement(object):
         steps = [{'exact_level': 1, 'LocalizedControlType': n} for n in names]
         return self.find_nested(*steps, **kwargs)
 
-    #def find(self, _criteria, find_first_only=True, max_descend_level=None, exact_level=None, exception_on_find_fail=None):
-    #def find(self, AutomationId=True, ClassName=True, Name=True, ControlType=True, ProcessId=True,
-    #         find_first_only=True, max_descend_level=None, exact_level=None, exception_on_find_fail=None):
     def find(self, **kwargs):
         '''
         Поиск дочернего окна-объекта любого уровня вложенности. Под окном пнимается любой WinForms-элемент любого класса.

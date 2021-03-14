@@ -34,4 +34,5 @@ class AdapterMeta(type):
 
 
 class Adapter(OsAdapterMixin, metaclass=AdapterMeta):
-    pass
+    
+    known_element_property_names = element_property_names

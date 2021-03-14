@@ -4,6 +4,7 @@ import os
 from collections import namedtuple
 from contextlib import contextmanager
 
+from pikuli import logger
 from pikuli._helpers import NotImplemetedDummyFactory
 
 
@@ -56,7 +57,6 @@ class EmulatorMethod(object):
 
         KeyCode, ButtonCode, ScrollDirection, OsKeyboardMixin, OsMouseMixin, Clipboard = cls._collection[new_method]
         cls._current_method = new_method
-
 
 if os.name == 'nt':
     from .windows.input_emulator import WinVirtKeyCodes

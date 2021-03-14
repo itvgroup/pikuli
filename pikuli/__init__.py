@@ -15,12 +15,10 @@ Doc pywin32:
 #SUPPORT_UIA = True
 
 import os
-import logging
 import sys
 
-
-from .logger import PikuliLogger as logger
-from .utils import basic_logger_config
+from .logger import logger
+from .utils import wait_while, wait_while_not
 
 from ._SettingsClass import SettingsClass
 Settings = SettingsClass()

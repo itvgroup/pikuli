@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 
+from pikuli import wait_while_not, wait_while
 from pikuli.uia.adapter import Enums, STATE_SYSTEM
-from wait_loop import wait_while_not, wait_while
 from . import CONTROL_CHECK_TIMEOUT
 from .uia_control import UIAControl
 

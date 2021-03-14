@@ -16,8 +16,8 @@ try:
 
 except Exception as ex:
     err_msg = traceback.format_exc()
-    #logger.exception(
-    #    'NOTE: Cann\'t initialize class UIA API. A dummy will be used. Some features is not available.')
+    logger.exception(
+        'NOTE: Cann\'t initialize class UIA API. A dummy will be used. Some features is not available.')
     (
         UIAElement,
         Desktop
