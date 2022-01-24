@@ -2,7 +2,6 @@
 
 from enum import Enum, EnumMeta
 
-
 class ApiEnumAutoval(Enum):
 
     def __new__(cls, default_val):
@@ -13,7 +12,6 @@ class ApiEnumAutoval(Enum):
     @property
     def _c_name(self):
         return self.name
-
 
 class ApiEnumExplicit(int, Enum):
 
@@ -26,7 +24,6 @@ class ApiEnumExplicit(int, Enum):
         """
         name = self.name if self.name != 'None_' else 'None'
         return name
-
 
 class Enums(object):
 
@@ -44,7 +41,6 @@ class Enums(object):
 
     def __str__(self):
         return str(self.get_collection().keys())
-
 
 class IdNameMap(object):
 

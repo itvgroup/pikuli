@@ -8,7 +8,6 @@
 #http://msdn.microsoft.com/en-us/library/windows/desktop/dd318521(v=vs.85).aspx
 ###############################
 
-
 #Automation Element Property Identifiers
 element_property_names = (
     "AcceleratorKey",
@@ -50,7 +49,6 @@ element_property_names = (
     "ProviderDescription",
     "RuntimeId",
 )
-
 
 # Automation Control Type Identifiers (https://msdn.microsoft.com/en-us/library/windows/desktop/ee671198(v=vs.85).aspx)
 control_type_names = (
@@ -96,7 +94,6 @@ control_type_names = (
     "TreeItem",
     "Window",
 )
-
 
 """
 #Control Pattern Property Identifiers

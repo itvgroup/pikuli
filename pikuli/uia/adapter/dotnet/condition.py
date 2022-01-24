@@ -3,7 +3,6 @@
 from pikuli.utils import class_property
 from .adapter import Condition_clr
 
-
 class Condition(object):
 
     @class_property

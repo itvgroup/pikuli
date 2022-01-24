@@ -7,7 +7,6 @@ from enum import Enum
 from evdev import ecodes
 from evdev.uinput import UInput
 
-
 class EvdevKeyCodes(int, Enum):
     """
     `evdev` key codes (see `linux/include/uapi/linux/input-event-codes.h`)
@@ -42,17 +41,14 @@ class EvdevKeyCodes(int, Enum):
     F11        = ecodes.KEY_F11
     F12        = ecodes.KEY_F12
 
-
 class EvdevButtonCode(int, Enum):
     LEFT   = ecodes.BTN_LEFT
     RIGHT  = ecodes.BTN_RIGHT
     MIDDLE = ecodes.BTN_MIDDLE
 
-
 class EvdevScrollDirection(int, Enum):
     UP = 1
     DOWN = -1
-
 
 def _TEMP_parse_dumpkeys_output():
     """
@@ -92,14 +88,12 @@ def _TEMP_parse_dumpkeys_output():
 
     return keycode_and_shift_by_ascii
 
-
 class InputMixin(object):
 
     @staticmethod
     @contextmanager
     def block_input():
         yield
-
 
 class EvdevBase(object):
 
@@ -109,7 +103,6 @@ class EvdevBase(object):
             ecodes.EV_REL: [ecodes.REL_WHEEL]
         },
         name='pikuli-evdev-uinput')
-
 
 class EvdevKeyboardMixin(EvdevBase, InputMixin):
 
@@ -139,7 +132,6 @@ class EvdevKeyboardMixin(EvdevBase, InputMixin):
     def _do_release_key(cls, key_code):
         cls._uinput_dev.write(ecodes.EV_KEY, key_code, 0)
         cls._uinput_dev.syn()
-
 
 class EvdevMouseMixin(EvdevBase, InputMixin):
 

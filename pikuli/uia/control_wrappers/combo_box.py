@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
-from pikuli import FindFailed, wait_while_not
+from pikuli import FindFailed
+from pikuli.utils import wait_while_not
 
 from . import CONTROL_CHECK_TIMEOUT
 from .uia_control import UIAControl
 from .mixin import _ValuePattern_methods, _Enter_Text_method
-
 
 class ComboBox(UIAControl, _ValuePattern_methods, _Enter_Text_method):
 

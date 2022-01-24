@@ -7,7 +7,6 @@ from gi.repository import Gtk, Gdk
 
 from pikuli import logger
 
-
 class GtkClipboard(object):
 
     _clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)

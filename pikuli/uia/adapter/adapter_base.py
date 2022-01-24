@@ -4,7 +4,6 @@ from pikuli import logger
 from pikuli.uia import AdapterException
 from pikuli.utils import class_property
 
-
 class AdapterBase(object):
 
     @class_property

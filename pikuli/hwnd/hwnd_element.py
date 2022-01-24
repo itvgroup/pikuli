@@ -2,10 +2,8 @@
 
 ''' Субмодуль работы с контролами через win32api. '''
 
-import os
 import re
 import types
-import logging
 
 import psutil
 
@@ -19,14 +17,10 @@ from ctypes import byref
 import comtypes
 import comtypes.client
 
-
-
-import pikuli
 from pikuli._exceptions import FindFailed
 from pikuli.geom import Region
-from pikuli import wait_while, wait_while_not
-from pikuli import logger
-
+from pikuli.uia import UIAElement
+from pikuli import wait_while, wait_while_not, logger
 
 '''
 !!! TODO: !!!
@@ -48,14 +42,11 @@ BUTTON_NOT_MARKED = 0x000001  # Если этот бит в поле state кн�
 CHECKED           = 0x000010
 FOCUSED           = 0x000004
 
-
 # # Словарь "системых" title'ов. Если title не строка, а число отсюда, то title интерпретируется не просто как заголвок окна или текст лейбла, а как указание на какой-то объект.
 # SYS_TITLES = {'main_window': 0}
 
-
 def _hwnd2wf(hwnd):
     return HWNDElement(hwnd)
-
 
 def _is_visible(hwnd0):
     ''' Определяет свойство visible окна hwnd, а также проверяет наследвоание этого свойства от всех родительских окон. '''
@@ -66,7 +57,6 @@ def _is_visible(hwnd0):
             return False
         return _iv(GetParent(hwnd))
     return _iv(hwnd0)
-
 
 def _find_main_parent_window(child_hwnd, child_pid=None):
     ''' Для указанного (дочеренего) окна ищет самое-самое родительское. Если child_pid=None, то родительским
@@ -88,7 +78,6 @@ def _find_main_parent_window(child_hwnd, child_pid=None):
     if child_hwnd == 0:
         return 0
     return _fmpw(child_hwnd, child_pid)
-
 
 def _find_all_windows_by_pid(pid):
     '''
@@ -116,7 +105,6 @@ def _find_all_windows_by_pid(pid):
     EnumWindows(EnumWindows_callback, extra)
 
     return extra['hwnds']
-
 
 def _find_window_by_process_name_and_title(proc_name, in_title):
     ''' По имени exe-файла и текстут в заголовке (in_title -- список строк, искомых в заголовке) ищет окно. Это
@@ -152,7 +140,6 @@ def _find_window_by_process_name_and_title(proc_name, in_title):
         raise FindFailed('pikuli.HWNDElement: more then one window with %s in title of the process \'%s\' (%s) was found.' % (str(in_title), str(proc_name), str(extra['pid'])))
 
     return (extra['pid'], extra['hwnd'])
-
 
 class HWNDElement(object):
     '''
@@ -225,7 +212,7 @@ class HWNDElement(object):
             if not extra['res']:
                 raise Exception('pikuli.HWNDElement: constructor error: hwnd = %s is not child for main window %s' % (str(hwnd), str(self.hwnd_main_win)))'''
 
-        elif len(args) == 1 and isinstance(args[0], pikuli.uia.UIAElement):
+        elif len(args) == 1 and isinstance(args[0], UIAElement):
             if args[0].hwnd is None or args[0].hwnd == 0:
                 raise Exception('pikuli.HWNDElement: constructor error: args[0].hwnd is None or args[0].hwnd == 0:; args = %s' % str(args))
             self.hwnd          = args[0].hwnd
@@ -253,7 +240,6 @@ class HWNDElement(object):
     def title(self):
         return GetWindowText(self.hwnd)
 
-
     '''def _hwnd2reg(self, hwnd, title=None):
         # полчение размеров клменскй области окна
         (_, _, wc, hc) = GetClientRect(hwnd)
@@ -266,14 +252,11 @@ class HWNDElement(object):
             reg.winctrl = HWNDElement(hwnd)
         return reg'''
 
-
     def is_empty(self):
         return (self.proc_name is None)
 
-
     def find_all(self, win_class, title, process_name=False, title_regexp=False, max_depth_level=None, depth_level=None):
         return self.find(win_class, title, process_name=process_name, title_regexp=title_regexp, find_all=True, max_depth_level=max_depth_level, depth_level=depth_level)
-
 
     def find(self, win_class, title, process_name=False, title_regexp=False, find_all=False, max_depth_level=None, depth_level=None):  #, timeout=None):
         '''
@@ -371,7 +354,6 @@ class HWNDElement(object):
             else:
                 raise FindFailed('pikuli.HWNDElement.find: window %s with win_class = \'%s\' and title = \'%s\' has visible = False.' % (hex(extra['hwnds'][0]), str(win_class), str(title)))
 
-
     def reg(self, force_new_reg=False):
         ''' Возвращает Region для self-элемента HWNDElement. '''
         if self.is_empty():
@@ -449,7 +431,6 @@ class HWNDElement(object):
         if not wait_while(self.is_button_checked, timeout):
             raise Exception('pikuli.HWNDElement: wait_for_button_unchecked(...) of %s was failed' % str(self))
 
-
     def is_button_marked(self):
         '''
         В первую очередь, речь идет о кнопке Applay.
@@ -473,7 +454,6 @@ class HWNDElement(object):
         if not wait_while(self.is_button_marked, timeout):
             raise Exception('pikuli.HWNDElement: wait_for_button_unmarked(...) of %s was failed' % str(self))
 
-
     def get_editbox_text(self):
         ''' Вернет текст поля ввода '''
         if self.is_empty():
@@ -485,7 +465,6 @@ class HWNDElement(object):
             return str(self._obj().accValue())
         else:
             raise Exception('TODO')
-
 
     def get_combobox_text(self):
         ''' Вернет текст поля combobox '''
@@ -499,27 +478,6 @@ class HWNDElement(object):
         else:
             raise NotImplementedError
 
-
     def get_parent(self):
         ''' Вернет HWNDElement для родительского окна (в широком виндовом смысле "окна"). '''
         return HWNDElement(GetParent(self.hwnd))
-
-
-
-
-"""
-import pywinauto
-win32defines = pywinauto.win32defines
-
-'''
--= Tree View: =-
-    pywinauto.controls.common_controls.TreeViewWrapper (https://github.com/pywinauto/pywinauto)
-    "About Tree-View Controls" (https://msdn.microsoft.com/en-us/en-en/library/windows/desktop/bb760017(v=vs.85).aspx)
-    "Using Tree-View Controls" (https://msdn.microsoft.com/en-us/en-en/library/windows/desktop/bb773409(v=vs.85).aspx)
-'''
-
-def _treeview_element__reg(self):
-    rect = self.Rectangle()
-    return geom.Region(rect.left, rect.top, rect.width, rect.height)
-setattr(pywinauto.controls.common_controls._treeview_element, 'reg', _treeview_element__reg)
-"""

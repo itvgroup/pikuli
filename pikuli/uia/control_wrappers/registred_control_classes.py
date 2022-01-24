@@ -5,7 +5,6 @@ import numbers
 
 from ..adapter.oleacc_h import ROLE_SYSTEM, ROLE_SYSTEM_rev
 
-
 class RegisteredControlClasses:
     """
     TODO: Improme registration machinery and criteria structure.

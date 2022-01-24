@@ -4,7 +4,6 @@ from pikuli import logger
 from .patterns_plain_description import METHOD, PROPERTY, patterns_plain_description
 from ..exceptions import AdapterException
 
-
 class PatternDescriptions():
     """
     Accumulates Patterns known by Pikuli and available in the current system.
@@ -49,10 +48,8 @@ class PatternDescriptions():
         """
         return patterns_plain_description.keys()
 
-
 def _unpack_member_description(member_type, member_name, *member_args):
     return member_type, member_name, member_args
-
 
 class _PattDesc(object):
 

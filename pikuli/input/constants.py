@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-
 DELAY_KBD_KEY_PRESS = 0.02
 DELAY_KBD_KEY_RELEASE = 0.02
 

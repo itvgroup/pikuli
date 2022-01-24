@@ -6,7 +6,6 @@ import datetime
 import traceback
 import sys
 import re
-import logging
 import json
 import os
 
@@ -22,7 +21,7 @@ else:
 
 import pikuli.uia
 
-from pikuli import wait_while
+from pikuli.utils import wait_while
 from pikuli.geom import Region
 from pikuli._functions import verify_timeout_argument
 from pikuli._exceptions import FindFailed, FailExit
@@ -365,7 +364,6 @@ class UIAElement(object):
         '''
         self._test4readiness()
 
-
         # Обработка воходных аргументов:
         find_first_only        = kwargs.pop('find_first_only', True)
         max_descend_level      = kwargs.pop('max_descend_level', None)
@@ -499,7 +497,6 @@ class UIAElement(object):
                 next_automation_element = method_f(next_automation_element)
             return found_automation_element_arr_local
 
-
         '''
         # Поиск по веткам элементов:
         def _descendants_range_level(walker, automation_element, level=0):
@@ -553,11 +550,9 @@ class UIAElement(object):
                         found_automation_element_arr.append( elem )
                     _add_to_next_level_todo(elem)
 
-
                 (current_level_todo_arr, next_level_todo_arr, level) = _goto_next_level()
 
             return found_automation_element_arr
-
 
         def _descendants_exact_level(walker, automation_element, level=0):
             if level < exact_level:  # exact_level > 0; level от вызова к вызову +1 (растет от 0).

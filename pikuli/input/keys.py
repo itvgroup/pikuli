@@ -2,7 +2,6 @@ from enum import Enum, EnumMeta
 
 from .platform_init import KeyCode, ScrollDirection
 
-
 class InputSequence(object):
 
     def __init__(self, obj):
@@ -57,13 +56,11 @@ class InputSequence(object):
     def is_empty(self):
         return len(self._container) == 0
 
-
 class KeyMeta(EnumMeta):
     def __new__(mcs, name, bases, dct):
         for e in KeyCode:
             dct[e.name] = e.value
         return super(KeyMeta, mcs).__new__(mcs, name, bases, dct)
-
 
 class KeyBaseEnum(int, Enum):
 
@@ -94,7 +91,6 @@ class KeyBaseEnum(int, Enum):
             raise ValueError("Operand should be int: {!r}".format(times))
         return InputSequence(self)._repeat(times)
 
-
 class Key(KeyBaseEnum, metaclass=KeyMeta):
     """
     Коды специальных клавиш. Позволяют легко добавлять их к строкам в коде. К примеру:
@@ -103,7 +99,6 @@ class Key(KeyBaseEnum, metaclass=KeyMeta):
     Код клавиши зависит от OS. Для Windows это Virtual-key Code, а в Linux -- коды evdev.
     """
     pass
-
 
 class KeyModifier(KeyBaseEnum):
     """

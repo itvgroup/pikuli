@@ -4,7 +4,6 @@ from pikuli.uia.adapter import STATE_SYSTEM
 from .mixin import _ValuePattern_methods, _Enter_Text_method
 from .uia_control import UIAControl
 
-
 class DataItem(UIAControl, _ValuePattern_methods, _Enter_Text_method):
 
     CONTROL_TYPE = 'DataItem'

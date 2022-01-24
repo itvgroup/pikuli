@@ -13,7 +13,6 @@ class X11Base(_HookedClassInit):
         cls._display = Display()
         cls._root_window = cls._display.screen().root
 
-
 '''
 class X11KeyboardMixin(X11Base):
     """
@@ -35,14 +34,12 @@ class X11KeyboardMixin(X11Base):
         """ `key_code` is ... """
 '''
 
-
 class InputMixin(object):
 
     @staticmethod
     @contextmanager
     def block_input():
         yield
-
 
 class X11MouseMixin(X11Base, InputMixin):
 

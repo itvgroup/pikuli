@@ -4,9 +4,7 @@ import inspect
 
 from .platform_init import OsPropertyValueConverter
 
-
 CONV_METHOD_NAME_PREFIX = 'convert_'
-
 
 class PropertyValueConverterMeta(type):
 
@@ -19,7 +17,6 @@ class PropertyValueConverterMeta(type):
             if n.startswith(CONV_METHOD_NAME_PREFIX)
         }
         return new_cls
-
 
 class PropertyValueConverter(OsPropertyValueConverter, metaclass=PropertyValueConverterMeta):
 

@@ -7,7 +7,6 @@ from pikuli.uia.adapter import Enums
 from .uia_control import UIAControl
 from .check_box import CheckBox
 
-
 class TreeItem(CheckBox, UIAControl):
     """
     Наследование от :class:`CheckBox` здесь чисто утилитарное -- нужные его методы.

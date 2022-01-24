@@ -2,7 +2,6 @@
 
 from ..uia_element import UIAElement
 
-
 class CustomControl(UIAElement):
     """
     Cunstom (Graphic, for example) control. It does not support LegacyIAccessiblePattern, because this patternt

@@ -3,7 +3,6 @@
 from pikuli.utils import class_property
 from .adapter import TreeWalker_clr
 
-
 class TreeWalker(object):
 
     def __init__(self, condition):

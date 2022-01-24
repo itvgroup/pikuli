@@ -2,12 +2,10 @@
 
 import os
 
-from pikuli import logger
-
+from . import logger
 
 class NotImplemetedDummyBase(object):
     err_msg = None
-
 
 class NotImplemetedDummyFactory(object):
 

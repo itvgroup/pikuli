@@ -3,7 +3,7 @@
 import sys
 import logging
 
-def basic_logger_config(loglevel=logging.INFO):
+def basic_logger_config(logger, loglevel=logging.INFO):
     if logger.handlers:
         logger.info('Pikuli logger already configured. Skip `pikuli.utils.basic_logger_config()`.')
         return
@@ -19,6 +19,6 @@ def basic_logger_config(loglevel=logging.INFO):
     logger.addHandler(handler)
     logger.debug('Pikuli logger has been configured basicaly')
 
-
 logger = logging.getLogger('axxon.pikuli')
-basic_logger_config()
+
+basic_logger_config(logger)

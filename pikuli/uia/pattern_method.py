@@ -3,7 +3,6 @@ from pikuli.uia.adapter import Enums
 
 from .exceptions import AdapterException
 
-
 class UiaPatternMethod(object):
     '''
     Wrapper class for UIA pattern method

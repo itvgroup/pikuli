@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-
 '''
     "Object State Constants" (https://msdn.microsoft.com/en-us/library/windows/desktop/dd373609(v=vs.85).aspx)
     Константы, описывающие состояние WinForms кнопок, checkbox и прочих. Эти константы относятся к LegacyAccessible-паттерну,

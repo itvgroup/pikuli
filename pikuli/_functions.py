@@ -3,11 +3,13 @@
 '''
    Файл содержит вспомогательные функции, используемые в pikuli.
 '''
+from distutils import extension
 import os
 import time
 import logging
+from typing import Any
+
 import mss
-from io import BytesIO
 from PIL import Image
 
 if os.name == 'nt':
@@ -15,16 +17,11 @@ if os.name == 'nt':
     import win32gui
     import win32con
 
-import numpy as np
-
-import pikuli
-from ._exceptions import FailExit, FindFailed
-from pikuli import logger
-
+from .geom.simple_types import Rectangle
+from . import FailExit, logger, settings
 
 # Константа отсутствует в win32con, но есть в http://userpages.umbc.edu/~squire/download/WinGDI.h:
 CAPTUREBLT = 0x40000000
-
 
 def verify_timeout_argument(timeout, allow_None=False, err_msg='pikuli.verify_timeout_argument()'):
     if timeout is None and allow_None:
@@ -37,9 +34,8 @@ def verify_timeout_argument(timeout, allow_None=False, err_msg='pikuli.verify_ti
         raise FailExit('%s: wrong timeout = \'%s\' (%s)' % (str(err_msg), str(timeout), str(ex)))
     return timeout
 
-
 def addImagePath(path):
-    pikuli.Settings.addImagePath(path)
+    settings.addImagePath(path)
 
 def get_hwnd_by_location(x, y):
     '''
@@ -48,7 +44,7 @@ def get_hwnd_by_location(x, y):
     return win32gui.WindowFromPoint((x, y))
 
 def setFindFailedDir(path):
-    pikuli.Settings.setFindFailedDir(path)
+    settings.setFindFailedDir(path)
 
 def _monitor_hndl_to_screen_n(m_hndl):
     ''' Экраны-мониторы нуменруются от 1. Нулевой экран -- это полный вирутальный. '''
@@ -58,11 +54,9 @@ def _monitor_hndl_to_screen_n(m_hndl):
         raise FailExit('can not obtaen Screen number from win32api.GetMonitorInfo() = %s' % str(minfo))
     return screen_n
 
-
 def _screen_n_to_monitor_name(n):
     ''' Экраны-мониторы нуменруются от 1. Нулевой экран -- это полный вирутальный. '''
     return r'\\.\DISPLAY%i' % n
-
 
 def _screen_n_to_mon_descript(n):
     ''' Returns a sequence of tuples. For each monitor found, returns a handle to the monitor, device context handle, and intersection rectangle:
@@ -80,7 +74,6 @@ def _screen_n_to_mon_descript(n):
     else:
         raise FailExit('wrong screen number \'%s\'' % str(n))
     return m
-
 
 def highlight_region(x, y, w, h, delay=0.5):
     def _cp_boundary(dest_dc, dest_x0, dest_y0, src_dc, src_x0, src_y0, w, h):
@@ -126,51 +119,53 @@ def highlight_region(x, y, w, h, delay=0.5):
     #threading.Thread(target=_thread_function, args=(x, y, w, h, delay), name='highlight_region %s' % str((x, y, w, h, delay))).start()
     return
 
+class SimpleImage:
 
-def _take_screenshot(x, y, w, h, hwnd=None):
+    def __init__(self, img_src: Any, pil_img: Image):
+        self.img_src = img_src
+        self._pil_img = pil_img
+
+    @classmethod
+    def from_cv2(cls, img_src: Any, cv2_img):
+        return Image.fromarray(cv2_img, mode="RGB")
+
+    @property
+    def pillow_img(self) -> Image:
+        return self._pil_img
+
+    def save(self, filename, loglevel=logging.DEBUG):
+        path = os.path.abspath(filename)
+        logger.log(loglevel, f'Save {self.img_src} to {path}')
+        
+        dir_path = os.path.dirname(path)
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path)
+        
+        _, extension = os.path.splitext(path)
+        self._pil_img.save(path, format=extension.lstrip('.'))
+
+def take_screenshot(rect: Rectangle) -> SimpleImage:
     '''
     Получаем скриншот области:
         x, y  --  верхний левый угол прямоуголника в системе координат виртуального рабочего стола
         w, h  --  размеры прямоуголника
-    #
+
+    # TODO: Fix multi-monitor configuration!!!
     '''
     with mss.mss() as sct:
         monitor = sct.monitors[0]
         max_x = monitor["width"]
         max_y = monitor["height"]
         # проверка выхода заданного значения width за допустимый диапозон
-        w = w if x + w < max_x else max_x - x
+        w = rect.w if rect.x + rect.w < max_x else max_x - rect.x
         # проверка выхода заданного значения height за допустимый диапозон
-        h = h if y + h < max_y else max_y - y
-        sct_img = sct.grab(dict(left=x, top=y, height=h, width=w))
-        scr = mss.tools.to_png(sct_img.rgb, sct_img.size, output="")
-        return np.array(Image.open(BytesIO(scr)).convert('RGB'))
-
-
-"""def _scr_num_of_point(x, y):
-    ''' Вернет номер (от нуля) того экрана, на котором располоржен левый верхний угол текущего Region. '''
-    m_tl = win32api.MonitorFromPoint((x, y), win32con.MONITOR_DEFAULTTONULL)
-    if m_tl is None:
-        raise FailExit('top-left corner of the Region is out of visible area of sreens (%s, %s)' % (str(x), str(y)))
-    return _monitor_hndl_to_screen_n(m_tl)"""
-
-"""
-def __check_reg_in_single_screen(self):
-    ''' Проверяем, что Region целиком на одном экране. Экран -- это просто один из мониторав, которые существуют по мнению Windows. '''
-    m_tl = win32api.MonitorFromPoint((self._x, self._y), win32con.MONITOR_DEFAULTTONULL)
-    # Do "-1" to get the edge pixel belonget to the Region. The next pixel (over any direction) is out of the Region:
-    m_br = win32api.MonitorFromPoint((self._x + self._w - 1, self._y + self._h - 1), win32con.MONITOR_DEFAULTTONULL)
-    if m_tl is None or m_br is None:
-        raise FailExit('one or more corners of region out of visible area of sreens')
-    if m_tl != m_br:
-        raise FailExit('region occupies more than one screen')
-    return Screen(_monitor_hndl_to_screen_n(m_tl))
-"""
-
+        h = rect.h if rect.y + rect.h < max_y else max_y - rect.y
+        sct_img = sct.grab(dict(left=rect.x, top=rect.y, height=h, width=w))
+        pil_img = Image.frombytes("RGB", sct_img.size, sct_img.bgra, "raw", "BGRX")
+    return SimpleImage(rect, pil_img)
 
 def pixel_color_at(x, y, monitor_number=1):
     return pixels_colors_at([(x, y)], monitor_number)[0]
-
 
 def pixels_colors_at(coords_tuple_list, monitor_number=1):
     with mss.mss() as sct:

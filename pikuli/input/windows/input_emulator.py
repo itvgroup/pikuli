@@ -8,7 +8,6 @@ import win32con
 
 from ..helper_types import WindowsButtonCode
 
-
 class WinVirtKeyCodes(int, Enum):
     """
     Virtual-key codes of some special keys.
@@ -46,17 +45,14 @@ class WinVirtKeyCodes(int, Enum):
     F11        = win32con.VK_F11
     F12        = win32con.VK_F12
 
-
 class WinButtonCode(WindowsButtonCode, Enum):
     LEFT   = (win32con.MOUSEEVENTF_LEFTDOWN, win32con.MOUSEEVENTF_LEFTUP)
     RIGHT  = (win32con.MOUSEEVENTF_RIGHTDOWN, win32con.MOUSEEVENTF_RIGHTUP)
     MIDDLE = (win32con.MOUSEEVENTF_MIDDLEDOWN, win32con.MOUSEEVENTF_MIDDLEUP)
 
-
 class WinScrollDirection(int, Enum):
     UP = 1
     DOWN = -1
-
 
 class InputMixin(object):
 
@@ -66,7 +62,6 @@ class InputMixin(object):
         windll.user32.BlockInput(True)
         yield
         windll.user32.BlockInput(False)
-
 
 class WinKeyboardMixin(InputMixin):
 
@@ -86,7 +81,6 @@ class WinKeyboardMixin(InputMixin):
     @classmethod
     def _do_release_key(cls, key_code):
         win32api.keybd_event(key_code, 0, win32con.KEYEVENTF_EXTENDEDKEY | win32con.KEYEVENTF_KEYUP, 0)  # win32con.KEYEVENTF_EXTENDEDKEY
-
 
 class WinMouseMixin(InputMixin):
 

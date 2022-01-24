@@ -4,9 +4,7 @@
 Enums below are got from Windows SDK 8.1.
 """
 
-
 from .helper_types import ApiEnumAutoval, ApiEnumExplicit, Enums
-
 
 #
 # See `UIAutomationCoreApi.h`
@@ -19,7 +17,6 @@ AsyncContentLoadedState = ApiEnumAutoval('AsyncContentLoadedState',
     'Completed'
 ])
 
-
 AutomationIdentifierType = ApiEnumAutoval('AutomationIdentifierType',
 [
     'Property',
@@ -29,7 +26,6 @@ AutomationIdentifierType = ApiEnumAutoval('AutomationIdentifierType',
     'TextAttribute'
 ])
 
-
 class ConditionType(ApiEnumExplicit):
     TRUE = 0
     FALSE = 1
@@ -37,7 +33,6 @@ class ConditionType(ApiEnumExplicit):
     And = 3
     Or = 4
     Not = 5
-
 
 EventArgsType = ApiEnumAutoval('EventArgsType',
 [
@@ -49,7 +44,6 @@ EventArgsType = ApiEnumAutoval('EventArgsType',
     'TextEditTextChanged'
 ])
 
-
 NormalizeState = ApiEnumAutoval('NormalizeState',
 [
     'None',    # Don't normalize
@@ -57,14 +51,12 @@ NormalizeState = ApiEnumAutoval('NormalizeState',
     'Custom'   # Normalize against supplied condition
 ])
 
-
 ProviderType = ApiEnumAutoval('ProviderType',
 [
     'BaseHwnd',
     'Proxy',
     'NonClientArea'
 ])
-
 
 #
 # See `UIAutomationClient.h`
@@ -78,16 +70,13 @@ class TreeScope(ApiEnumExplicit):
     Ancestors = 0x10
     Subtree = (Element | Children) | Descendants
 
-
 class PropertyConditionFlags(ApiEnumExplicit):
     None_ = 0x00
     IgnoreCase = 0x01
 
-
 class AutomationElementMode(ApiEnumExplicit):
     None_ = 0
     Full = 1
-
 
 #
 # See `UIAutomationCore.h`
@@ -98,7 +87,6 @@ class NavigateDirection(ApiEnumExplicit):
     PreviousSibling = 2
     FirstChild = 3
     LastChild = 4
-
 
 class ProviderOptions(ApiEnumExplicit):
     """ TODO: ??? DEFINE_ENUM_FLAG_OPERATORS(ProviderOptions) """
@@ -112,7 +100,6 @@ class ProviderOptions(ApiEnumExplicit):
     HasNativeIAccessible = 0x080
     UseClientCoordinates = 0x100
 
-
 class StructureChangeType(ApiEnumExplicit):
     ChildAdded = 0
     ChildRemoved = 1
@@ -121,19 +108,16 @@ class StructureChangeType(ApiEnumExplicit):
     ChildrenBulkRemoved = 4
     ChildrenReordered = 5
 
-
 class TextEditChangeType(ApiEnumExplicit):
     None_ = 0
     AutoCorrect = 1
     Composition = 2
     CompositionFinalized = 3
 
-
 class OrientationType(ApiEnumExplicit):
     None_ = 0
     Horizontal = 1
     Vertical = 2
-
 
 class DockPosition(ApiEnumExplicit):
     Top = 0
@@ -143,13 +127,11 @@ class DockPosition(ApiEnumExplicit):
     Fill = 4
     None_ = 5
 
-
 class ExpandCollapseState(ApiEnumExplicit):
     Collapsed = 0
     Expanded = 1
     PartiallyExpanded = 2
     LeafNode = 3
-
 
 class ScrollAmount(ApiEnumExplicit):
     LargeDecrement = 0
@@ -158,24 +140,20 @@ class ScrollAmount(ApiEnumExplicit):
     LargeIncrement = 3
     SmallIncrement = 4
 
-
 class RowOrColumnMajor(ApiEnumExplicit):
     RowMajor = 0
     ColumnMajor = 1
     Indeterminate = 2
-
 
 class ToggleState(ApiEnumExplicit):
     Off = 0
     On = 1
     Indeterminate = 2
 
-
 class WindowVisualState(ApiEnumExplicit):
     Normal = 0
     Maximized = 1
     Minimized = 2
-
 
 class SynchronizedInputType(ApiEnumExplicit):
     """ TODO: ??? DEFINE_ENUM_FLAG_OPERATORS(SynchronizedInputType) """
@@ -186,14 +164,12 @@ class SynchronizedInputType(ApiEnumExplicit):
     RightMouseUp = 0x10
     RightMouseDown = 0x20
 
-
 class WindowInteractionState(ApiEnumExplicit):
     Running = 0
     Closing = 1
     ReadyForUserInteraction = 2
     BlockedByModalWindow = 3
     NotResponding = 4
-
 
 class TextUnit(ApiEnumExplicit):
     Character = 0
@@ -204,40 +180,33 @@ class TextUnit(ApiEnumExplicit):
     Page = 5
     Document = 6
 
-
 class TextPatternRangeEndpoint(ApiEnumExplicit):
     Start = 0
     End = 1
-
 
 class SupportedTextSelection(ApiEnumExplicit):
     None_ = 0
     Single = 1
     Multiple = 2
 
-
 class LiveSetting(ApiEnumExplicit):
     Off = 0
     Polite = 1
     Assertive = 2
-
 
 class ActiveEnd(ApiEnumExplicit):
     None_ = 0
     Start = 1
     End = 2
 
-
 class CaretPosition(ApiEnumExplicit):
     Unknown = 0
     EndOfLine = 1
     BeginningOfLine = 2
 
-
 class CaretBidiMode(ApiEnumExplicit):
     LTR = 0
     RTL = 1
-
 
 class ZoomUnit(ApiEnumExplicit):
     NoAmount = 0
@@ -245,7 +214,6 @@ class ZoomUnit(ApiEnumExplicit):
     SmallDecrement = 2
     LargeIncrement = 3
     SmallIncrement = 4
-
 
 class AnimationStyle(ApiEnumExplicit):
     None_ = 0
@@ -257,7 +225,6 @@ class AnimationStyle(ApiEnumExplicit):
     Shimmer = 6
     Other = -1
 
-
 class BulletStyle(ApiEnumExplicit):
     None_ = 0
     HollowRoundBullet = 1
@@ -266,7 +233,6 @@ class BulletStyle(ApiEnumExplicit):
     FilledSquareBullet = 4
     DashBullet = 5
     Other = -1
-
 
 class CapStyle(ApiEnumExplicit):
     None_ = 0
@@ -278,13 +244,11 @@ class CapStyle(ApiEnumExplicit):
     Titling = 6
     Other = -1
 
-
 class FlowDirections(ApiEnumExplicit):
     Default = 0
     RightToLeft = 1
     BottomToTop = 2
     Vertical = 4
-
 
 class HorizontalTextAlignment(ApiEnumExplicit):
     Left = 0
@@ -292,14 +256,12 @@ class HorizontalTextAlignment(ApiEnumExplicit):
     Right = 2
     Justified = 3
 
-
 class OutlineStyles(ApiEnumExplicit):
     None_ = 0
     Outline = 1
     Shadow = 2
     Engraved = 4
     Embossed = 8
-
 
 class TextDecorationLineStyle(ApiEnumExplicit):
     None_ = 0
@@ -321,7 +283,6 @@ class TextDecorationLineStyle(ApiEnumExplicit):
     ThickDot = 17
     ThickLongDash = 18
     Other = -1
-
 
 class UIAutomationType(ApiEnumExplicit):
     Int = 0x00001
@@ -354,7 +315,6 @@ class UIAutomationType(ApiEnumExplicit):
     OutPointArray = (Point | Array) | Out
     OutRectArray = (Rect | Array) | Out
     OutElementArray = (Element | Array) | Out
-
 
 def _get_sdk_enums():
     return [v for v in globals().values() if Enums.is_enum(v)]

@@ -3,7 +3,6 @@ from pikuli.uia.adapter import Enums
 
 from .uia_control import UIAControl
 
-
 class ListItem(UIAControl):
     ''' Элементы списка ListItem. '''
 

@@ -13,7 +13,6 @@ from .constants import (
 from .keys import InputSequence, Key, KeyModifier
 from .platform_init import ButtonCode, KeyCode, OsKeyboardMixin, OsMouseMixin
 
-
 class KeyboardMixin(object):
 
     #_PrintableChars = set(string.printable) - set(????)
@@ -104,7 +103,6 @@ class KeyboardMixin(object):
         for m in modifiers:
             action(m.key_code)
 
-
 class MouseMixin(object):
 
     @classmethod
@@ -161,7 +159,6 @@ class MouseMixin(object):
         for _ in range(0, count):
             cls._do_scroll(direction, step=step)
             time.sleep(DELAY_MOUSE_SCROLL)
-
 
 class InputEmulator(
     KeyboardMixin, MouseMixin,
