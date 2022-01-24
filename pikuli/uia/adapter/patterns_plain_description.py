@@ -3,7 +3,6 @@
 PROPERTY = 'property'
 METHOD = 'method'
 
-
 patterns_plain_description = {
 "AnnotationPattern"         : [
     (PROPERTY, 'CurrentAnnotationTypeId',

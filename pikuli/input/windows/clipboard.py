@@ -3,7 +3,6 @@
 import win32clipboard
 from pikuli import logger
 
-
 class WinClipboard(object):
 
     @classmethod

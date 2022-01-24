@@ -2,18 +2,14 @@
 
 import traceback
 
-
 class PikuliError(RuntimeError):
     pass
-
 
 class PostMoveCheck(PikuliError):
     pass
 
-
 class FailExit(PikuliError):
     pass
-
 
 class FindFailed(PikuliError):
     """ This exception is raised when an image pattern

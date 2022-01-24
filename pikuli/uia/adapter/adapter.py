@@ -5,7 +5,6 @@ from .helper_types import IdNameMap
 from .pattern_description import PatternDescriptions
 from .platform_init import OsAdapterMixin
 
-
 class AdapterMeta(type):
 
     def __new__(mcls, name, bases, dct):
@@ -31,7 +30,6 @@ class AdapterMeta(type):
             cls._build_patterns_map, PatternDescriptions.get_all_known_names())
 
         return cls
-
 
 class Adapter(OsAdapterMixin, metaclass=AdapterMeta):
     

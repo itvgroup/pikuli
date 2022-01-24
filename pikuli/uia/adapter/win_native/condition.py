@@ -3,7 +3,6 @@
 from pikuli.utils import class_property
 import pikuli.uia.adapter
 
-
 class Condition(object):
 
     @class_property

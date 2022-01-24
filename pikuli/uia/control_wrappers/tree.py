@@ -6,7 +6,6 @@ from pikuli import logger
 
 from .uia_control import UIAControl
 
-
 class Tree(UIAControl):
 
     CONTROL_TYPE = 'Tree'

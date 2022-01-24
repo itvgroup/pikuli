@@ -4,7 +4,6 @@ import os
 
 from pikuli.uia.settings import UIA_FORCE_DOTNET
 
-
 if os.name == 'nt' and not UIA_FORCE_DOTNET:
     from .win_native.adapter import WinAdapter as OsAdapterMixin
     from .win_native.automation_element import AutomationElement

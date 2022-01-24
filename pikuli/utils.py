@@ -3,7 +3,6 @@
 import time
 from datetime import datetime
 
-
 class class_property(property):
 
     def __init__(self, method):
@@ -12,7 +11,6 @@ class class_property(property):
     def __get__(self, cls, owner):
         p = self.fget.__get__(cls, owner)
         return p()
-
 
 def wait_while(f_logic, timeout, warning_timeout=None, warning_text=None, delay_between_attempts=0.5):
     """
@@ -42,7 +40,6 @@ def wait_while(f_logic, timeout, warning_timeout=None, warning_text=None, delay_
             return False
 
         time.sleep(delay_between_attempts)
-
 
 def wait_while_not(f_logic, timeout, warning_timeout=None, delay_between_attempts=0.5):
     """

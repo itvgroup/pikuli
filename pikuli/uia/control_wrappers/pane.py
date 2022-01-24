@@ -2,7 +2,6 @@
 
 from .uia_control import UIAControl
 
-
 class Pane(UIAControl):
 
     CONTROL_TYPE = 'Pane'

@@ -122,8 +122,6 @@ class Vector(Point):
             yield self.y
         return targer()
 
-
-
 class RelativeVec(Vector):
     """
     Вектор, координаты которого изменяются в интервале [0.0; 100.0].

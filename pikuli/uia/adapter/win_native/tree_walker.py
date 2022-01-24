@@ -2,7 +2,6 @@
 
 import pikuli.uia.adapter
 
-
 class TreeWalker(object):
 
     def __init__(self, condition):

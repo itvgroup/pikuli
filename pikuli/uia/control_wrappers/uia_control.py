@@ -3,7 +3,6 @@
 from pikuli import logger
 from ..uia_element import UIAElement
 
-
 class UIAControl(UIAElement):
 
     CONTROL_TYPE = None

@@ -5,7 +5,6 @@ import ctypes
 from pikuli.uia.exceptions import AdapterException
 from ..pattern_description import PatternDescriptions
 
-
 class PatternFactory(object):
 
     _pattern_interfaces_map = {}

@@ -2,7 +2,6 @@
 
 from .uia_control import UIAControl
 
-
 class List(UIAControl):
     ''' Некий список из ListItem'ов. '''
 

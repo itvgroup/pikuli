@@ -7,14 +7,11 @@ from ..adapter_base import AdapterBase
 from ..helper_types import Enums
 from ..sdk_enums import _get_sdk_enums
 
-
 UIA_type_lib_IID = '{944DE083-8FB8-45CF-BCB7-C477ACB2F897}'
-
 
 def _get_enum_element_full_name(elem):
     return '{enum_name}_{elem_name}'.format(
         enum_name=elem.__class__.__name__, elem_name=elem._c_name)
-
 
 class WinAdapter(AdapterBase):
 

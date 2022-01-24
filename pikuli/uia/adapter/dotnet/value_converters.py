@@ -2,7 +2,6 @@
 
 from pikuli.uia.adapter.property_value_types import Rectangle
 
-
 class DotNetPropertyValueConverter(object):
 
     @classmethod

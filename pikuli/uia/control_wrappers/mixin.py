@@ -7,9 +7,7 @@ from pikuli.uia import UIAElement
 
 from . import CONTROL_CHECK_TIMEOUT
 
-
 TEXT_CLEAN_METHODS = ['uia_api', 'end&backspaces', 'home&deletes', 'single_backspace']
-
 
 class _Enter_Text_method(UIAElement):
 
@@ -79,7 +77,6 @@ class _Enter_Text_method(UIAElement):
         if p2c_notif:
             logger.info('pikuli.%s.type_text(): type \'%s\' in %s' % (type(self).__name__, repr(text), str(self)))
 
-
     def enter_text(self, text, method='click', clean_method=None, check_timeout=CONTROL_CHECK_TIMEOUT, p2c_notif=True):
         '''
         Перезапишет текст в контроле.
@@ -120,7 +117,6 @@ class _Enter_Text_method(UIAElement):
         #         logger.info('pikuli.%s.enter_text(): \'%s\' is alredy in %s' % (type(self).__name__, repr(text), str(self)))
         # return changed
 
-
 class _ValuePattern_methods(UIAElement):
 
     REQUIRED_PATTERNS = {'ValuePattern': ['get_value', 'set_value_api', 'is_readoly']}
@@ -154,7 +150,6 @@ class _ValuePattern_methods(UIAElement):
     def is_read_only(self):
         return bool(self.get_pattern('ValuePattern').CurrentIsReadOnly)
 
-
 class _LegacyIAccessiblePattern_state_methods(UIAElement):
 
     def is_unavailable(self):
@@ -165,7 +160,6 @@ class _LegacyIAccessiblePattern_state_methods(UIAElement):
 
     def is_focused(self):
         return bool(self.get_pattern('LegacyIAccessiblePattern').CurrentState & STATE_SYSTEM['FOCUSED'])
-
 
 class _LegacyIAccessiblePattern_value_methods(UIAElement):
 

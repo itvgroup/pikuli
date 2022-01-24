@@ -6,7 +6,6 @@ from pikuli import logger
 from pikuli._helpers import NotImplemetedDummyBase, NotImplemetedDummyFactory
 from .exceptions import AdapterException
 
-
 try:
     from .adapter import Adapter as __Adapter
     assert not issubclass(__Adapter, NotImplemetedDummyBase), __Adapter.err_msg

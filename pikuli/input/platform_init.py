@@ -7,7 +7,6 @@ from contextlib import contextmanager
 from pikuli import logger
 from pikuli._helpers import NotImplemetedDummyFactory
 
-
 Method = namedtuple('Method', [
     'KeyCode',
     'ButtonCode',
@@ -16,7 +15,6 @@ Method = namedtuple('Method', [
     'OsMouseMixin',
     'Clipboard'
 ])
-
 
 class EmulatorMethod(object):
     """

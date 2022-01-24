@@ -5,12 +5,10 @@ from pikuli.uia.adapter import Enums, STATE_SYSTEM
 from . import CONTROL_CHECK_TIMEOUT
 from .uia_control import UIAControl
 
-
 class CheckBox(UIAControl):
 
     CONTROL_TYPE = 'CheckBox'
     REQUIRED_PATTERNS = {}
-
 
 
     def _state(self, method):

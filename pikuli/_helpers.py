@@ -7,7 +7,6 @@ from . import logger
 class NotImplemetedDummyBase(object):
     err_msg = None
 
-
 class NotImplemetedDummyFactory(object):
 
     class _AttrPlaceholder(object):

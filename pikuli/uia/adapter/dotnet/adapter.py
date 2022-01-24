@@ -26,13 +26,11 @@ def _load_uia_assemblies_by_name_type(name_type):
     for assm_name in _uia_assembly_names[name_type]:
         clr.AddReference(assm_name)  # contains System.Windows.Automation
 
-
 clr.AddReference("System.Runtime")
 try:
     _load_uia_assemblies_by_name_type("short")
 except:
     _load_uia_assemblies_by_name_type("full_v4")
-
 
 import System.Windows.Automation
 from System.Windows.Automation import (
@@ -75,7 +73,6 @@ from pikuli.utils import class_property
 from ..adapter_base import AdapterBase
 from ..helper_types import Enums
 from ..sdk_enums import _get_sdk_enums
-
 
 class DotNetAdapter(AdapterBase):
 

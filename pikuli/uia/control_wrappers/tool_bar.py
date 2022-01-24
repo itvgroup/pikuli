@@ -2,7 +2,6 @@
 
 from ..uia_element import UIAElement
 
-
 class ToolBar(UIAElement):
 
     CONTROL_TYPE = 'ToolBar'

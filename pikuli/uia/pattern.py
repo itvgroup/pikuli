@@ -4,7 +4,6 @@ from .adapter import PatternFactory, Enums
 from .adapter.pattern_description import PatternDescriptions
 from .pattern_method import UiaPatternMethod
 
-
 class UiaPattern(object):
     '''
     Wrapper class for UIA pattern interface

@@ -4,7 +4,6 @@ import pikuli.uia.adapter
 
 from ..pattern_description import PatternDescriptions
 
-
 class _PatternWrapper(object):
 
     def __init__(self, dotnet_pattern_obj):
@@ -34,7 +33,6 @@ class _PatternWrapper(object):
             if attr_name.startswith(mode):
                 return (mode, attr_name[len(mode):])
         return (None, None)
-
 
 class PatternFactory(object):
 

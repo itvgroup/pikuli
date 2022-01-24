@@ -3,7 +3,6 @@ from pikuli import FindFailed, logger
 from pikuli.uia.control_wrappers.data_item import DataItem
 from .uia_control import UIAControl
 
-
 class DataGrid(UIAControl):
 
     CONTROL_TYPE = 'DataGrid'
@@ -40,5 +39,4 @@ class DataGrid(UIAControl):
         else:
             found_elem = _find_row_precisely(self, row_name, 1)
         return found_elem
-
 

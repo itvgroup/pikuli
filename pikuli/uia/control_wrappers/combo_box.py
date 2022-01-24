@@ -7,7 +7,6 @@ from . import CONTROL_CHECK_TIMEOUT
 from .uia_control import UIAControl
 from .mixin import _ValuePattern_methods, _Enter_Text_method
 
-
 class ComboBox(UIAControl, _ValuePattern_methods, _Enter_Text_method):
 
     """

@@ -3,7 +3,6 @@
 from pikuli.utils import class_property
 from .adapter import AutomationElement_clr
 
-
 class AutomationElement(object):
 
     @class_property

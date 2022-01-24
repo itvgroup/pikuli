@@ -23,7 +23,6 @@ from . import FailExit, logger, settings
 # Константа отсутствует в win32con, но есть в http://userpages.umbc.edu/~squire/download/WinGDI.h:
 CAPTUREBLT = 0x40000000
 
-
 def verify_timeout_argument(timeout, allow_None=False, err_msg='pikuli.verify_timeout_argument()'):
     if timeout is None and allow_None:
         return None
@@ -34,7 +33,6 @@ def verify_timeout_argument(timeout, allow_None=False, err_msg='pikuli.verify_ti
     except (ValueError, TypeError) as ex:
         raise FailExit('%s: wrong timeout = \'%s\' (%s)' % (str(err_msg), str(timeout), str(ex)))
     return timeout
-
 
 def addImagePath(path):
     settings.addImagePath(path)
@@ -56,11 +54,9 @@ def _monitor_hndl_to_screen_n(m_hndl):
         raise FailExit('can not obtaen Screen number from win32api.GetMonitorInfo() = %s' % str(minfo))
     return screen_n
 
-
 def _screen_n_to_monitor_name(n):
     ''' Экраны-мониторы нуменруются от 1. Нулевой экран -- это полный вирутальный. '''
     return r'\\.\DISPLAY%i' % n
-
 
 def _screen_n_to_mon_descript(n):
     ''' Returns a sequence of tuples. For each monitor found, returns a handle to the monitor, device context handle, and intersection rectangle:
@@ -78,7 +74,6 @@ def _screen_n_to_mon_descript(n):
     else:
         raise FailExit('wrong screen number \'%s\'' % str(n))
     return m
-
 
 def highlight_region(x, y, w, h, delay=0.5):
     def _cp_boundary(dest_dc, dest_x0, dest_y0, src_dc, src_x0, src_y0, w, h):
@@ -171,7 +166,6 @@ def take_screenshot(rect: Rectangle) -> SimpleImage:
 
 def pixel_color_at(x, y, monitor_number=1):
     return pixels_colors_at([(x, y)], monitor_number)[0]
-
 
 def pixels_colors_at(coords_tuple_list, monitor_number=1):
     with mss.mss() as sct:

@@ -6,7 +6,6 @@ from pikuli.uia.adapter import STATE_SYSTEM
 from .uia_control import UIAControl
 from .mixin import _LegacyIAccessiblePattern_value_methods, _Enter_Text_method
 
-
 class ANPropGrid_Table(UIAControl):
     '''
     Таблица настроек в AxxonNext ничего не поддерживает, кроме Legacy-паттерна.
@@ -56,7 +55,6 @@ class ANPropGrid_Table(UIAControl):
             found_elem = _find_row_precisely(self, row_name, 1)
         # logger.debug('pikuli.ANPropGrid_Table.find_row: \'%s\' has been found: %s' % (str(row_name), repr(found_elem)))
         return found_elem
-
 
 class ANPropGrid_Row(UIAControl, _LegacyIAccessiblePattern_value_methods, _Enter_Text_method):
     ''' Таблица настроек в AxxonNext ничего не поддерживает, кроме Legacy-паттерна.
@@ -110,5 +108,4 @@ class ANPropGrid_Row(UIAControl, _LegacyIAccessiblePattern_value_methods, _Enter
     @property
     def value(self):
         return self.get_pattern('ValuePattern').CurrentValue
-
 

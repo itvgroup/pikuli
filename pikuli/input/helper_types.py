@@ -6,9 +6,7 @@ from collections import namedtuple
 from pikuli import logger
 from pikuli._helpers import NotImplemetedDummyFactory
 
-
 WindowsButtonCode = namedtuple('WindowsButtonCode', ['event_down', 'event_up'])
-
 
 class _HookedClassInitMeta(type):
 
@@ -63,7 +61,6 @@ class _HookedClassInitMeta(type):
         return '_{cls_name}{attr_name}'.format(
             cls_name=cls.__name__,
             attr_name=attr_name)
-
 
 class _HookedClassInit(metaclass=_HookedClassInitMeta):
     pass

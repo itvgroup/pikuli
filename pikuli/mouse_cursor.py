@@ -7,7 +7,6 @@ DEFAULT_CURSORS_TYPES = [IDC_APPSTARTING, IDC_ARROW, IDC_CROSS, IDC_HAND,
     IDC_HELP, IDC_IBEAM, IDC_ICON, IDC_NO, IDC_SIZE, IDC_SIZEALL,
     IDC_SIZENESW, IDC_SIZENS, IDC_SIZENWSE, IDC_SIZEWE, IDC_UPARROW, IDC_WAIT]
 
-
 class MouseCursor(object):
 
     @classmethod
@@ -25,5 +24,3 @@ class MouseCursor(object):
     def __init__(self, cursor_type, handle):
         self.type = cursor_type
         self.handle = handle
-
-

@@ -3,7 +3,6 @@
 import pikuli.uia.adapter
 from pikuli.utils import class_property
 
-
 class AutomationElement(object):
 
     @class_property

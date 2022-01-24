@@ -6,7 +6,6 @@ from gi.repository import Gdk
 
 from ..linux_evdev.input_emulator import EvdevKeyboardMixin
 
-
 class GtkKeyboardMixin(EvdevKeyboardMixin):
     """
     NOT WORKS AT ALL YET!

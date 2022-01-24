@@ -2,7 +2,6 @@
 
 from ..uia_element import UIAElement
 
-
 class MenuBar(UIAElement):
 
     CONTROL_TYPE = 'MenuBar'

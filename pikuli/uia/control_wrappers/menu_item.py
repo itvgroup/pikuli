@@ -2,7 +2,6 @@
 
 from .uia_control import UIAControl
 
-
 class MenuItem(UIAControl):
     ''' Контекстное меню, к примеру. '''
 

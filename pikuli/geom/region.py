@@ -196,7 +196,6 @@ class Region(Rectangle):
         else:
             raise FailExit('[error] Incorect Region.set_h(...) method call:\n\th = %s, %s\n\trelation = %s' % (str(h), type(h), str(relation)))
 
-
     def setRect(self, *args, **kwargs):
         try:
             if len(args) == 1 and isinstance(args[0], Region):

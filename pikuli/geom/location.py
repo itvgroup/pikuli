@@ -12,7 +12,6 @@ from pikuli._functions import FailExit, pixel_color_at
 
 from .vector import Vector, RelativeVec
 
-
 DRAGnDROP_MOVE_DELAY = 0.005
 DRAGnDROP_MOVE_STEP  = 6
 
@@ -398,7 +397,6 @@ class LocationF(Vector):
         """
         loc = Location(*args)
         return abs(self - loc)
-
 
 class Location(LocationF):
 
