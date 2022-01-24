@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from pikuli import logger, wait_while_not
+from pikuli import logger
+from pikuli.utils import wait_while_not
 from pikuli.input import Key, KeyModifier, InputEmulator, Clipboard
 from pikuli.uia import UIAElement
 

@@ -3,8 +3,7 @@
 import os
 import tempfile
 
-
-class SettingsClass(object):
+class SettingsClass:
 
     __def_IMG_ADDITION_PATH = []  # Пути, кроме текущего и мб еще какого-то подобного
     __def_MinSimilarity = 0.995  # Почти устойчиво с 0.995, но однажны не нашел узелок для контура. 0.700 -- будет найдено в каждом пикселе (порог надо поднимать выше).
@@ -52,3 +51,5 @@ class SettingsClass(object):
 
     def getPatternURLTemplate(self):
         return self.GetPattern_URLTemplate
+
+settings = SettingsClass()

@@ -3,14 +3,12 @@
    Представляет любую точку на экране. Содержит методы для перемещения точки на экране, перемещения курсора в точку на экране, эмуляции пользовательских действий (клики, ввод текста).
 '''
 
-import logging
 import time
 from collections import namedtuple
 from contextlib import contextmanager
 
 from pikuli.input import InputEmulator, KeyModifier, Key, ScrollDirection, ButtonCode
-from pikuli._exceptions import PostMoveCheck
-from pikuli._functions import FailExit, _take_screenshot
+from pikuli._functions import FailExit, pixel_color_at
 
 from .vector import Vector, RelativeVec
 
@@ -106,8 +104,7 @@ class LocationF(Vector):
         return int(round(self._y))
 
     def get_color(self):
-        arr = _take_screenshot(self._x_int, self._y_int, 1, 1)
-        return Color(*arr.reshape(3)[::-1])
+        return Color(*pixel_color_at(self._x_int, self._y_int))
 
     def mouse_move(self, delay=0):
         """

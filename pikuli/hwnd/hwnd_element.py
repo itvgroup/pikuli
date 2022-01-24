@@ -2,10 +2,8 @@
 
 ''' Субмодуль работы с контролами через win32api. '''
 
-import os
 import re
 import types
-import logging
 
 import psutil
 
@@ -19,14 +17,10 @@ from ctypes import byref
 import comtypes
 import comtypes.client
 
-
-
-import pikuli
 from pikuli._exceptions import FindFailed
 from pikuli.geom import Region
-from pikuli import wait_while, wait_while_not
-from pikuli import logger
-
+from pikuli.uia import UIAElement
+from pikuli import wait_while, wait_while_not, logger
 
 '''
 !!! TODO: !!!
@@ -225,7 +219,7 @@ class HWNDElement(object):
             if not extra['res']:
                 raise Exception('pikuli.HWNDElement: constructor error: hwnd = %s is not child for main window %s' % (str(hwnd), str(self.hwnd_main_win)))'''
 
-        elif len(args) == 1 and isinstance(args[0], pikuli.uia.UIAElement):
+        elif len(args) == 1 and isinstance(args[0], UIAElement):
             if args[0].hwnd is None or args[0].hwnd == 0:
                 raise Exception('pikuli.HWNDElement: constructor error: args[0].hwnd is None or args[0].hwnd == 0:; args = %s' % str(args))
             self.hwnd          = args[0].hwnd
@@ -503,23 +497,3 @@ class HWNDElement(object):
     def get_parent(self):
         ''' Вернет HWNDElement для родительского окна (в широком виндовом смысле "окна"). '''
         return HWNDElement(GetParent(self.hwnd))
-
-
-
-
-"""
-import pywinauto
-win32defines = pywinauto.win32defines
-
-'''
--= Tree View: =-
-    pywinauto.controls.common_controls.TreeViewWrapper (https://github.com/pywinauto/pywinauto)
-    "About Tree-View Controls" (https://msdn.microsoft.com/en-us/en-en/library/windows/desktop/bb760017(v=vs.85).aspx)
-    "Using Tree-View Controls" (https://msdn.microsoft.com/en-us/en-en/library/windows/desktop/bb773409(v=vs.85).aspx)
-'''
-
-def _treeview_element__reg(self):
-    rect = self.Rectangle()
-    return geom.Region(rect.left, rect.top, rect.width, rect.height)
-setattr(pywinauto.controls.common_controls._treeview_element, 'reg', _treeview_element__reg)
-"""

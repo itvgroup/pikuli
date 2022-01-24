@@ -2,24 +2,26 @@
 
 from math import sqrt
 
+from .simple_types import Point
 
-class Vector(object):
+class Vector(Point):
 
     def __init__(self, *args):
         """
         Координаты -- вещественые числа. Или :class:`Vector`.
         """
         if len(args) == 2:
-            self._x = float(args[0])
-            self._y = float(args[1])
-        elif len(args) == 1 and isinstance(args[0], Vector):
-            self._x = float(args[0]._x)
-            self._y = float(args[0]._y)
+            x = float(args[0])
+            y = float(args[1])
+        elif len(args) == 1 and isinstance(args[0], Point):
+            x = float(args[0].x)
+            y = float(args[0].y)
         elif len(args) == 1 and isinstance(args[0], (list, tuple)):
-            self._x = float(args[0][0])
-            self._y = float(args[0][1])
+            x = float(args[0][0])
+            y = float(args[0][1])
         else:
             raise Exception('{}'.format(args))
+        super(Vector, self).__init__(x, y)
 
     def __add__(self, other):
         """
@@ -86,14 +88,6 @@ class Vector(object):
         Hadamard inverse vector
         """
         return self.__class__(1.0 / self.x, 1.0 / self.y)
-
-    @property
-    def x(self):
-        return self._x
-
-    @property
-    def y(self):
-        return self._y
 
     @property
     def xy(self):

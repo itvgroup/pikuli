@@ -6,7 +6,6 @@ import datetime
 import traceback
 import sys
 import re
-import logging
 import json
 import os
 
@@ -22,7 +21,7 @@ else:
 
 import pikuli.uia
 
-from pikuli import wait_while
+from pikuli.utils import wait_while
 from pikuli.geom import Region
 from pikuli._functions import verify_timeout_argument
 from pikuli._exceptions import FindFailed, FailExit

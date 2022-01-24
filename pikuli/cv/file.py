@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 
-
 import os
 
-class File(object):
+class File:
     def __init__(self, path):
         if path is None:
             self._path = None
